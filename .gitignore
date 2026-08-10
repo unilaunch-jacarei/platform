@@ -1,0 +1,88 @@
+# -----------------------------------------------------------------------------
+# Secrets and local configuration
+# -----------------------------------------------------------------------------
+.env
+.env.*
+!.env.example
+!.env.*.example
+!.env.template
+.secrets/
+*.secret
+*.secrets
+*.pem
+*.key
+*.p12
+*.pfx
+credentials.json
+service-account*.json
+docker-compose.override.yml
+*.sqlite
+*.sqlite3
+*.db
+*.dump
+*.backup
+
+# -----------------------------------------------------------------------------
+# Rust / backend
+# -----------------------------------------------------------------------------
+**/target/
+**/*.rs.bk
+
+# Keep Cargo.lock for applications. Keep .sqlx/ because SQLx offline metadata
+# is part of the reproducible build and should be reviewed/versioned.
+
+# -----------------------------------------------------------------------------
+# JavaScript / Svelte / frontend
+# -----------------------------------------------------------------------------
+**/node_modules/
+**/.svelte-kit/
+**/.output/
+**/.vercel/
+**/.netlify/
+**/.wrangler/
+**/dist/
+**/build/
+**/.vite/
+**/vite.config.js.timestamp-*
+**/vite.config.ts.timestamp-*
+
+# -----------------------------------------------------------------------------
+# Tests, coverage, caches and logs
+# -----------------------------------------------------------------------------
+**/coverage/
+**/.nyc_output/
+**/.cache/
+**/.parcel-cache/
+**/.turbo/
+**/.eslintcache
+**/.stylelintcache
+*.log
+*.log.*
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+bun-debug.log*
+
+# -----------------------------------------------------------------------------
+# Editors and operating systems
+# -----------------------------------------------------------------------------
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# -----------------------------------------------------------------------------
+# Temporary and generated files
+# -----------------------------------------------------------------------------
+*.tmp
+*.temp
+*.bak
+*.orig
+*.rej
+*.pid
+*.seed
+tmp/
+temp/

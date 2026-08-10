@@ -1,0 +1,29 @@
+node_modules/
+
+# Output
+.output/
+.vercel/
+.netlify/
+.wrangler/
+/.svelte-kit/
+/build/
+/dist/
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Vite
+vite.config.js.timestamp-*
+vite.config.ts.timestamp-*
+
+# Logs, coverage and local tooling
+*.log
+coverage/
+.cache/
+.eslintcache
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

@@ -1,0 +1,103 @@
+UniLaunch Platform Source-Available Non-Commercial License v1.0
+
+Copyright (c) 2026 Stackvize
+Website: https://stackvize.org
+Contact: contato.stackvize@gmail.com
+
+1. Definitions
+
+"Software" means the source code, documentation and other original materials
+contained in this repository and distributed by Stackvize.
+
+"Non-Commercial Purpose" means a purpose that is not primarily intended for
+commercial advantage or monetary compensation. This includes personal study,
+academic research, classroom teaching, and operation by a nonprofit
+organization for an educational or social-impact purpose, provided that the
+Software is not sold, licensed for a fee, or used to provide a paid service.
+
+"Commercial Use" means any use intended to generate revenue, commercial
+advantage or monetary compensation. This includes, without limitation,
+reselling the Software, offering it as a paid service or SaaS, embedding it in
+a commercial product, using it to serve paying customers, or using it as part
+of a paid consulting or delivery engagement.
+
+2. Permission
+
+Subject to the conditions in this License, Stackvize grants you a limited,
+non-exclusive, non-transferable, royalty-free license to:
+
+  a. view and study the Software;
+  b. copy and modify the Software privately; and
+  c. execute the Software for a Non-Commercial Purpose that is educational or
+     social in nature.
+
+3. Conditions
+
+The permissions above apply to recipients of the Software. Stackvize, as the
+copyright holder and responsible legal entity, reserves all rights not
+expressly granted by this License and may use, modify, commercialize, license,
+operate and distribute the Software in its own projects, including paid B2B
+projects and hosted services.
+
+Stackvize may also authorize its employees, contractors, students and other
+official project collaborators in writing to use and modify the Software as
+part of an official Stackvize or UniLaunch project. This authorization may
+include projects that generate revenue and compensation or revenue sharing
+among participating collaborators.
+
+Any permitted copy or private modification must retain this License, the
+copyright notice, and clear attribution to Stackvize and the UniLaunch
+Platform.
+
+This License does not grant permission to publicly distribute, publish,
+redistribute, sublicense, sell, rent, lease, or make available any copy or
+modified version of the Software. It also does not grant permission to offer
+the Software, or a substantially similar modified version, as a hosted,
+managed or software-as-a-service product.
+
+The authorization for official Stackvize or UniLaunch projects above is an
+exception to this restriction. It does not authorize a collaborator or
+customer to independently commercialize, sublicense or redistribute the
+Software.
+
+Technical forks of this public GitHub repository may exist under GitHub's
+platform rules. A fork does not grant any additional permission to use,
+distribute or commercially exploit the Software. Any use of the Software
+remains subject to this License.
+
+4. Commercial permission
+
+Except for Stackvize and collaborators expressly authorized under Section 3,
+Commercial Use requires a separate written license agreement signed by
+Stackvize. Contact contato.stackvize@gmail.com to request commercial terms.
+
+This License does not create an employment relationship, partnership, equity
+interest, payment obligation or revenue-sharing right. Any compensation or
+revenue-sharing arrangement must be established in a separate written
+agreement.
+
+5. Trademarks
+
+This License does not grant permission to use the names, logos, trademarks or
+brand assets of Stackvize, UniLaunch or their projects, except as necessary to
+preserve the required attribution.
+
+6. Third-party materials
+
+This License applies only to original materials owned by Stackvize. Third-party
+dependencies, assets and other materials remain subject to their own licenses.
+
+7. Disclaimer and limitation of liability
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+STACKVIZE BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE, TO THE MAXIMUM EXTENT PERMITTED BY LAW.
+
+8. Termination
+
+This License terminates automatically if you violate its terms. Upon
+termination, you must stop using the Software and delete copies in your
+possession or control, except where retention is required by law.

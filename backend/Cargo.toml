@@ -1,0 +1,21 @@
+[package]
+name = "backend"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow = "1.0.104"
+argon2 = "0.5.3"
+axum = "0.8.9"
+dotenvy = "0.15.7"
+hex = "0.4.3"
+hmac = "0.13.0"
+rand = "0.8.5"
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.151"
+sha2 = "0.11.0"
+sqlx = { version = "0.8.6", features = ["runtime-tokio", "postgres", "macros"] }
+tokio = { version = "1.53.1", features = ["full"] }
+tracing = "0.1.44"
+tracing-subscriber = "0.3.23"
+tower-http = { version = "0.6.6", features = ["trace"] }

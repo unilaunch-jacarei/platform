@@ -1,0 +1,9 @@
+/target/
+.env
+.env.*
+!.env.example
+
+# Logs, local databases and IDE files
+*.log
+.vscode/
+.idea/
