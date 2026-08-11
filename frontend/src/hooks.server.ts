@@ -45,7 +45,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 	}
 
 	const isApiRoute = pathname.startsWith('/api/');
-	const isPublicPage = ['/login', '/cadastro', '/recuperar-senha'].some(
+	const isPublicPage = ['/login', '/cadastro', '/recuperar-senha', '/reset-password'].some(
 		(path) => pathname === path || pathname.startsWith(`${path}/`)
 	);
 	if (!event.locals.userId && !isApiRoute && !isPublicPage) {
