@@ -63,7 +63,10 @@ jobs:
       - uses: taiki-e/install-action@v2
         with:
           tool: cargo-audit
-      - run: cargo audit --file backend/Cargo.lock
+      # RUSTSEC-2023-0071 belongs to SQLx's optional MySQL driver. This service
+      # enables only PostgreSQL; cargo tree confirms rsa is not in the active graph.
+      # RustSec currently reports no fixed rsa release.
+      - run: cargo audit --file backend/Cargo.lock --ignore RUSTSEC-2023-0071
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: '1.3'
