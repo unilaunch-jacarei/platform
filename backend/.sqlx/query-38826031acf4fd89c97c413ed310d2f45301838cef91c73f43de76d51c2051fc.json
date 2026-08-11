@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT id, usuario_id\n           FROM password_reset_tokens\n           WHERE token_hash = $1\n             AND used_at IS NULL\n             AND expires_at > NOW()\n           FOR UPDATE",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "usuario_id",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Bpchar"
+      ]
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "38826031acf4fd89c97c413ed310d2f45301838cef91c73f43de76d51c2051fc"
+}

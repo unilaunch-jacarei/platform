@@ -4,6 +4,7 @@ use axum::{
     response::{IntoResponse, Response},
 };
 
+#[derive(Debug)]
 pub struct AppError(pub Error);
 
 impl IntoResponse for AppError {
