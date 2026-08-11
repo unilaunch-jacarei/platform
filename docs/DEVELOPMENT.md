@@ -59,3 +59,10 @@ cd frontend && bun run check
 cd ../backend && cargo fmt --all -- --check
 SQLX_OFFLINE=true cargo test
 ```
+
+Os testes de fluxo real de autenticação e recuperação de senha usam PostgreSQL e ficam marcados como `#[ignore]` para não quebrar ambientes sem banco. Para executá-los:
+
+```bash
+cd backend
+SQLX_OFFLINE=true cargo test --test auth_flows -- --ignored --test-threads=1
+```
