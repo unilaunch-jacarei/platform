@@ -1,0 +1,13 @@
+**/.env
+**/.env.*
+**/target
+**/node_modules
+**/.svelte-kit
+**/dist
+**/build
+.git
+.github
+base_estilo
+docs
+LICENSE
+README.md
