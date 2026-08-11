@@ -7,6 +7,77 @@ pub struct LoginUser {
     pub password_hash: Option<String>,
 }
 
+pub async fn create_password_reset(pool: &PgPool, user_id: i64, hash: String) -> Result<()> {
+    sqlx::query!(
+        r#"INSERT INTO password_reset_tokens (usuario_id, token_hash, expires_at)
+           VALUES ($1, $2, NOW() + INTERVAL '1 hour')"#,
+        user_id,
+        hash
+    )
+    .execute(pool)
+    .await
+    .context("falha ao criar token de recuperação de senha")?;
+    Ok(())
+}
+
+pub async fn consume_password_reset(
+    pool: &PgPool,
+    token_hash: &str,
+    password_hash: &str,
+) -> Result<bool> {
+    let mut transaction = pool
+        .begin()
+        .await
+        .context("falha ao iniciar transação de recuperação")?;
+
+    let Some(token) = sqlx::query!(
+        r#"SELECT id, usuario_id
+           FROM password_reset_tokens
+           WHERE token_hash = $1
+             AND used_at IS NULL
+             AND expires_at > NOW()
+           FOR UPDATE"#,
+        token_hash
+    )
+    .fetch_optional(&mut *transaction)
+    .await
+    .context("falha ao validar token de recuperação")?
+    else {
+        return Ok(false);
+    };
+
+    sqlx::query!(
+        "UPDATE usuarios SET password_hash = $1 WHERE id = $2",
+        password_hash,
+        token.usuario_id
+    )
+    .execute(&mut *transaction)
+    .await
+    .context("falha ao atualizar senha")?;
+
+    sqlx::query!(
+        "UPDATE password_reset_tokens SET used_at = NOW() WHERE id = $1",
+        token.id
+    )
+    .execute(&mut *transaction)
+    .await
+    .context("falha ao consumir token de recuperação")?;
+
+    sqlx::query!(
+        "DELETE FROM sessoes WHERE usuario_id = $1",
+        token.usuario_id
+    )
+    .execute(&mut *transaction)
+    .await
+    .context("falha ao invalidar sessões antigas")?;
+
+    transaction
+        .commit()
+        .await
+        .context("falha ao confirmar recuperação de senha")?;
+    Ok(true)
+}
+
 pub async fn find_user_by_email(pool: &PgPool, email: &str) -> Result<Option<LoginUser>> {
     sqlx::query_as!(
         LoginUser,
