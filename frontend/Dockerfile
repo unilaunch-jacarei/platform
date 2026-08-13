@@ -20,5 +20,5 @@ ENV PORT=3000
 COPY --from=builder /app/build ./build
 
 EXPOSE 3000
-USER bun
+USER node
 CMD ["node", "build"]
