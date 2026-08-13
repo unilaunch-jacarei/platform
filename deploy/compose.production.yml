@@ -1,0 +1,46 @@
+services:
+  backend:
+    image: ghcr.io/${GHCR_OWNER:?Defina GHCR_OWNER}/platform-back:${VERSION:?Defina VERSION, por exemplo v1}
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: ${DATABASE_URL:?Defina DATABASE_URL}
+      INTERNAL_SECRET: ${INTERNAL_SECRET:?Defina INTERNAL_SECRET}
+      BIND_ADDR: 0.0.0.0:3000
+      PUBLIC_APP_URL: ${PUBLIC_APP_URL:?Defina PUBLIC_APP_URL}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      MAIL_FROM: ${MAIL_FROM:-UniLaunch <noreply@example.com>}
+      EMAIL_LOGO_URL: ${EMAIL_LOGO_URL:-}
+    expose:
+      - "3000"
+    networks:
+      - platform
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+
+  frontend:
+    image: ghcr.io/${GHCR_OWNER:?Defina GHCR_OWNER}/platform-front:${VERSION:?Defina VERSION, por exemplo v1}
+    restart: unless-stopped
+    depends_on:
+      - backend
+    environment:
+      BACKEND_URL: http://backend:3000
+      INTERNAL_SECRET: ${INTERNAL_SECRET:?Defina INTERNAL_SECRET}
+      HOST: 0.0.0.0
+      PORT: 3000
+      NODE_ENV: production
+    ports:
+      - "${PRODUCTION_PORT:-80}:3000"
+    networks:
+      - platform
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+
+networks:
+  platform:
+    driver: bridge
