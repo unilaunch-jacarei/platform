@@ -1,4 +1,3 @@
-use anyhow::Result;
 use async_trait::async_trait;
 use axum::{
     Json,
@@ -7,20 +6,23 @@ use axum::{
 };
 use backend::{
     AppState,
-    domains::{
-        auth::{
-            handlers::{
-                ConfirmResetPasswordRequest, LoginRequest, ResetPasswordRequest,
-                confirm_reset_password, login, reset_password,
-            },
-            repository as auth_repository,
+    adapters::{
+        inbound::http::auth::{
+            dto::{ConfirmResetPasswordRequest, LoginRequest, ResetPasswordRequest},
+            handlers::{confirm_reset_password, login, reset_password},
         },
-        usuarios::repository as usuarios_repository,
+        outbound::{
+            persistence::postgres::{PostgresAuthRepository, PostgresUsuarioRepository},
+            rate_limiter::MemoryRateLimiter,
+            security::{Argon2PasswordHasher, CryptoTokenGenerator},
+        },
     },
-    infra::{
-        email::{EmailMessage, EmailSender},
-        rate_limiter::RateLimiter,
+    application::{
+        auth::ports::{AuthRepository, EmailMessage, EmailSenderPort, PasswordHasher, SessionIdGenerator},
+        usuarios::ports::UsuarioRepository,
     },
+    bootstrap::create_app_state,
+    domain::usuarios::{Email, Nome, PlainPassword},
 };
 use sqlx::{PgPool, postgres::PgPoolOptions};
 use std::{
@@ -37,8 +39,8 @@ struct MockEmailSender {
 }
 
 #[async_trait]
-impl EmailSender for MockEmailSender {
-    async fn send(&self, message: EmailMessage) -> Result<String> {
+impl EmailSenderPort for MockEmailSender {
+    async fn send(&self, message: EmailMessage) -> Result<String, String> {
         self.messages.lock().await.push(message);
         Ok("email-test-id".to_owned())
     }
@@ -61,15 +63,25 @@ async fn test_pool() -> PgPool {
     pool
 }
 
-fn test_state(pool: PgPool, email_sender: Option<Arc<dyn EmailSender>>) -> AppState {
-    AppState {
-        db: pool,
-        internal_secret: Arc::from("test-secret"),
-        rate_limiter: Arc::new(RateLimiter::new()),
+fn test_state(pool: PgPool, email_sender: Option<Arc<dyn EmailSenderPort>>) -> AppState {
+    let usuario_repo = Arc::new(PostgresUsuarioRepository::new(pool.clone()));
+    let auth_repo = Arc::new(PostgresAuthRepository::new(pool));
+    let password_hasher = Arc::new(Argon2PasswordHasher::new());
+    let crypto_generator = Arc::new(CryptoTokenGenerator::new());
+    let rate_limiter = Arc::new(MemoryRateLimiter::new());
+
+    create_app_state(
+        usuario_repo,
+        auth_repo,
+        password_hasher,
+        rate_limiter,
+        crypto_generator.clone(),
+        crypto_generator,
         email_sender,
-        public_app_url: Arc::from("http://localhost:5173"),
-        email_logo_url: Some(Arc::from("https://example.com/logo.png")),
-    }
+        Arc::from("test-secret"),
+        Arc::from("http://localhost:5173"),
+        Some(Arc::from("https://example.com/logo.png")),
+    )
 }
 
 fn address(octet: u8) -> SocketAddr {
@@ -97,10 +109,24 @@ fn extract_reset_token(html: &str) -> String {
 #[ignore = "requer DATABASE_URL apontando para PostgreSQL de teste/desenvolvimento"]
 async fn login_creates_a_server_side_session() {
     let pool = test_pool().await;
+    let usuario_repo = PostgresUsuarioRepository::new(pool.clone());
+    let auth_repo = PostgresAuthRepository::new(pool.clone());
+    let password_hasher = Argon2PasswordHasher::new();
+
     let email = unique_email("login");
-    let user_id = usuarios_repository::create(&pool, "Login Test", &email, "senha-antiga-segura")
+    let hashed_pw = password_hasher
+        .hash(&PlainPassword::new("senha-antiga-segura").unwrap())
+        .unwrap();
+
+    let user_id = usuario_repo
+        .create(
+            &Nome::new("Login Test").unwrap(),
+            &Email::new(&email).unwrap(),
+            &hashed_pw,
+        )
         .await
         .unwrap();
+
     let state = test_state(pool.clone(), None);
 
     let (status, Json(response)) = login(
@@ -115,10 +141,11 @@ async fn login_creates_a_server_side_session() {
     .unwrap();
 
     assert_eq!(status, StatusCode::CREATED);
-    assert_eq!(response.user_id, user_id);
+    assert_eq!(response.user_id, user_id.value());
     assert_eq!(response.session_id.len(), 64);
     assert_eq!(
-        auth_repository::find_user_id_by_session(&pool, &response.session_id)
+        auth_repo
+            .find_user_id_by_session(&backend::domain::auth::SessionId::new(&response.session_id).unwrap())
             .await
             .unwrap(),
         Some(user_id)
@@ -150,13 +177,31 @@ async fn password_reset_is_silent_for_unknown_email() {
 #[ignore = "requer DATABASE_URL apontando para PostgreSQL de teste/desenvolvimento"]
 async fn password_reset_token_is_single_use_and_invalidates_old_sessions() {
     let pool = test_pool().await;
+    let usuario_repo = PostgresUsuarioRepository::new(pool.clone());
+    let auth_repo = PostgresAuthRepository::new(pool.clone());
+    let password_hasher = Argon2PasswordHasher::new();
+    let crypto_generator = CryptoTokenGenerator::new();
+
     let email = unique_email("reset");
-    let user_id = usuarios_repository::create(&pool, "Reset Test", &email, "senha-antiga-segura")
+    let hashed_pw = password_hasher
+        .hash(&PlainPassword::new("senha-antiga-segura").unwrap())
+        .unwrap();
+
+    let user_id = usuario_repo
+        .create(
+            &Nome::new("Reset Test").unwrap(),
+            &Email::new(&email).unwrap(),
+            &hashed_pw,
+        )
         .await
         .unwrap();
-    let old_session_id = auth_repository::create_session(&pool, user_id)
+
+    let old_session_id = crypto_generator.generate();
+    auth_repo
+        .create_session(user_id, &old_session_id)
         .await
         .unwrap();
+
     let sender = MockEmailSender::default();
     let state = test_state(pool.clone(), Some(Arc::new(sender.clone())));
 
@@ -190,7 +235,8 @@ async fn password_reset_token_is_single_use_and_invalidates_old_sessions() {
     assert_eq!(status, StatusCode::NO_CONTENT);
 
     assert_eq!(
-        auth_repository::find_user_id_by_session(&pool, &old_session_id)
+        auth_repo
+            .find_user_id_by_session(&old_session_id)
             .await
             .unwrap(),
         None
@@ -207,7 +253,7 @@ async fn password_reset_token_is_single_use_and_invalidates_old_sessions() {
     .await
     .unwrap();
     assert_eq!(status, StatusCode::CREATED);
-    assert_eq!(response.user_id, user_id);
+    assert_eq!(response.user_id, user_id.value());
 
     let status = confirm_reset_password(
         State(state),
