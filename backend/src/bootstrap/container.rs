@@ -27,6 +27,7 @@ pub struct ApplicationContainer {
     pub config: AppConfig,
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn create_app_state(
     usuario_repo: Arc<dyn UsuarioRepository>,
     auth_repo: Arc<dyn AuthRepository>,

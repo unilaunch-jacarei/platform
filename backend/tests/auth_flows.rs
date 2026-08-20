@@ -18,7 +18,9 @@ use backend::{
         },
     },
     application::{
-        auth::ports::{AuthRepository, EmailMessage, EmailSenderPort, PasswordHasher, SessionIdGenerator},
+        auth::ports::{
+            AuthRepository, EmailMessage, EmailSenderPort, PasswordHasher, SessionIdGenerator,
+        },
         usuarios::ports::UsuarioRepository,
     },
     bootstrap::create_app_state,
@@ -145,7 +147,9 @@ async fn login_creates_a_server_side_session() {
     assert_eq!(response.session_id.len(), 64);
     assert_eq!(
         auth_repo
-            .find_user_id_by_session(&backend::domain::auth::SessionId::new(&response.session_id).unwrap())
+            .find_user_id_by_session(
+                &backend::domain::auth::SessionId::new(&response.session_id).unwrap()
+            )
             .await
             .unwrap(),
         Some(user_id)
