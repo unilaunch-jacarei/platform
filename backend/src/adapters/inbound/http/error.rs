@@ -107,17 +107,37 @@ mod tests {
 
     #[test]
     fn hides_internal_error_from_http_client() {
-        let response = ApiError::Internal("database password must stay private".to_string()).into_response();
+        let response =
+            ApiError::Internal("database password must stay private".to_string()).into_response();
         assert_eq!(response.status(), StatusCode::INTERNAL_SERVER_ERROR);
     }
 
     #[test]
     fn maps_all_api_errors_to_status_codes() {
-        assert_eq!(ApiError::BadRequest("msg".into()).into_response().status(), StatusCode::BAD_REQUEST);
-        assert_eq!(ApiError::Unauthorized("msg".into()).into_response().status(), StatusCode::UNAUTHORIZED);
-        assert_eq!(ApiError::NotFound("msg".into()).into_response().status(), StatusCode::NOT_FOUND);
-        assert_eq!(ApiError::UnprocessableEntity("msg".into()).into_response().status(), StatusCode::UNPROCESSABLE_ENTITY);
-        assert_eq!(ApiError::Internal("msg".into()).into_response().status(), StatusCode::INTERNAL_SERVER_ERROR);
+        assert_eq!(
+            ApiError::BadRequest("msg".into()).into_response().status(),
+            StatusCode::BAD_REQUEST
+        );
+        assert_eq!(
+            ApiError::Unauthorized("msg".into())
+                .into_response()
+                .status(),
+            StatusCode::UNAUTHORIZED
+        );
+        assert_eq!(
+            ApiError::NotFound("msg".into()).into_response().status(),
+            StatusCode::NOT_FOUND
+        );
+        assert_eq!(
+            ApiError::UnprocessableEntity("msg".into())
+                .into_response()
+                .status(),
+            StatusCode::UNPROCESSABLE_ENTITY
+        );
+        assert_eq!(
+            ApiError::Internal("msg".into()).into_response().status(),
+            StatusCode::INTERNAL_SERVER_ERROR
+        );
     }
 
     #[test]
@@ -126,13 +146,23 @@ mod tests {
         assert_eq!(err.into_response().status(), StatusCode::BAD_REQUEST);
 
         let err: ApiError = UsuarioDomainError::EmailInvalido("a".into()).into();
-        assert_eq!(err.into_response().status(), StatusCode::UNPROCESSABLE_ENTITY);
+        assert_eq!(
+            err.into_response().status(),
+            StatusCode::UNPROCESSABLE_ENTITY
+        );
 
         let err: ApiError = UsuarioAppError::UsuarioNaoEncontrado(1).into();
-        assert_eq!(err.into_response().status(), StatusCode::INTERNAL_SERVER_ERROR);
+        assert_eq!(
+            err.into_response().status(),
+            StatusCode::INTERNAL_SERVER_ERROR
+        );
 
-        let err: ApiError = UsuarioAppError::Repository(RepositoryError::Database("db".into())).into();
-        assert_eq!(err.into_response().status(), StatusCode::INTERNAL_SERVER_ERROR);
+        let err: ApiError =
+            UsuarioAppError::Repository(RepositoryError::Database("db".into())).into();
+        assert_eq!(
+            err.into_response().status(),
+            StatusCode::INTERNAL_SERVER_ERROR
+        );
 
         let err: ApiError = AuthDomainError::TokenRecuperacaoInvalido.into();
         assert_eq!(err.into_response().status(), StatusCode::UNAUTHORIZED);
@@ -141,13 +171,21 @@ mod tests {
         assert_eq!(err.into_response().status(), StatusCode::BAD_REQUEST);
 
         let err: ApiError = AuthDomainError::CredenciaisInvalidas.into();
-        assert_eq!(err.into_response().status(), StatusCode::INTERNAL_SERVER_ERROR);
+        assert_eq!(
+            err.into_response().status(),
+            StatusCode::INTERNAL_SERVER_ERROR
+        );
 
         let err: ApiError = AuthAppError::Internal("err".into()).into();
-        assert_eq!(err.into_response().status(), StatusCode::INTERNAL_SERVER_ERROR);
+        assert_eq!(
+            err.into_response().status(),
+            StatusCode::INTERNAL_SERVER_ERROR
+        );
 
         let err: ApiError = anyhow::anyhow!("generic").into();
-        assert_eq!(err.into_response().status(), StatusCode::INTERNAL_SERVER_ERROR);
+        assert_eq!(
+            err.into_response().status(),
+            StatusCode::INTERNAL_SERVER_ERROR
+        );
     }
 }
-

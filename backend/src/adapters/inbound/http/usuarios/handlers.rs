@@ -19,13 +19,12 @@ pub async fn create_usuario(
         password: input.password,
     };
 
-    let id = state
-        .user_use_cases
-        .create_usuario
-        .execute(command)
-        .await?;
+    let id = state.user_use_cases.create_usuario.execute(command).await?;
 
-    Ok((StatusCode::CREATED, Json(serde_json::json!({ "id": id.value() }))))
+    Ok((
+        StatusCode::CREATED,
+        Json(serde_json::json!({ "id": id.value() })),
+    ))
 }
 
 pub async fn get_usuario(
@@ -48,13 +47,13 @@ pub async fn get_usuario(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::application::usuarios::ports::{RepositoryError, UsuarioRepository};
-    use crate::application::auth::ports::PasswordHasher;
-    use crate::domain::usuarios::{Email, HashedPassword, Nome, PlainPassword, Usuario};
-    use crate::bootstrap::create_app_state;
     use crate::adapters::outbound::rate_limiter::MemoryRateLimiter;
     use crate::adapters::outbound::security::CryptoTokenGenerator;
+    use crate::application::auth::ports::PasswordHasher;
+    use crate::application::usuarios::ports::{RepositoryError, UsuarioRepository};
+    use crate::bootstrap::create_app_state;
     use crate::domain::auth::{ResetTokenHash, SessionId};
+    use crate::domain::usuarios::{Email, HashedPassword, Nome, PlainPassword, Usuario};
     use async_trait::async_trait;
     use std::sync::Arc;
 
@@ -66,7 +65,12 @@ mod tests {
         async fn find_by_id(&self, id: UsuarioId) -> Result<Option<Usuario>, RepositoryError> {
             Ok(self.user.clone().filter(|u| u.id == id))
         }
-        async fn create(&self, _n: &Nome, _e: &Email, _p: &HashedPassword) -> Result<UsuarioId, RepositoryError> {
+        async fn create(
+            &self,
+            _n: &Nome,
+            _e: &Email,
+            _p: &HashedPassword,
+        ) -> Result<UsuarioId, RepositoryError> {
             Ok(UsuarioId::new(1))
         }
     }
@@ -74,18 +78,49 @@ mod tests {
     struct DummyAuthRepo;
     #[async_trait]
     impl crate::application::auth::ports::AuthRepository for DummyAuthRepo {
-        async fn find_user_by_email(&self, _e: &Email) -> Result<Option<Usuario>, RepositoryError> { Ok(None) }
-        async fn create_session(&self, _u: UsuarioId, _s: &SessionId) -> Result<(), RepositoryError> { Ok(()) }
-        async fn find_user_id_by_session(&self, _s: &SessionId) -> Result<Option<UsuarioId>, RepositoryError> { Ok(None) }
-        async fn delete_session(&self, _s: &SessionId) -> Result<(), RepositoryError> { Ok(()) }
-        async fn create_password_reset(&self, _u: UsuarioId, _t: &ResetTokenHash) -> Result<(), RepositoryError> { Ok(()) }
-        async fn consume_password_reset(&self, _t: &ResetTokenHash, _p: &HashedPassword) -> Result<bool, RepositoryError> { Ok(true) }
+        async fn find_user_by_email(&self, _e: &Email) -> Result<Option<Usuario>, RepositoryError> {
+            Ok(None)
+        }
+        async fn create_session(
+            &self,
+            _u: UsuarioId,
+            _s: &SessionId,
+        ) -> Result<(), RepositoryError> {
+            Ok(())
+        }
+        async fn find_user_id_by_session(
+            &self,
+            _s: &SessionId,
+        ) -> Result<Option<UsuarioId>, RepositoryError> {
+            Ok(None)
+        }
+        async fn delete_session(&self, _s: &SessionId) -> Result<(), RepositoryError> {
+            Ok(())
+        }
+        async fn create_password_reset(
+            &self,
+            _u: UsuarioId,
+            _t: &ResetTokenHash,
+        ) -> Result<(), RepositoryError> {
+            Ok(())
+        }
+        async fn consume_password_reset(
+            &self,
+            _t: &ResetTokenHash,
+            _p: &HashedPassword,
+        ) -> Result<bool, RepositoryError> {
+            Ok(true)
+        }
     }
 
     struct FakeHasher;
     impl PasswordHasher for FakeHasher {
-        fn hash(&self, p: &PlainPassword) -> Result<HashedPassword, String> { Ok(HashedPassword::new(p.as_str())) }
-        fn verify(&self, _p: &PlainPassword, _h: &HashedPassword) -> Result<bool, String> { Ok(true) }
+        fn hash(&self, p: &PlainPassword) -> Result<HashedPassword, String> {
+            Ok(HashedPassword::new(p.as_str()))
+        }
+        fn verify(&self, _p: &PlainPassword, _h: &HashedPassword) -> Result<bool, String> {
+            Ok(true)
+        }
     }
 
     fn test_app_state(user: Option<Usuario>) -> AppState {
@@ -145,4 +180,3 @@ mod tests {
         assert_eq!(envelope.data.nome, "Ana");
     }
 }
-

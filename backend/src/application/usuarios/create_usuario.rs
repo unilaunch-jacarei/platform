@@ -90,7 +90,11 @@ mod tests {
             Ok(HashedPassword::new(format!("hashed_{}", password.as_str())))
         }
 
-        fn verify(&self, password: &PlainPassword, hashed: &HashedPassword) -> Result<bool, String> {
+        fn verify(
+            &self,
+            password: &PlainPassword,
+            hashed: &HashedPassword,
+        ) -> Result<bool, String> {
             Ok(hashed.as_str() == format!("hashed_{}", password.as_str()))
         }
     }
@@ -130,7 +134,9 @@ mod tests {
 
         assert!(matches!(
             result,
-            Err(UsuarioAppError::Domain(UsuarioDomainError::EmailInvalido(_)))
+            Err(UsuarioAppError::Domain(UsuarioDomainError::EmailInvalido(
+                _
+            )))
         ));
         assert_eq!(*repo.created_count.lock().unwrap(), 0);
     }
@@ -156,4 +162,3 @@ mod tests {
         assert_eq!(*repo.created_count.lock().unwrap(), 0);
     }
 }
-

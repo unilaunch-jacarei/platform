@@ -24,8 +24,8 @@ impl ResendEmailSender {
     pub fn from_env() -> Result<Self, String> {
         let api_key = std::env::var("RESEND_API_KEY")
             .map_err(|_| "RESEND_API_KEY não configurada".to_string())?;
-        let from = std::env::var("MAIL_FROM")
-            .map_err(|_| "MAIL_FROM não configurado".to_string())?;
+        let from =
+            std::env::var("MAIL_FROM").map_err(|_| "MAIL_FROM não configurado".to_string())?;
 
         if api_key.trim().is_empty() || from.trim().is_empty() {
             return Err("RESEND_API_KEY e MAIL_FROM não podem ser vazios".to_string());

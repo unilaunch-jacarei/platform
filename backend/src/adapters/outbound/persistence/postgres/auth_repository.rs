@@ -86,13 +86,10 @@ impl AuthRepository for PostgresAuthRepository {
     }
 
     async fn delete_session(&self, session_id: &SessionId) -> Result<(), RepositoryError> {
-        sqlx::query!(
-            "DELETE FROM sessoes WHERE id = $1",
-            session_id.as_str()
-        )
-        .execute(&self.pool)
-        .await
-        .map_err(|e| RepositoryError::Database(e.to_string()))?;
+        sqlx::query!("DELETE FROM sessoes WHERE id = $1", session_id.as_str())
+            .execute(&self.pool)
+            .await
+            .map_err(|e| RepositoryError::Database(e.to_string()))?;
 
         Ok(())
     }

@@ -54,7 +54,9 @@ impl RequestPasswordResetUseCase {
             .await;
 
         if !allowed {
-            return Err(AuthAppError::Domain(AuthDomainError::LimiteTentativasExcedido));
+            return Err(AuthAppError::Domain(
+                AuthDomainError::LimiteTentativasExcedido,
+            ));
         }
 
         let Ok(email) = Email::new(cmd.email.clone()) else {
@@ -177,15 +179,25 @@ mod tests {
 
     #[async_trait]
     impl AuthRepository for FakeAuthRepository {
-        async fn find_user_by_email(&self, email: &Email) -> Result<Option<Usuario>, RepositoryError> {
+        async fn find_user_by_email(
+            &self,
+            email: &Email,
+        ) -> Result<Option<Usuario>, RepositoryError> {
             Ok(self.user.clone().filter(|u| &u.email == email))
         }
 
-        async fn create_session(&self, _user_id: UsuarioId, _session_id: &SessionId) -> Result<(), RepositoryError> {
+        async fn create_session(
+            &self,
+            _user_id: UsuarioId,
+            _session_id: &SessionId,
+        ) -> Result<(), RepositoryError> {
             Ok(())
         }
 
-        async fn find_user_id_by_session(&self, _session_id: &SessionId) -> Result<Option<UsuarioId>, RepositoryError> {
+        async fn find_user_id_by_session(
+            &self,
+            _session_id: &SessionId,
+        ) -> Result<Option<UsuarioId>, RepositoryError> {
             Ok(None)
         }
 
@@ -193,12 +205,23 @@ mod tests {
             Ok(())
         }
 
-        async fn create_password_reset(&self, user_id: UsuarioId, token_hash: &ResetTokenHash) -> Result<(), RepositoryError> {
-            self.created_resets.lock().unwrap().push((user_id, token_hash.clone()));
+        async fn create_password_reset(
+            &self,
+            user_id: UsuarioId,
+            token_hash: &ResetTokenHash,
+        ) -> Result<(), RepositoryError> {
+            self.created_resets
+                .lock()
+                .unwrap()
+                .push((user_id, token_hash.clone()));
             Ok(())
         }
 
-        async fn consume_password_reset(&self, _token_hash: &ResetTokenHash, _password_hash: &HashedPassword) -> Result<bool, RepositoryError> {
+        async fn consume_password_reset(
+            &self,
+            _token_hash: &ResetTokenHash,
+            _password_hash: &HashedPassword,
+        ) -> Result<bool, RepositoryError> {
             Ok(true)
         }
     }
@@ -222,7 +245,13 @@ mod tests {
 
     #[async_trait]
     impl RateLimiterPort for FakeRateLimiter {
-        async fn is_allowed(&self, _ip: IpAddr, _op: RateLimitOperation, _window: Duration, _max: u32) -> bool {
+        async fn is_allowed(
+            &self,
+            _ip: IpAddr,
+            _op: RateLimitOperation,
+            _window: Duration,
+            _max: u32,
+        ) -> bool {
             self.allowed
         }
 
@@ -285,7 +314,11 @@ mod tests {
         let sent = email_sender.sent_messages.lock().unwrap();
         assert_eq!(sent.len(), 1);
         assert_eq!(sent[0].to, "beatriz@example.com");
-        assert!(sent[0].html.contains("https://app.test/reset-password?token=raw-token-123"));
+        assert!(
+            sent[0]
+                .html
+                .contains("https://app.test/reset-password?token=raw-token-123")
+        );
     }
 
     #[tokio::test]
@@ -319,4 +352,3 @@ mod tests {
         assert_eq!(email_sender.sent_messages.lock().unwrap().len(), 0);
     }
 }
-

@@ -55,4 +55,3 @@ mod tests {
         assert_eq!(c.bind_addr.to_string(), "0.0.0.0:3000");
     }
 }
-

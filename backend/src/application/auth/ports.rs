@@ -54,8 +54,15 @@ pub trait SessionIdGenerator: Send + Sync {
 #[async_trait]
 pub trait AuthRepository: Send + Sync {
     async fn find_user_by_email(&self, email: &Email) -> Result<Option<Usuario>, RepositoryError>;
-    async fn create_session(&self, user_id: UsuarioId, session_id: &SessionId) -> Result<(), RepositoryError>;
-    async fn find_user_id_by_session(&self, session_id: &SessionId) -> Result<Option<UsuarioId>, RepositoryError>;
+    async fn create_session(
+        &self,
+        user_id: UsuarioId,
+        session_id: &SessionId,
+    ) -> Result<(), RepositoryError>;
+    async fn find_user_id_by_session(
+        &self,
+        session_id: &SessionId,
+    ) -> Result<Option<UsuarioId>, RepositoryError>;
     async fn delete_session(&self, session_id: &SessionId) -> Result<(), RepositoryError>;
     async fn create_password_reset(
         &self,

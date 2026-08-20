@@ -19,7 +19,9 @@ impl ValidateSessionUseCase {
             .auth_repository
             .find_user_id_by_session(&session_id)
             .await?
-            .ok_or(AuthAppError::Domain(AuthDomainError::SessaoInvalidaOuExpirada))?;
+            .ok_or(AuthAppError::Domain(
+                AuthDomainError::SessaoInvalidaOuExpirada,
+            ))?;
 
         Ok(user_id)
     }
@@ -39,22 +41,40 @@ mod tests {
 
     #[async_trait]
     impl AuthRepository for FakeAuthRepository {
-        async fn find_user_by_email(&self, _email: &Email) -> Result<Option<Usuario>, RepositoryError> {
+        async fn find_user_by_email(
+            &self,
+            _email: &Email,
+        ) -> Result<Option<Usuario>, RepositoryError> {
             Ok(None)
         }
-        async fn create_session(&self, _user_id: UsuarioId, _session_id: &SessionId) -> Result<(), RepositoryError> {
+        async fn create_session(
+            &self,
+            _user_id: UsuarioId,
+            _session_id: &SessionId,
+        ) -> Result<(), RepositoryError> {
             Ok(())
         }
-        async fn find_user_id_by_session(&self, _session_id: &SessionId) -> Result<Option<UsuarioId>, RepositoryError> {
+        async fn find_user_id_by_session(
+            &self,
+            _session_id: &SessionId,
+        ) -> Result<Option<UsuarioId>, RepositoryError> {
             Ok(self.user_id)
         }
         async fn delete_session(&self, _session_id: &SessionId) -> Result<(), RepositoryError> {
             Ok(())
         }
-        async fn create_password_reset(&self, _user_id: UsuarioId, _token_hash: &ResetTokenHash) -> Result<(), RepositoryError> {
+        async fn create_password_reset(
+            &self,
+            _user_id: UsuarioId,
+            _token_hash: &ResetTokenHash,
+        ) -> Result<(), RepositoryError> {
             Ok(())
         }
-        async fn consume_password_reset(&self, _token_hash: &ResetTokenHash, _password_hash: &HashedPassword) -> Result<bool, RepositoryError> {
+        async fn consume_password_reset(
+            &self,
+            _token_hash: &ResetTokenHash,
+            _password_hash: &HashedPassword,
+        ) -> Result<bool, RepositoryError> {
             Ok(true)
         }
     }
@@ -79,8 +99,9 @@ mod tests {
         let result = use_case.execute("expired-session").await;
         assert!(matches!(
             result,
-            Err(AuthAppError::Domain(AuthDomainError::SessaoInvalidaOuExpirada))
+            Err(AuthAppError::Domain(
+                AuthDomainError::SessaoInvalidaOuExpirada
+            ))
         ));
     }
 }
-

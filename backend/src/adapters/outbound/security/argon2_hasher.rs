@@ -2,7 +2,9 @@ use crate::application::auth::ports::PasswordHasher;
 use crate::domain::usuarios::{HashedPassword, PlainPassword};
 use argon2::{
     Argon2,
-    password_hash::{PasswordHash, PasswordHasher as _, PasswordVerifier, SaltString, rand_core::OsRng},
+    password_hash::{
+        PasswordHash, PasswordHasher as _, PasswordVerifier, SaltString, rand_core::OsRng,
+    },
 };
 
 #[derive(Default, Clone)]

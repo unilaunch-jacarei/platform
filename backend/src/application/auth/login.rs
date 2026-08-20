@@ -1,5 +1,7 @@
 use super::error::AuthAppError;
-use super::ports::{AuthRepository, PasswordHasher, RateLimitOperation, RateLimiterPort, SessionIdGenerator};
+use super::ports::{
+    AuthRepository, PasswordHasher, RateLimitOperation, RateLimiterPort, SessionIdGenerator,
+};
 use crate::domain::auth::{AuthDomainError, SessionId};
 use crate::domain::usuarios::{Email, PlainPassword, UsuarioId};
 use std::net::IpAddr;
@@ -51,7 +53,9 @@ impl LoginUseCase {
             .await;
 
         if !allowed {
-            return Err(AuthAppError::Domain(AuthDomainError::LimiteTentativasExcedido));
+            return Err(AuthAppError::Domain(
+                AuthDomainError::LimiteTentativasExcedido,
+            ));
         }
 
         let email = Email::new(cmd.email)?;
@@ -76,7 +80,9 @@ impl LoginUseCase {
             return Err(AuthAppError::Domain(AuthDomainError::CredenciaisInvalidas));
         }
 
-        self.rate_limiter.reset(cmd.ip, RateLimitOperation::Login).await;
+        self.rate_limiter
+            .reset(cmd.ip, RateLimitOperation::Login)
+            .await;
 
         let session_id = self.session_generator.generate();
         self.auth_repository
@@ -106,7 +112,10 @@ mod tests {
 
     #[async_trait]
     impl AuthRepository for FakeAuthRepository {
-        async fn find_user_by_email(&self, email: &Email) -> Result<Option<Usuario>, RepositoryError> {
+        async fn find_user_by_email(
+            &self,
+            email: &Email,
+        ) -> Result<Option<Usuario>, RepositoryError> {
             Ok(self.user.clone().filter(|u| &u.email == email))
         }
 
@@ -115,11 +124,17 @@ mod tests {
             user_id: UsuarioId,
             session_id: &SessionId,
         ) -> Result<(), RepositoryError> {
-            self.sessions.lock().unwrap().push((user_id, session_id.clone()));
+            self.sessions
+                .lock()
+                .unwrap()
+                .push((user_id, session_id.clone()));
             Ok(())
         }
 
-        async fn find_user_id_by_session(&self, _session_id: &SessionId) -> Result<Option<UsuarioId>, RepositoryError> {
+        async fn find_user_id_by_session(
+            &self,
+            _session_id: &SessionId,
+        ) -> Result<Option<UsuarioId>, RepositoryError> {
             Ok(None)
         }
 
@@ -127,11 +142,19 @@ mod tests {
             Ok(())
         }
 
-        async fn create_password_reset(&self, _user_id: UsuarioId, _token_hash: &ResetTokenHash) -> Result<(), RepositoryError> {
+        async fn create_password_reset(
+            &self,
+            _user_id: UsuarioId,
+            _token_hash: &ResetTokenHash,
+        ) -> Result<(), RepositoryError> {
             Ok(())
         }
 
-        async fn consume_password_reset(&self, _token_hash: &ResetTokenHash, _password_hash: &HashedPassword) -> Result<bool, RepositoryError> {
+        async fn consume_password_reset(
+            &self,
+            _token_hash: &ResetTokenHash,
+            _password_hash: &HashedPassword,
+        ) -> Result<bool, RepositoryError> {
             Ok(true)
         }
     }
@@ -143,7 +166,11 @@ mod tests {
             Ok(HashedPassword::new(format!("hash_{}", password.as_str())))
         }
 
-        fn verify(&self, password: &PlainPassword, hashed: &HashedPassword) -> Result<bool, String> {
+        fn verify(
+            &self,
+            password: &PlainPassword,
+            hashed: &HashedPassword,
+        ) -> Result<bool, String> {
             Ok(hashed.as_str() == format!("hash_{}", password.as_str()))
         }
     }
@@ -154,7 +181,13 @@ mod tests {
 
     #[async_trait]
     impl RateLimiterPort for FakeRateLimiter {
-        async fn is_allowed(&self, _ip: IpAddr, _op: RateLimitOperation, _window: Duration, _max: u32) -> bool {
+        async fn is_allowed(
+            &self,
+            _ip: IpAddr,
+            _op: RateLimitOperation,
+            _window: Duration,
+            _max: u32,
+        ) -> bool {
             self.allowed
         }
 
@@ -262,8 +295,9 @@ mod tests {
 
         assert!(matches!(
             result,
-            Err(AuthAppError::Domain(AuthDomainError::LimiteTentativasExcedido))
+            Err(AuthAppError::Domain(
+                AuthDomainError::LimiteTentativasExcedido
+            ))
         ));
     }
 }
-

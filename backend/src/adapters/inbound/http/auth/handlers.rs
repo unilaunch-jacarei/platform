@@ -1,6 +1,4 @@
-use super::dto::{
-    ConfirmResetPasswordRequest, LoginRequest, LoginResponse, ResetPasswordRequest,
-};
+use super::dto::{ConfirmResetPasswordRequest, LoginRequest, LoginResponse, ResetPasswordRequest};
 use crate::adapters::inbound::http::error::ApiError;
 use crate::adapters::inbound::http::state::AppState;
 use crate::application::auth::{
@@ -43,11 +41,7 @@ pub async fn session(
         .get::<String>()
         .ok_or_else(|| ApiError::Internal("sessão ausente".to_string()))?;
 
-    let user_id = state
-        .auth_use_cases
-        .session
-        .execute(session_id)
-        .await?;
+    let user_id = state.auth_use_cases.session.execute(session_id).await?;
 
     Ok(Json(serde_json::json!({ "user_id": user_id.value() })))
 }
@@ -75,11 +69,7 @@ pub async fn reset_password(
         ip: address.ip(),
     };
 
-    state
-        .auth_use_cases
-        .reset_password
-        .execute(command)
-        .await?;
+    state.auth_use_cases.reset_password.execute(command).await?;
 
     Ok(StatusCode::NO_CONTENT)
 }
@@ -119,21 +109,30 @@ fn validate_confirm_reset_password(input: &ConfirmResetPasswordRequest) -> anyho
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::application::usuarios::ports::{RepositoryError, UsuarioRepository};
-    use crate::application::auth::ports::{AuthRepository, PasswordHasher};
-    use crate::domain::usuarios::{Email, HashedPassword, Nome, PlainPassword, Usuario, UsuarioId};
-    use crate::bootstrap::create_app_state;
     use crate::adapters::outbound::rate_limiter::MemoryRateLimiter;
     use crate::adapters::outbound::security::CryptoTokenGenerator;
+    use crate::application::auth::ports::{AuthRepository, PasswordHasher};
+    use crate::application::usuarios::ports::{RepositoryError, UsuarioRepository};
+    use crate::bootstrap::create_app_state;
     use crate::domain::auth::{ResetTokenHash, SessionId};
+    use crate::domain::usuarios::{Email, HashedPassword, Nome, PlainPassword, Usuario, UsuarioId};
     use async_trait::async_trait;
     use std::sync::Arc;
 
     struct DummyUserRepo;
     #[async_trait]
     impl UsuarioRepository for DummyUserRepo {
-        async fn find_by_id(&self, _id: UsuarioId) -> Result<Option<Usuario>, RepositoryError> { Ok(None) }
-        async fn create(&self, _n: &Nome, _e: &Email, _p: &HashedPassword) -> Result<UsuarioId, RepositoryError> { Ok(UsuarioId::new(1)) }
+        async fn find_by_id(&self, _id: UsuarioId) -> Result<Option<Usuario>, RepositoryError> {
+            Ok(None)
+        }
+        async fn create(
+            &self,
+            _n: &Nome,
+            _e: &Email,
+            _p: &HashedPassword,
+        ) -> Result<UsuarioId, RepositoryError> {
+            Ok(UsuarioId::new(1))
+        }
     }
 
     struct FakeAuthRepo {
@@ -141,18 +140,49 @@ mod tests {
     }
     #[async_trait]
     impl AuthRepository for FakeAuthRepo {
-        async fn find_user_by_email(&self, _e: &Email) -> Result<Option<Usuario>, RepositoryError> { Ok(self.user.clone()) }
-        async fn create_session(&self, _u: UsuarioId, _s: &SessionId) -> Result<(), RepositoryError> { Ok(()) }
-        async fn find_user_id_by_session(&self, _s: &SessionId) -> Result<Option<UsuarioId>, RepositoryError> { Ok(Some(UsuarioId::new(1))) }
-        async fn delete_session(&self, _s: &SessionId) -> Result<(), RepositoryError> { Ok(()) }
-        async fn create_password_reset(&self, _u: UsuarioId, _t: &ResetTokenHash) -> Result<(), RepositoryError> { Ok(()) }
-        async fn consume_password_reset(&self, _t: &ResetTokenHash, _p: &HashedPassword) -> Result<bool, RepositoryError> { Ok(true) }
+        async fn find_user_by_email(&self, _e: &Email) -> Result<Option<Usuario>, RepositoryError> {
+            Ok(self.user.clone())
+        }
+        async fn create_session(
+            &self,
+            _u: UsuarioId,
+            _s: &SessionId,
+        ) -> Result<(), RepositoryError> {
+            Ok(())
+        }
+        async fn find_user_id_by_session(
+            &self,
+            _s: &SessionId,
+        ) -> Result<Option<UsuarioId>, RepositoryError> {
+            Ok(Some(UsuarioId::new(1)))
+        }
+        async fn delete_session(&self, _s: &SessionId) -> Result<(), RepositoryError> {
+            Ok(())
+        }
+        async fn create_password_reset(
+            &self,
+            _u: UsuarioId,
+            _t: &ResetTokenHash,
+        ) -> Result<(), RepositoryError> {
+            Ok(())
+        }
+        async fn consume_password_reset(
+            &self,
+            _t: &ResetTokenHash,
+            _p: &HashedPassword,
+        ) -> Result<bool, RepositoryError> {
+            Ok(true)
+        }
     }
 
     struct FakeHasher;
     impl PasswordHasher for FakeHasher {
-        fn hash(&self, p: &PlainPassword) -> Result<HashedPassword, String> { Ok(HashedPassword::new(p.as_str())) }
-        fn verify(&self, _p: &PlainPassword, _h: &HashedPassword) -> Result<bool, String> { Ok(true) }
+        fn hash(&self, p: &PlainPassword) -> Result<HashedPassword, String> {
+            Ok(HashedPassword::new(p.as_str()))
+        }
+        fn verify(&self, _p: &PlainPassword, _h: &HashedPassword) -> Result<bool, String> {
+            Ok(true)
+        }
     }
 
     fn test_app_state(user: Option<Usuario>) -> AppState {
@@ -263,4 +293,3 @@ mod tests {
         assert_eq!(confirm_res.unwrap(), StatusCode::NO_CONTENT);
     }
 }
-

@@ -96,4 +96,3 @@ mod tests {
         assert_eq!(hash.into_string(), "hash-value");
     }
 }
-

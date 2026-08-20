@@ -19,12 +19,8 @@ mod tests {
 
     #[test]
     fn creates_session_entity() {
-        let session = Session::new(
-            SessionId::new("sess-123").unwrap(),
-            UsuarioId::new(1),
-        );
+        let session = Session::new(SessionId::new("sess-123").unwrap(), UsuarioId::new(1));
         assert_eq!(session.id.as_str(), "sess-123");
         assert_eq!(session.user_id.value(), 1);
     }
 }
-

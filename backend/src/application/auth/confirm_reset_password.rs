@@ -44,7 +44,9 @@ impl ConfirmPasswordResetUseCase {
             .await?;
 
         if !consumed {
-            return Err(AuthAppError::Domain(AuthDomainError::TokenRecuperacaoInvalido));
+            return Err(AuthAppError::Domain(
+                AuthDomainError::TokenRecuperacaoInvalido,
+            ));
         }
 
         Ok(())
@@ -65,15 +67,25 @@ mod tests {
 
     #[async_trait]
     impl AuthRepository for FakeAuthRepository {
-        async fn find_user_by_email(&self, _email: &Email) -> Result<Option<Usuario>, RepositoryError> {
+        async fn find_user_by_email(
+            &self,
+            _email: &Email,
+        ) -> Result<Option<Usuario>, RepositoryError> {
             Ok(None)
         }
 
-        async fn create_session(&self, _user_id: UsuarioId, _session_id: &SessionId) -> Result<(), RepositoryError> {
+        async fn create_session(
+            &self,
+            _user_id: UsuarioId,
+            _session_id: &SessionId,
+        ) -> Result<(), RepositoryError> {
             Ok(())
         }
 
-        async fn find_user_id_by_session(&self, _session_id: &SessionId) -> Result<Option<UsuarioId>, RepositoryError> {
+        async fn find_user_id_by_session(
+            &self,
+            _session_id: &SessionId,
+        ) -> Result<Option<UsuarioId>, RepositoryError> {
             Ok(None)
         }
 
@@ -81,11 +93,19 @@ mod tests {
             Ok(())
         }
 
-        async fn create_password_reset(&self, _user_id: UsuarioId, _token_hash: &ResetTokenHash) -> Result<(), RepositoryError> {
+        async fn create_password_reset(
+            &self,
+            _user_id: UsuarioId,
+            _token_hash: &ResetTokenHash,
+        ) -> Result<(), RepositoryError> {
             Ok(())
         }
 
-        async fn consume_password_reset(&self, _token_hash: &ResetTokenHash, _password_hash: &HashedPassword) -> Result<bool, RepositoryError> {
+        async fn consume_password_reset(
+            &self,
+            _token_hash: &ResetTokenHash,
+            _password_hash: &HashedPassword,
+        ) -> Result<bool, RepositoryError> {
             Ok(self.consume_success)
         }
     }
@@ -97,7 +117,11 @@ mod tests {
             Ok(HashedPassword::new(format!("hash_{}", password.as_str())))
         }
 
-        fn verify(&self, password: &PlainPassword, hashed: &HashedPassword) -> Result<bool, String> {
+        fn verify(
+            &self,
+            password: &PlainPassword,
+            hashed: &HashedPassword,
+        ) -> Result<bool, String> {
             Ok(hashed.as_str() == format!("hash_{}", password.as_str()))
         }
     }
@@ -119,7 +143,9 @@ mod tests {
 
     #[tokio::test]
     async fn confirms_password_reset_successfully() {
-        let repo = Arc::new(FakeAuthRepository { consume_success: true });
+        let repo = Arc::new(FakeAuthRepository {
+            consume_success: true,
+        });
         let hasher = Arc::new(FakePasswordHasher);
         let token_gen = Arc::new(FakeTokenGenerator);
 
@@ -137,7 +163,9 @@ mod tests {
 
     #[tokio::test]
     async fn fails_when_token_is_invalid_or_expired() {
-        let repo = Arc::new(FakeAuthRepository { consume_success: false });
+        let repo = Arc::new(FakeAuthRepository {
+            consume_success: false,
+        });
         let hasher = Arc::new(FakePasswordHasher);
         let token_gen = Arc::new(FakeTokenGenerator);
 
@@ -152,8 +180,9 @@ mod tests {
 
         assert!(matches!(
             result,
-            Err(AuthAppError::Domain(AuthDomainError::TokenRecuperacaoInvalido))
+            Err(AuthAppError::Domain(
+                AuthDomainError::TokenRecuperacaoInvalido
+            ))
         ));
     }
 }
-

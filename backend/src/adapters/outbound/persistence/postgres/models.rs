@@ -57,4 +57,3 @@ mod tests {
         assert!(model.try_into_domain().is_err());
     }
 }
-

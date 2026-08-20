@@ -1,7 +1,5 @@
 use super::config::AppConfig;
-use crate::adapters::inbound::http::{
-    AppState, AuthUseCases, UserUseCases, build_http_router,
-};
+use crate::adapters::inbound::http::{AppState, AuthUseCases, UserUseCases, build_http_router};
 use crate::adapters::outbound::email::ResendEmailSender;
 use crate::adapters::outbound::persistence::postgres::{
     PostgresAuthRepository, PostgresUsuarioRepository,
@@ -143,25 +141,65 @@ mod tests {
     struct DummyUserRepo;
     #[async_trait]
     impl UsuarioRepository for DummyUserRepo {
-        async fn find_by_id(&self, _id: UsuarioId) -> Result<Option<Usuario>, RepositoryError> { Ok(None) }
-        async fn create(&self, _n: &Nome, _e: &Email, _p: &HashedPassword) -> Result<UsuarioId, RepositoryError> { Ok(UsuarioId::new(1)) }
+        async fn find_by_id(&self, _id: UsuarioId) -> Result<Option<Usuario>, RepositoryError> {
+            Ok(None)
+        }
+        async fn create(
+            &self,
+            _n: &Nome,
+            _e: &Email,
+            _p: &HashedPassword,
+        ) -> Result<UsuarioId, RepositoryError> {
+            Ok(UsuarioId::new(1))
+        }
     }
 
     struct DummyAuthRepo;
     #[async_trait]
     impl AuthRepository for DummyAuthRepo {
-        async fn find_user_by_email(&self, _e: &Email) -> Result<Option<Usuario>, RepositoryError> { Ok(None) }
-        async fn create_session(&self, _u: UsuarioId, _s: &SessionId) -> Result<(), RepositoryError> { Ok(()) }
-        async fn find_user_id_by_session(&self, _s: &SessionId) -> Result<Option<UsuarioId>, RepositoryError> { Ok(None) }
-        async fn delete_session(&self, _s: &SessionId) -> Result<(), RepositoryError> { Ok(()) }
-        async fn create_password_reset(&self, _u: UsuarioId, _t: &ResetTokenHash) -> Result<(), RepositoryError> { Ok(()) }
-        async fn consume_password_reset(&self, _t: &ResetTokenHash, _p: &HashedPassword) -> Result<bool, RepositoryError> { Ok(true) }
+        async fn find_user_by_email(&self, _e: &Email) -> Result<Option<Usuario>, RepositoryError> {
+            Ok(None)
+        }
+        async fn create_session(
+            &self,
+            _u: UsuarioId,
+            _s: &SessionId,
+        ) -> Result<(), RepositoryError> {
+            Ok(())
+        }
+        async fn find_user_id_by_session(
+            &self,
+            _s: &SessionId,
+        ) -> Result<Option<UsuarioId>, RepositoryError> {
+            Ok(None)
+        }
+        async fn delete_session(&self, _s: &SessionId) -> Result<(), RepositoryError> {
+            Ok(())
+        }
+        async fn create_password_reset(
+            &self,
+            _u: UsuarioId,
+            _t: &ResetTokenHash,
+        ) -> Result<(), RepositoryError> {
+            Ok(())
+        }
+        async fn consume_password_reset(
+            &self,
+            _t: &ResetTokenHash,
+            _p: &HashedPassword,
+        ) -> Result<bool, RepositoryError> {
+            Ok(true)
+        }
     }
 
     struct DummyHasher;
     impl PasswordHasher for DummyHasher {
-        fn hash(&self, _p: &PlainPassword) -> Result<HashedPassword, String> { Ok(HashedPassword::new("hash")) }
-        fn verify(&self, _p: &PlainPassword, _h: &HashedPassword) -> Result<bool, String> { Ok(true) }
+        fn hash(&self, _p: &PlainPassword) -> Result<HashedPassword, String> {
+            Ok(HashedPassword::new("hash"))
+        }
+        fn verify(&self, _p: &PlainPassword, _h: &HashedPassword) -> Result<bool, String> {
+            Ok(true)
+        }
     }
 
     #[test]
@@ -188,4 +226,3 @@ mod tests {
         let _router = build_http_router(state);
     }
 }
-

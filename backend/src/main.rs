@@ -28,7 +28,8 @@ async fn main() -> Result<()> {
 
     axum::serve(
         listener,
-        app.router.into_make_service_with_connect_info::<SocketAddr>(),
+        app.router
+            .into_make_service_with_connect_info::<SocketAddr>(),
     )
     .await
     .context("servidor HTTP encerrado com erro")?;
