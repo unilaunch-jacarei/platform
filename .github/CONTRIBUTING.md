@@ -13,6 +13,7 @@ Obrigado pelo interesse em construir o UniLaunch Platform.
 - Use uma branch específica para a mudança.
 - Mantenha o escopo pequeno e explique a motivação.
 - Execute `cargo fmt --all -- --check` e `SQLX_OFFLINE=true cargo test` no backend.
+- No PowerShell (Windows), use `$env:SQLX_OFFLINE="true"` antes de executar `cargo test`.
 - Execute `bun run check` no frontend.
 - Atualize migrations e o cache SQLx quando alterar queries.
 - Não inclua segredos ou dados reais nos testes.
