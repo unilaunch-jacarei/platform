@@ -12,6 +12,7 @@ from backend.database import (
 
 @pytest.mark.asyncio
 async def test_database_lifecycle():
+    await close_db()
     # 1. Get engine
     engine = get_engine()
     assert isinstance(engine, AsyncEngine)

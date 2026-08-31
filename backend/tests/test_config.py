@@ -4,7 +4,10 @@ from pydantic import ValidationError
 from backend.config import Settings, get_settings
 
 
-def test_settings_defaults():
+def test_settings_defaults(monkeypatch):
+    monkeypatch.delenv("ENVIRONMENT", raising=False)
+    monkeypatch.delenv("DATABASE_URL", raising=False)
+    monkeypatch.delenv("JWT_SECRET", raising=False)
     settings = Settings(_env_file=None)
     assert settings.environment == "development"
     assert settings.port == 3000
