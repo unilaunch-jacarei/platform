@@ -4,14 +4,16 @@ services:
     restart: unless-stopped
     environment:
       DATABASE_URL: ${DATABASE_URL:?Defina DATABASE_URL}
+      JWT_SECRET: ${JWT_SECRET:?Defina JWT_SECRET}
       INTERNAL_SECRET: ${INTERNAL_SECRET:?Defina INTERNAL_SECRET}
-      BIND_ADDR: 0.0.0.0:3000
+      BIND_ADDR: 0.0.0.0:8000
+      ENVIRONMENT: staging
       PUBLIC_APP_URL: ${PUBLIC_APP_URL:?Defina PUBLIC_APP_URL}
       RESEND_API_KEY: ${RESEND_API_KEY:-}
       MAIL_FROM: ${MAIL_FROM:-UniLaunch <noreply@example.com>}
       EMAIL_LOGO_URL: ${EMAIL_LOGO_URL:-}
     expose:
-      - "3000"
+      - "8000"
     networks:
       - platform
     security_opt:
@@ -26,7 +28,7 @@ services:
     depends_on:
       - backend
     environment:
-      BACKEND_URL: http://backend:3000
+      BACKEND_URL: http://backend:8000
       INTERNAL_SECRET: ${INTERNAL_SECRET:?Defina INTERNAL_SECRET}
       HOST: 0.0.0.0
       PORT: 3000
