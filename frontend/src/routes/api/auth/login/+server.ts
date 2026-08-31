@@ -9,21 +9,27 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
 		return json({ error: 'e-mail e senha são obrigatórios' }, { status: 400 });
 	}
 
-	const response = await backendFetch('/api/v1/auth/login', email, {
+	const bodyParams = new URLSearchParams();
+	bodyParams.append('username', email);
+	bodyParams.append('password', password);
+
+	const response = await backendFetch('/api/v1/auth/jwt/login', {
 		method: 'POST',
-		headers: { 'content-type': 'application/json' },
-		body: JSON.stringify({ email, password })
+		headers: { 'content-type': 'application/x-www-form-urlencoded' },
+		body: bodyParams.toString()
 	});
-	const body = await response.json().catch(() => ({ error: 'resposta inválida do backend' }));
 
 	if (!response.ok) return json({ error: 'e-mail ou senha inválidos' }, { status: 401 });
 
-	cookies.set('session_id', body.session_id, {
+	const body = (await response.json()) as { access_token: string };
+
+	cookies.set('session_token', body.access_token, {
 		path: '/',
 		httpOnly: true,
 		secure: !dev,
-		sameSite: 'strict',
-		maxAge: 60 * 60 * 8
+		sameSite: 'lax',
+		maxAge: 60 * 60 * 24 * 7
 	});
-	return json({ user_id: body.user_id });
+
+	return json({ ok: true });
 };

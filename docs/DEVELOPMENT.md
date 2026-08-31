@@ -4,39 +4,44 @@ O código deste repositório é distribuído sob a [UniLaunch Platform Source-Av
 
 ## Stacks
 
-- Backend: Rust, Axum, Tokio, SQLx e PostgreSQL.
-- Frontend: SvelteKit, Svelte 5, TypeScript e Bun.
-- Segurança: HMAC-SHA256, Argon2id e sessões server-side.
+- **Backend:** Python 3.12+, FastAPI, SQLAlchemy 2.0 (async), `fastapi-users`, `uv` e PostgreSQL (ou SQLite para dev local).
+- **Frontend:** SvelteKit, Svelte 5, TypeScript e Bun.
+- **Segurança:** Cookies HttpOnly/Secure/SameSite Lax, JWT Bearer, Rate Limiting (SlowAPI), Argon2id e Headers OWASP.
+
+---
 
 ## Backend
+
+Requisitos: [uv](https://docs.astral.sh/uv/) (gerenciador rápido de pacotes Python).
 
 ```bash
 cd backend
 cp .env.example .env
 ```
 
-Configure:
+Configure o arquivo `.env`:
 
 ```env
-DATABASE_URL=postgres://postgres:postgres@127.0.0.1:5432/platform
+DATABASE_URL=sqlite+aiosqlite:///platform.db
+JWT_SECRET=platform-dev-super-secret-jwt-key-32chars!
 INTERNAL_SECRET=change-me-in-production
-BIND_ADDR=0.0.0.0:3000
+BIND_ADDR=0.0.0.0:8000
+PUBLIC_APP_URL=http://localhost:5173
 ```
 
-Com PostgreSQL local disponível:
+Para rodar o servidor em modo de desenvolvimento (com auto-reload):
 
 ```bash
-cargo install sqlx-cli --version 0.8.6 --no-default-features --features rustls,postgres
-cargo sqlx database create
-cargo sqlx migrate run
-cargo sqlx prepare
-SQLX_OFFLINE=true cargo build
-./target/debug/backend
+uv run backend
 ```
 
-`cargo sqlx prepare` gera o cache `.sqlx/`, necessário para builds offline e CI sem PostgreSQL disponível. O cache deve ser versionado e regenerado sempre que queries ou migrations mudarem.
+A documentação interativa Swagger estará disponível em: [http://localhost:8000/docs](http://localhost:8000/docs).
+
+---
 
 ## Frontend
+
+Requisitos: [Bun](https://bun.sh/).
 
 ```bash
 cd frontend
@@ -45,17 +50,30 @@ bun install
 bun run dev
 ```
 
+Configure o arquivo `.env` do frontend:
+
 ```env
-BACKEND_URL=http://127.0.0.1:3000
+BACKEND_URL=http://127.0.0.1:8000
 INTERNAL_SECRET=change-me-in-production
 ```
 
-O segredo deve ser igual nos dois serviços. Em Docker, use o nome do serviço, por exemplo `BACKEND_URL=http://backend:3000`.
+Acesse no navegador: [http://localhost:5173](http://localhost:5173).
 
-## Qualidade
+---
+
+## Qualidade e Testes
+
+Para validar a formatação, o linter e a suíte completa de testes:
 
 ```bash
-cd frontend && bun run check
-cd ../backend && cargo fmt --all -- --check
-SQLX_OFFLINE=true cargo test
+# Frontend
+cd frontend
+bun run check
+bun run build
+
+# Backend
+cd backend
+uv run ruff format --check .
+uv run ruff check .
+uv run pytest
 ```

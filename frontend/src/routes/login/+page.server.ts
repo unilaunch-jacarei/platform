@@ -13,23 +13,30 @@ export const actions: Actions = {
 		}
 
 		try {
-			const response = await backendFetch('/api/v1/auth/login', email, {
+			const bodyParams = new URLSearchParams();
+			bodyParams.append('username', email);
+			bodyParams.append('password', password);
+
+			const response = await backendFetch('/api/v1/auth/jwt/login', {
 				method: 'POST',
-				headers: { 'content-type': 'application/json' },
-				body: JSON.stringify({ email, password })
+				headers: {
+					'content-type': 'application/x-www-form-urlencoded'
+				},
+				body: bodyParams.toString()
 			});
 
 			if (!response.ok) {
 				return fail(401, { error: 'E-mail ou senha inválidos.', email });
 			}
 
-			const body = await response.json();
-			cookies.set('session_id', body.session_id, {
+			const body = (await response.json()) as { access_token: string; token_type: string };
+
+			cookies.set('session_token', body.access_token, {
 				path: '/',
 				httpOnly: true,
 				secure: !import.meta.env.DEV,
-				sameSite: 'strict',
-				maxAge: 60 * 60 * 8
+				sameSite: 'lax',
+				maxAge: 60 * 60 * 24 * 7 // 7 dias
 			});
 		} catch {
 			return fail(503, { error: 'Não foi possível conectar ao servidor.', email });

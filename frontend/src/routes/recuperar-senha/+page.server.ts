@@ -12,7 +12,7 @@ export const actions: Actions = {
 		}
 
 		try {
-			const response = await backendFetch('/api/v1/auth/password-reset', email, {
+			const response = await backendFetch('/api/v1/auth/forgot-password', {
 				method: 'POST',
 				headers: { 'content-type': 'application/json' },
 				body: JSON.stringify({ email })
