@@ -1,11 +1,19 @@
-// See https://svelte.dev/docs/kit/types#app.d.ts
-// for information about these interfaces
+export interface User {
+	id: string;
+	email: string;
+	nome: string;
+	is_active?: boolean;
+	is_superuser?: boolean;
+	is_verified?: boolean;
+}
+
 declare global {
 	namespace App {
 		// interface Error {}
 		interface Locals {
-			/** Identidade obtida da sessão, depois de validada pelo frontend. */
+			user: User | null;
 			userId?: string;
+			token?: string;
 		}
 		// interface PageData {}
 		// interface PageState {}

@@ -3,11 +3,21 @@ import type { RequestHandler } from './$types';
 import { backendFetch } from '$lib/server/backend';
 
 export const POST: RequestHandler = async ({ cookies }) => {
-	const sessionId = cookies.get('session_id');
-	if (sessionId) {
-		await backendFetch('/api/v1/auth/logout', sessionId, { method: 'DELETE' }).catch(() => undefined);
+	const sessionToken = cookies.get('session_token');
+	if (sessionToken) {
+		await backendFetch('/api/v1/auth/jwt/logout', sessionToken, { method: 'POST' }).catch(() => undefined);
 	}
 
-	cookies.delete('session_id', { path: '/' });
+	cookies.delete('session_token', { path: '/' });
+	throw redirect(303, '/login');
+};
+
+export const GET: RequestHandler = async ({ cookies }) => {
+	const sessionToken = cookies.get('session_token');
+	if (sessionToken) {
+		await backendFetch('/api/v1/auth/jwt/logout', sessionToken, { method: 'POST' }).catch(() => undefined);
+	}
+
+	cookies.delete('session_token', { path: '/' });
 	throw redirect(303, '/login');
 };

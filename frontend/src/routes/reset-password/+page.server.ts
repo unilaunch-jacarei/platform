@@ -22,14 +22,14 @@ export const actions: Actions = {
 		}
 
 		try {
-			const response = await backendFetch('/api/v1/auth/password-reset/confirm', 'password-reset', {
+			const response = await backendFetch('/api/v1/auth/reset-password', {
 				method: 'POST',
 				headers: { 'content-type': 'application/json' },
-				body: JSON.stringify({ token, new_password: newPassword })
+				body: JSON.stringify({ token, password: newPassword })
 			});
 
-			if (response.status === 401) {
-				return fail(401, { error: 'Este link é inválido, expirou ou já foi utilizado.' });
+			if (response.status === 400 || response.status === 401) {
+				return fail(400, { error: 'Este link é inválido, expirou ou já foi utilizado.' });
 			}
 			if (!response.ok) return fail(400, { error: 'Não foi possível redefinir sua senha.' });
 		} catch {

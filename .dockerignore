@@ -1,5 +1,11 @@
 **/.env
 **/.env.*
+**/.venv
+**/__pycache__
+**/.pytest_cache
+**/htmlcov
+**/*.db
+**/*.sqlite*
 **/target
 **/node_modules
 **/.svelte-kit
@@ -10,4 +16,3 @@
 base_estilo
 docs
 LICENSE
-README.md
