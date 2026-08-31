@@ -11,7 +11,7 @@
 <p align="center">
   <a href="https://github.com/unilaunch-jacarei/platform/stargazers"><img src="https://img.shields.io/github/stars/unilaunch-jacarei/platform?style=flat-square" alt="GitHub stars" /></a>
   <a href="https://github.com/unilaunch-jacarei/platform/issues"><img src="https://img.shields.io/github/issues/unilaunch-jacarei/platform?style=flat-square" alt="GitHub issues" /></a>
-  <img src="https://img.shields.io/badge/backend-Rust-orange?style=flat-square&logo=rust" alt="Rust" />
+  <img src="https://img.shields.io/badge/backend-FastAPI%20%2F%20Python-009688?style=flat-square&logo=fastapi" alt="FastAPI" />
   <img src="https://img.shields.io/badge/frontend-SvelteKit-ff3e00?style=flat-square&logo=svelte" alt="SvelteKit" />
   <img src="https://img.shields.io/badge/database-PostgreSQL-336791?style=flat-square&logo=postgresql" alt="PostgreSQL" />
   <img src="https://img.shields.io/badge/license-Source--Available%20Non--Commercial-blue?style=flat-square" alt="Source-Available Non-Commercial" />
@@ -62,7 +62,7 @@ Quem provou sua capacidade em projetos sociais passa a ter acesso a oportunidade
 
 Somos um projeto sem fins lucrativos e sem financiamento de risco. Para nós, alta performance não é luxo: é condição de existência.
 
-Por isso construímos o UniLaunch Platform com **Rust no backend** e **SvelteKit no frontend**. A arquitetura enxuta reduz o custo da infraestrutura e permite que mais recursos sejam direcionados aos estudantes e às organizações atendidas.
+Por isso construímos o UniLaunch Platform com **Python (FastAPI) no backend** e **SvelteKit no frontend**. A arquitetura enxuta reduz o custo da infraestrutura e permite que mais recursos sejam direcionados aos estudantes e às organizações atendidas.
 
 Nosso objetivo técnico é provar que arquitetura inteligente e software eficiente também podem ser ferramentas de transformação social.
 
