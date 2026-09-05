@@ -1,0 +1,19 @@
+/* src/lib/styles/3-elements/_typography.css */
+
+body {
+  font-family: var(--font-body);
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-medium);
+  color: var(--foreground);
+  line-height: 1.25;
+  text-wrap: balance;
+}

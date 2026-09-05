@@ -1,0 +1,42 @@
+/* src/lib/styles/0-settings/_colors.css */
+:root {
+  --bg: #08091A;
+
+  --surface: rgba(14, 14, 18, 0.9);
+  --surface-soft: rgba(20, 20, 26, 0.92);
+  --surface-strong: #0c0c10;
+
+  --text: #f2efff;
+  --muted: #a7a7bc;
+
+  --border: rgba(180, 108, 255, 0.14);
+  --border-strong: rgba(180, 108, 255, 0.22);
+
+  --accent: #b46cff;
+  --accent-strong: #8b5cf6;
+  --accent-soft: rgba(180, 108, 255, 0.12);
+
+  --green: #4ade80;
+  --yellow: #fbbf24;
+  --blue: #7dd3fc;
+  --cyan: #2dd4bf;
+}
+
+html.light,
+body.light {
+  --bg: #f5f3ff;
+
+  --surface: rgba(255, 255, 255, 0.9);
+  --surface-soft: #f0ebff;
+  --surface-strong: #ffffff;
+
+  --text: #18113a;
+  --muted: #6b5b8a;
+
+  --border: rgba(180, 108, 255, 0.15);
+  --border-strong: rgba(180, 108, 255, 0.3);
+
+  --accent: #7c3aed;
+  --accent-strong: #6366f1;
+  --accent-soft: rgba(124, 58, 237, 0.1);
+}

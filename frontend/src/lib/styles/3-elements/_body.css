@@ -1,0 +1,30 @@
+/* Suporte dinâmico a color-scheme do navegador */
+html {
+  color-scheme: dark;
+}
+
+html.light {
+  color-scheme: light;
+}
+
+/* Seleção de Texto */
+::selection {
+  background-color: var(--accent-soft);
+  color: var(--text);
+}
+
+/* Links sem classe */
+a {
+  color: var(--accent);
+  transition: color var(--transition);
+
+  &:hover {
+    color: var(--accent-strong);
+  }
+}
+
+/* Indicador de Foco Acessível Padrão */
+:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}

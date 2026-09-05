@@ -1,0 +1,27 @@
+@import "tailwindcss";
+
+@source "../../../src";
+
+@import "./0-settings/_colors.css";
+@import "./0-settings/_radius.css";
+@import "./0-settings/_shadow.css";
+@import "./0-settings/_spacing.css";
+@import "./0-settings/_themes.css";
+@import "./0-settings/_transition.css";
+@import "./0-settings/_typography.css";
+@import "./0-settings/_tailwind.css";
+
+@import "./1-tools/_breakpoints.css";
+@import "./1-tools/_mixins.css";
+
+@import "./2-generic/_animations.css";
+@import "./2-generic/_reset.css";
+
+@import "./3-elements/_body.css";
+@import "./3-elements/_button.css";
+@import "./3-elements/_forms.css";
+@import "./3-elements/_images.css";
+@import "./3-elements/_input.css";
+@import "./3-elements/_typography.css";
+
+@import "./4-utilities/_helpers.css";

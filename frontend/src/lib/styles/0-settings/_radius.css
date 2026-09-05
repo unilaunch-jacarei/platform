@@ -1,0 +1,8 @@
+:root {
+  --radius: 0.875rem; /* Base (14px) */
+
+  --radius-sm: calc(var(--radius) - 0.25rem); /* 10px */
+  --radius-md: calc(var(--radius) - 0.125rem); /* 12px */
+  --radius-lg: var(--radius); /* 14px */
+  --radius-xl: calc(var(--radius) + 0.25rem); /* 18px */
+}
