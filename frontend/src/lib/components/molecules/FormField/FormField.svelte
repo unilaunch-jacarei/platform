@@ -12,6 +12,8 @@
     required?: boolean;
     class?: string;
     value?: string | number | null;
+    forgotPasswordHref?: string;
+    forgotPasswordLabel?: string;
     children?: Snippet;
   };
 
@@ -24,6 +26,8 @@
     class: className = "",
     value = $bindable(""),
     type = "text",
+    forgotPasswordHref,
+    forgotPasswordLabel = "Esqueci minha senha",
     children,
     ...restProps
   }: FormFieldProps = $props();
@@ -36,20 +40,34 @@
 </script>
 
 <div class="flex flex-col gap-1.5 w-full {className}">
-  <!-- Label -->
-  {#if label}
-    <label for={id} class="inline-flex items-center gap-1 cursor-pointer w-fit">
-      <Typography variant="label">{label}</Typography>
-      {#if required}
-        <span
-          class="text-destructive font-bold text-xs"
-          title="Campo obrigatório">*</span
+  {#if label || (type === "password" && forgotPasswordHref)}
+    <div class="flex items-center justify-between w-full">
+      {#if label}
+        <label
+          for={id}
+          class="inline-flex items-center gap-1 cursor-pointer w-fit"
         >
+          <Typography variant="label">{label}</Typography>
+          {#if required}
+            <span
+              class="text-destructive font-bold text-xs"
+              title="Campo obrigatório">*</span
+            >
+          {/if}
+        </label>
       {/if}
-    </label>
+
+      {#if type === "password" && forgotPasswordHref}
+        <a
+          href={forgotPasswordHref}
+          class="text-xs font-semibold text-accent hover:underline transition-colors ml-auto"
+        >
+          {forgotPasswordLabel}
+        </a>
+      {/if}
+    </div>
   {/if}
 
-  <!-- Slot do Input / Controle Nativo -->
   <div class="relative w-full">
     {#if children}
       {@render children()}
@@ -73,7 +91,6 @@
           aria-label={showPassword ? "Ocultar senha" : "Exibir senha"}
         >
           {#if showPassword}
-            <!-- Olho Aberto -->
             <svg
               class="size-4 shrink-0 stroke-2"
               viewBox="0 0 24 24"
@@ -86,7 +103,6 @@
               <circle cx="12" cy="12" r="3" />
             </svg>
           {:else}
-            <!-- Olho Fechado -->
             <svg
               class="size-4 shrink-0 stroke-2"
               viewBox="0 0 24 24"
@@ -110,14 +126,12 @@
     {/if}
   </div>
 
-  <!-- Descrição -->
   {#if description && !error}
     <Typography variant="caption" class="text-xs text-muted">
       {description}
     </Typography>
   {/if}
 
-  <!-- Erro -->
   {#if error}
     <Typography
       variant="caption"

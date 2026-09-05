@@ -22,7 +22,6 @@
   --cyan: #2dd4bf;
 }
 
-/* Light Theme Overrides */
 html.light,
 body.light {
   --bg: #f5f3ff;

@@ -1,5 +1,3 @@
-/* src/lib/styles/4-helpers/_helpers.css */
-
 /* 1. Visibilidade exclusiva para leitores de tela (Acessibilidade - sr-only) */
 .sr-only {
   position: absolute !important;
