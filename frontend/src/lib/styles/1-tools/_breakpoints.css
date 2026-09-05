@@ -1,0 +1,5 @@
+@theme {
+  /* Breakpoints customizados caso precise de um específico para Mobile Pequeno ou Telas Ultra-Wide */
+  --breakpoint-xs: 23.4375rem; /* 375px */
+  --breakpoint-3xl: 120rem; /* 1920px */
+}

@@ -1,0 +1,10 @@
+:root {
+  --shadow: 0 16px 38px rgba(0, 0, 0, 0.58);
+  --shadow-hover: 0 22px 48px rgba(0, 0, 0, 0.7);
+}
+
+html.light,
+body.light {
+  --shadow: 0 16px 38px rgba(124, 58, 237, 0.08);
+  --shadow-hover: 0 22px 48px rgba(124, 58, 237, 0.15);
+}

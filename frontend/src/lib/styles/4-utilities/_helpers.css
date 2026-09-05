@@ -1,0 +1,33 @@
+/* src/lib/styles/4-helpers/_helpers.css */
+
+/* 1. Visibilidade exclusiva para leitores de tela (Acessibilidade - sr-only) */
+.sr-only {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border-width: 0 !important;
+}
+
+/* 2. Utilitário para travar a rolagem da página quando um Modal/Drawer estiver aberto */
+.overflow-hidden-scroll {
+  overflow: hidden !important;
+  touch-action: none !important;
+}
+
+/* 3. Utilitário para forçar aceleração de hardware em animações pesadas (GPU Layer) */
+.gpu-layer {
+  transform: translateZ(0);
+  will-change: transform, opacity;
+}
+
+/* 4. Prevenção de interação/foco para elementos desabilitados via CSS helper */
+.pointer-events-none-all,
+.pointer-events-none-all * {
+  pointer-events: none !important;
+  user-select: none !important;
+}
