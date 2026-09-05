@@ -4,6 +4,7 @@
   import Input from "$lib/components/atoms/Input/Input.svelte";
   import Button from "$lib/components/atoms/Button/Button.svelte";
   import Checkbox from "$lib/components/atoms/Checkbox/Checkbox.svelte";
+  import FormField from "$lib/components/molecules/FormField/FormField.svelte";
 
   let showPassword = $state(false);
   let submitting = $state(false);
@@ -51,3 +52,11 @@
 <Button type="submit" size="lg" class="w-full">Entrar →</Button>
 
 <Checkbox />
+
+<FormField
+  id="email"
+  label="E-mail profissional"
+  placeholder="seu@email.com"
+  description="Enviaremos um link de confirmação."
+  required
+/>
