@@ -106,7 +106,7 @@
           >link</span
         >
         <div>
-          <Typography variant="link" href="#"
+          <Typography variant="link" href="https://youtu.be/dQw4w9WgXcQ?list=RDdQw4w9WgXcQ"
             >Link — Clique aqui para saber mais</Typography
           >
         </div>
@@ -118,7 +118,7 @@
         >
         <Typography variant="form-footer"
           >Form Footer — Já tem uma conta? <a
-            href="#"
+            href="https://youtu.be/dQw4w9WgXcQ?list=RDdQw4w9WgXcQ"
             class="underline font-bold">Entrar</a
           ></Typography
         >
@@ -252,7 +252,7 @@
           label="Sua Senha"
           type="password"
           placeholder="••••••••"
-          forgotPasswordHref="/recuperar-senha"
+          forgotPasswordHref="https://youtu.be/dQw4w9WgXcQ?list=RDdQw4w9WgXcQ"
           required
         />
       </div>
@@ -292,7 +292,7 @@
         <FormFooter
           text="Ainda não possui cadastro?"
           linkLabel="Solicitar acesso"
-          linkHref="#"
+          linkHref="https://youtu.be/dQw4w9WgXcQ?list=RDdQw4w9WgXcQ"
         />
       </div>
     </div>
