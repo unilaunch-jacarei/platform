@@ -62,4 +62,13 @@
     description="Enviaremos um link de confirmação."
     required
   />
+
+  <FormField
+    id="password"
+    label="Senha"
+    type="password"
+    placeholder="password"
+    description="Não compartilhe sua senha com ninguém."
+    required
+  />
 </Card>
