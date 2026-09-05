@@ -1,8 +1,9 @@
+<!-- src/lib/components/molecules/FormField/FormField.svelte -->
 <script lang="ts">
-  import Input from "$lib/components/atoms/Input/Input.svelte";
-  import Typography from "$lib/components/atoms/Typography/Typography.svelte";
   import type { Snippet } from "svelte";
   import type { HTMLInputAttributes } from "svelte/elements";
+  import Input from "../../atoms/Input/Input.svelte";
+  import Typography from "../../atoms/Typography/Typography.svelte";
 
   type FormFieldProps = Omit<HTMLInputAttributes, "children"> & {
     id?: string;
@@ -40,6 +41,7 @@
 </script>
 
 <div class="flex flex-col gap-1.5 w-full {className}">
+  <!-- Header do Campo: Label e Link de Recuperação -->
   {#if label || (type === "password" && forgotPasswordHref)}
     <div class="flex items-center justify-between w-full">
       {#if label}
@@ -68,6 +70,7 @@
     </div>
   {/if}
 
+  <!-- Slot do Input / Input Nativo -->
   <div class="relative w-full">
     {#if children}
       {@render children()}
@@ -82,6 +85,7 @@
         {...restProps}
       />
 
+      <!-- Botão de Visibilidade da Senha -->
       {#if type === "password"}
         <button
           type="button"
@@ -91,6 +95,7 @@
           aria-label={showPassword ? "Ocultar senha" : "Exibir senha"}
         >
           {#if showPassword}
+            <!-- Ícone Olho Aberto -->
             <svg
               class="size-4 shrink-0 stroke-2"
               viewBox="0 0 24 24"
@@ -103,6 +108,7 @@
               <circle cx="12" cy="12" r="3" />
             </svg>
           {:else}
+            <!-- Ícone Olho Fechado -->
             <svg
               class="size-4 shrink-0 stroke-2"
               viewBox="0 0 24 24"
@@ -126,12 +132,14 @@
     {/if}
   </div>
 
+  <!-- Descrição Auxiliar -->
   {#if description && !error}
     <Typography variant="caption" class="text-xs text-muted">
       {description}
     </Typography>
   {/if}
 
+  <!-- Mensagem de Erro -->
   {#if error}
     <Typography
       variant="caption"
