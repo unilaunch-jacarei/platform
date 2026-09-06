@@ -62,7 +62,7 @@
       type="password"
       placeholder="Mínimo de 8 caracteres"
       autocomplete="new-password"
-      minlength="8"
+      minlength={8}
       required
     />
 
