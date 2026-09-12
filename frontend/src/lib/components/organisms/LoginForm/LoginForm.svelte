@@ -1,10 +1,11 @@
 <script lang="ts">
   import { enhance } from "$app/forms";
-  import Button from "$lib/components/atoms/Button/Button.svelte";
   import FormField from "$lib/components/molecules/FormField/FormField.svelte";
   import FormHeader from "$lib/components/molecules/FormHeader/FormHeader.svelte";
   import FormFooter from "$lib/components/molecules/FormFooter/FormFooter.svelte";
-  import Card from "$lib/components/layouts/Card/Card.svelte";
+  import FormCheckbox from "../../molecules/FormCheckbox/FormCheckbox.svelte";
+  import Card from "../../layouts/Card/Card.svelte";
+  import FormButton from "$lib/components/molecules/FormButton/FormButton.svelte";
 
   let submitting = $state(false);
   let { form } = $props();
@@ -20,29 +21,18 @@
 
 <Card class="w-full max-w-[400px]">
   <FormHeader
-    title="Crie sua conta"
-    description="Comece sua jornada na UniLaunch"
+    title="Bem-vindo de volta"
+    description="Acesse sua conta para continuar"
   />
 
   <form method="POST" use:enhance={handleSubmit} class="flex flex-col gap-4">
     {#if form?.error}
       <div
         class="p-3 text-xs rounded-lg bg-destructive/10 border border-destructive/20 text-destructive font-medium"
-        role="alert"
       >
         {form.error}
       </div>
     {/if}
-
-    <FormField
-      id="nome"
-      name="nome"
-      label="Nome"
-      placeholder="Seu nome"
-      autocomplete="name"
-      value={form?.nome ?? ""}
-      required
-    />
 
     <FormField
       id="email"
@@ -50,8 +40,7 @@
       label="E-mail"
       type="email"
       placeholder="seu@email.com"
-      autocomplete="email"
-      value={form?.email ?? ""}
+      error={form?.errors?.email}
       required
     />
 
@@ -60,20 +49,20 @@
       name="password"
       label="Senha"
       type="password"
-      placeholder="Mínimo de 8 caracteres"
-      autocomplete="new-password"
-      minlength={8}
+      placeholder="••••••••"
+      forgotPasswordHref="/recuperar-senha"
+      error={form?.errors?.password}
       required
     />
 
-    <Button type="submit" size="lg" class="w-full mt-2" disabled={submitting}>
-      {submitting ? "Criando conta..." : "Criar conta"}
-    </Button>
+    <FormCheckbox id="remember" name="remember" label="Lembrar de mim" />
+
+    <FormButton {submitting} loadingText="Entrando...">Entrar →</FormButton>
   </form>
 
   <FormFooter
-    text="Já possui uma conta?"
-    linkLabel="Entrar"
-    linkHref="/login"
+    text="Não tem conta?"
+    linkLabel="Criar nova conta"
+    linkHref="/cadastro"
   />
 </Card>

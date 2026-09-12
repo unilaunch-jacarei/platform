@@ -1,7 +1,8 @@
 <script lang="ts">
   import { enhance } from "$app/forms";
   import CenteredContent from "$lib/components/layouts/CenteredContent/CenteredContent.svelte";
-  import LoginForm from "$lib/components/organisms/LoginForm.svelte";
+  import BrandLogoLoginSection from "$lib/components/organisms/BrandLogoLoginSection/BrandLogoLoginSection.svelte";
+  import LoginForm from "$lib/components/organisms/LoginForm/LoginForm.svelte";
 
   let showPassword = $state(false);
   let submitting = $state(false);
@@ -25,5 +26,6 @@
 </svelte:head>
 
 <CenteredContent>
+  <BrandLogoLoginSection />
   <LoginForm {form} />
 </CenteredContent>

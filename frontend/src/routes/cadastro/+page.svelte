@@ -1,6 +1,7 @@
 <script lang="ts">
   import CenteredContent from "$lib/components/layouts/CenteredContent/CenteredContent.svelte";
-  import RegisterForm from "$lib/components/organisms/RegisterForm.svelte";
+  import BrandLogoRegisterSection from "$lib/components/organisms/BrandLogoRegisterSection/BrandLogoRegisterSection.svelte";
+  import RegisterForm from "$lib/components/organisms/RegisterForm/RegisterForm.svelte";
 
   let { form } = $props();
 </script>
@@ -10,5 +11,6 @@
 </svelte:head>
 
 <CenteredContent>
+  <BrandLogoRegisterSection />
   <RegisterForm {form} />
 </CenteredContent>

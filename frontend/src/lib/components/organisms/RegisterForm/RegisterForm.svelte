@@ -4,8 +4,7 @@
   import FormField from "$lib/components/molecules/FormField/FormField.svelte";
   import FormHeader from "$lib/components/molecules/FormHeader/FormHeader.svelte";
   import FormFooter from "$lib/components/molecules/FormFooter/FormFooter.svelte";
-  import FormCheckbox from "../molecules/FormCheckbox/FormCheckbox.svelte";
-  import Card from "../layouts/Card/Card.svelte";
+  import Card from "$lib/components/layouts/Card/Card.svelte";
 
   let submitting = $state(false);
   let { form } = $props();
@@ -21,18 +20,29 @@
 
 <Card class="w-full max-w-[400px]">
   <FormHeader
-    title="Bem-vindo de volta"
-    description="Acesse sua conta para continuar"
+    title="Crie sua conta"
+    description="Comece sua jornada na UniLaunch"
   />
-  
+
   <form method="POST" use:enhance={handleSubmit} class="flex flex-col gap-4">
     {#if form?.error}
       <div
         class="p-3 text-xs rounded-lg bg-destructive/10 border border-destructive/20 text-destructive font-medium"
+        role="alert"
       >
         {form.error}
       </div>
     {/if}
+
+    <FormField
+      id="nome"
+      name="nome"
+      label="Nome Completo"
+      placeholder="Seu nome"
+      autocomplete="name"
+      value={form?.nome ?? ""}
+      required
+    />
 
     <FormField
       id="email"
@@ -40,7 +50,18 @@
       label="E-mail"
       type="email"
       placeholder="seu@email.com"
-      error={form?.errors?.email}
+      autocomplete="email"
+      value={form?.email ?? ""}
+      required
+    />
+
+    <FormField
+      id="cpf"
+      name="cpf"
+      label="CPF"
+      type="text"
+      placeholder="000.000.000-00"
+      value={form?.cpf ?? ""}
       required
     />
 
@@ -50,21 +71,30 @@
       label="Senha"
       type="password"
       placeholder="••••••••"
-      forgotPasswordHref="/recuperar-senha"
-      error={form?.errors?.password}
+      autocomplete="new-password"
+      minlength={8}
       required
     />
 
-    <FormCheckbox id="remember" name="remember" label="Lembrar de mim" />
+    <FormField
+      id="passwordConfirmation"
+      name="passwordConfirmation"
+      label="Confirmar Senha"
+      type="password"
+      placeholder="••••••••"
+      autocomplete="new-password"
+      minlength={8}
+      required
+    />
 
     <Button type="submit" size="lg" class="w-full mt-2" disabled={submitting}>
-      {submitting ? "Entrando..." : "Entrar →"}
+      {submitting ? "Criando conta..." : "Criar conta"}
     </Button>
   </form>
 
   <FormFooter
-    text="Não tem conta?"
-    linkLabel="Criar nova conta"
-    linkHref="/cadastro"
+    text="Já possui uma conta?"
+    linkLabel="Entrar"
+    linkHref="/login"
   />
 </Card>

@@ -1,3 +1,4 @@
+<!-- src/routes/playground/+page.svelte -->
 <script lang="ts">
   // Layouts
   import Card from "$lib/components/layouts/Card/Card.svelte";
@@ -8,15 +9,20 @@
   import Button from "$lib/components/atoms/Button/Button.svelte";
   import Input from "$lib/components/atoms/Input/Input.svelte";
   import Checkbox from "$lib/components/atoms/Checkbox/Checkbox.svelte";
+  import BrandIcon from "$lib/components/atoms/BrandIcon/BrandIcon.svelte";
 
   // Moléculas
   import FormField from "$lib/components/molecules/FormField/FormField.svelte";
   import FormHeader from "$lib/components/molecules/FormHeader/FormHeader.svelte";
   import FormFooter from "$lib/components/molecules/FormFooter/FormFooter.svelte";
   import FormCheckbox from "$lib/components/molecules/FormCheckbox/FormCheckbox.svelte";
+  import BrandHeader from "$lib/components/molecules/BrandHeader/BrandHeader.svelte";
 
   // Organismos
-  import LoginForm from "$lib/components/organisms/LoginForm.svelte";
+  import LoginForm from "$lib/components/organisms/LoginForm/LoginForm.svelte";
+  import RegisterForm from "$lib/components/organisms/RegisterForm/RegisterForm.svelte";
+  import BrandLogoLoginSection from "$lib/components/organisms/BrandLogoLoginSection/BrandLogoLoginSection.svelte";
+  import BrandLogoRegisterSection from "$lib/components/organisms/BrandLogoRegisterSection/BrandLogoRegisterSection.svelte";
 
   let checkboxState = $state(true);
   let formCheckboxState = $state(false);
@@ -106,7 +112,9 @@
           >link</span
         >
         <div>
-          <Typography variant="link" href="https://youtu.be/dQw4w9WgXcQ?list=RDdQw4w9WgXcQ"
+          <Typography
+            variant="link"
+            href="https://youtu.be/dQw4w9WgXcQ?list=RDdQw4w9WgXcQ"
             >Link — Clique aqui para saber mais</Typography
           >
         </div>
@@ -119,6 +127,8 @@
         <Typography variant="form-footer"
           >Form Footer — Já tem uma conta? <a
             href="https://youtu.be/dQw4w9WgXcQ?list=RDdQw4w9WgXcQ"
+            target="_blank"
+            rel="noopener noreferrer"
             class="underline font-bold">Entrar</a
           ></Typography
         >
@@ -160,10 +170,10 @@
     </div>
   </section>
 
-  <!-- SEÇÃO 3: INPUTS & CHECKBOXES (ÁTOMOS) -->
+  <!-- SEÇÃO 3: ÁTOMOS (Input, Checkbox & BrandIcon) -->
   <section class="space-y-4">
     <div class="border-b border-border/50 pb-2">
-      <Typography variant="h2">3. Átomos (Input & Checkbox)</Typography>
+      <Typography variant="h2">3. Átomos</Typography>
     </div>
 
     <div
@@ -191,7 +201,25 @@
         <Input type="email" placeholder="email@invalido" aria-invalid={true} />
       </div>
 
-      <div class="space-y-2 col-span-full">
+      <div class="space-y-2 col-span-full border-t border-border/30 pt-4">
+        <Typography variant="label">BrandIcon (Tamanhos)</Typography>
+        <div class="flex items-end gap-6 pt-2">
+          <div class="flex flex-col items-center gap-1">
+            <span class="text-xs font-mono text-muted-foreground">sm</span>
+            <BrandIcon size="sm" />
+          </div>
+          <div class="flex flex-col items-center gap-1">
+            <span class="text-xs font-mono text-muted-foreground">md</span>
+            <BrandIcon size="md" />
+          </div>
+          <div class="flex flex-col items-center gap-1">
+            <span class="text-xs font-mono text-muted-foreground">lg</span>
+            <BrandIcon size="lg" />
+          </div>
+        </div>
+      </div>
+
+      <div class="space-y-2 col-span-full border-t border-border/30 pt-4">
         <Typography variant="label">Checkbox Standalone</Typography>
         <div class="flex items-center gap-4">
           <Checkbox id="check-atom" bind:checked={checkboxState} />
@@ -214,6 +242,21 @@
     <div
       class="grid grid-cols-1 md:grid-cols-2 gap-6 bg-card/40 p-6 rounded-xl border border-border"
     >
+      <!-- BrandHeader -->
+      <div class="col-span-full border-b border-border/30 pb-4">
+        <span class="text-xs text-muted-foreground block mb-2 font-mono"
+          >BrandHeader.svelte</span
+        >
+        <div
+          class="border border-dashed border-border p-4 rounded-lg bg-background/50"
+        >
+          <BrandHeader
+            title="Unilaunch"
+            subtitle="Plataforma de Colaboração Acadêmica"
+          />
+        </div>
+      </div>
+
       <!-- FormHeader -->
       <div class="col-span-full border-b border-border/30 pb-4">
         <span class="text-xs text-muted-foreground block mb-2 font-mono"
@@ -341,6 +384,30 @@
         </div>
       </div>
 
+      <!-- Organismo: BrandLogoLoginSection Organism -->
+      <div class="col-span-full space-y-2">
+        <span class="text-xs text-muted-foreground block font-mono"
+          >BrandLogoLoginSection Organism</span
+        >
+        <div
+          class="flex justify-center p-8 bg-background rounded-2xl border border-border"
+        >
+          <BrandLogoLoginSection />
+        </div>
+      </div>
+
+      <!-- Organismo: BrandLogoRegisterSection Organism -->
+      <div class="col-span-full space-y-2">
+        <span class="text-xs text-muted-foreground block font-mono"
+          >BrandLogoRegisterSection Organism</span
+        >
+        <div
+          class="flex justify-center p-8 bg-background rounded-2xl border border-border"
+        >
+          <BrandLogoRegisterSection />
+        </div>
+      </div>
+
       <!-- Organismo: LoginForm Completo -->
       <div class="col-span-full space-y-2">
         <span class="text-xs text-muted-foreground block font-mono"
@@ -350,6 +417,18 @@
           class="flex justify-center p-8 bg-background rounded-2xl border border-border"
         >
           <LoginForm form={null} />
+        </div>
+      </div>
+
+      <!-- Organismo: RegisterForm Completo -->
+      <div class="col-span-full space-y-2">
+        <span class="text-xs text-muted-foreground block font-mono"
+          >RegisterForm Organism</span
+        >
+        <div
+          class="flex justify-center p-8 bg-background rounded-2xl border border-border"
+        >
+          <RegisterForm form={null} />
         </div>
       </div>
     </div>
