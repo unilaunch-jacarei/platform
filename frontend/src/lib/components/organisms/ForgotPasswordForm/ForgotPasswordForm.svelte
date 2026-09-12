@@ -1,0 +1,62 @@
+<!-- src/lib/components/organisms/ForgotPasswordForm/ForgotPasswordForm.svelte -->
+<script lang="ts">
+  import { enhance } from "$app/forms";
+  import Card from "$lib/components/layouts/Card/Card.svelte";
+  import BackLink from "$lib/components/molecules/BackLink/BackLink.svelte";
+  import IconFormHeader from "$lib/components/molecules/IconFormHeader/IconFormHeader.svelte";
+  import FormAlert from "$lib/components/molecules/FormAlert/FormAlert.svelte";
+  import FormField from "$lib/components/molecules/FormField/FormField.svelte";
+  import FormButton from "$lib/components/molecules/FormButton/FormButton.svelte";
+  import MailIcon from "$lib/components/atoms/MailIcon/MailIcon.svelte";
+
+  let submitting = $state(false);
+  let { form } = $props();
+
+  function handleSubmit() {
+    submitting = true;
+    return async ({ update }: { update: () => Promise<void> }) => {
+      await update();
+      submitting = false;
+    };
+  }
+</script>
+
+<Card class="w-full max-w-[420px] p-8 flex flex-col gap-6">
+  <BackLink href="/login" label="Voltar ao login" />
+
+  <IconFormHeader
+    title="Recuperar senha"
+    description="Informe seu e-mail cadastrado e enviaremos um link de recuperação."
+  >
+    {#snippet icon()}
+      <MailIcon />
+    {/snippet}
+  </IconFormHeader>
+
+  <form method="POST" use:enhance={handleSubmit} class="flex flex-col gap-5">
+    {#if form?.error}
+      <FormAlert variant="error" message={form.error} />
+    {/if}
+
+    {#if form?.success}
+      <FormAlert
+        variant="success"
+        message={form.message ?? "E-mail de redefinição enviado com sucesso!"}
+      />
+    {/if}
+
+    <FormField
+      id="email"
+      name="email"
+      label="E-mail cadastrado"
+      type="email"
+      placeholder="seu@email.com"
+      error={form?.errors?.email}
+      required
+    />
+
+    <FormButton {submitting} loadingText="Enviando...">
+      Enviar link de recuperação →
+    </FormButton>
+  </form>
+</Card>
