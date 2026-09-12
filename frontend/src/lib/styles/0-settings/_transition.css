@@ -1,0 +1,5 @@
+:root {
+  --transition: 220ms ease;
+  --transition-duration: 220ms;
+  --transition-timing: cubic-bezier(0.4, 0, 0.2, 1);
+}

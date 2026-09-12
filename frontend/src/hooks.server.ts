@@ -47,7 +47,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 	}
 
 	const isApiRoute = pathname.startsWith('/api/');
-	const isPublicPage = ['/login', '/cadastro', '/recuperar-senha', '/reset-password'].some(
+	const isPublicPage = ['/login', '/cadastro', '/recuperar-senha', '/reset-password', '/playground'].some(
 		(path) => pathname === path || pathname.startsWith(`${path}/`)
 	);
 
