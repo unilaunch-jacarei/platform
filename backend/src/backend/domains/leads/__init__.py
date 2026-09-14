@@ -5,6 +5,7 @@ from backend.domains.leads.schemas import (
     LeadCreate,
     LeadRead,
     LeadStatusUpdate,
+    LeadSubmissionRead,
     LeadViewCreate,
 )
 
@@ -17,6 +18,7 @@ __all__ = [
     "LeadContactInput",
     "LeadCreate",
     "LeadRead",
+    "LeadSubmissionRead",
     "LeadStatusUpdate",
     "LeadViewCreate",
 ]

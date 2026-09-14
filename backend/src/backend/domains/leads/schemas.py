@@ -70,6 +70,13 @@ class LeadRead(BaseModel):
     updated_at: datetime
 
 
+class LeadSubmissionRead(BaseModel):
+    id: uuid.UUID
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class LeadStatusUpdate(BaseModel):
     status: LeadStatus
 
