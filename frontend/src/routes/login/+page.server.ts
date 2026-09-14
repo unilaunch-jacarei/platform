@@ -7,6 +7,7 @@ export const actions: Actions = {
 		const form = await request.formData();
 		const email = String(form.get('email') ?? '').trim();
 		const password = String(form.get('password') ?? '');
+		const remember = form.get('remember') === 'on';
 
 		if (!email || !password) {
 			return fail(400, { error: 'Informe seu e-mail e sua senha.', email });
@@ -20,7 +21,7 @@ export const actions: Actions = {
 			}
 
 			const body = (await response.json()) as LoginResult;
-			setSessionCookie(cookies, body.access_token);
+			setSessionCookie(cookies, body.access_token, remember);
 		} catch {
 			return fail(503, { error: 'Não foi possível conectar ao servidor.', email });
 		}

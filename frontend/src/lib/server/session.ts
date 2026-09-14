@@ -20,14 +20,19 @@ export function authenticateWithPassword(email: string, password: string): Promi
 	});
 }
 
-export function setSessionCookie(cookies: Cookies, token: string): void {
-	cookies.set(SESSION_COOKIE, token, {
+export function setSessionCookie(cookies: Cookies, token: string, persistent = false): void {
+	const options = {
 		path: '/',
 		httpOnly: true,
 		secure: !dev,
-		sameSite: 'lax',
-		maxAge: SESSION_MAX_AGE
-	});
+		sameSite: 'lax' as const
+	};
+
+	cookies.set(
+		SESSION_COOKIE,
+		token,
+		persistent ? { ...options, maxAge: SESSION_MAX_AGE } : options
+	);
 }
 
 export async function clearSession(cookies: Cookies): Promise<void> {
