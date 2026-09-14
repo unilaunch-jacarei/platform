@@ -21,8 +21,7 @@
   // Organismos
   import LoginForm from "$lib/components/organisms/LoginForm/LoginForm.svelte";
   import RegisterForm from "$lib/components/organisms/RegisterForm/RegisterForm.svelte";
-  import BrandLogoLoginSection from "$lib/components/organisms/BrandLogoLoginSection/BrandLogoLoginSection.svelte";
-  import BrandLogoRegisterSection from "$lib/components/organisms/BrandLogoRegisterSection/BrandLogoRegisterSection.svelte";
+  import BrandLogoSection from "$lib/components/organisms/BrandLogoSection/BrandLogoSection.svelte";
 
   let checkboxState = $state(true);
   let formCheckboxState = $state(false);
@@ -384,27 +383,27 @@
         </div>
       </div>
 
-      <!-- Organismo: BrandLogoLoginSection Organism -->
+      <!-- Organismo: BrandLogoSection com subtítulo -->
       <div class="col-span-full space-y-2">
         <span class="text-xs text-muted-foreground block font-mono"
-          >BrandLogoLoginSection Organism</span
+          >BrandLogoSection com subtítulo</span
         >
         <div
           class="flex justify-center p-8 bg-background rounded-2xl border border-border"
         >
-          <BrandLogoLoginSection />
+          <BrandLogoSection subtitle="Plataforma de Colaboração Acadêmica" />
         </div>
       </div>
 
-      <!-- Organismo: BrandLogoRegisterSection Organism -->
+      <!-- Organismo: BrandLogoSection sem subtítulo -->
       <div class="col-span-full space-y-2">
         <span class="text-xs text-muted-foreground block font-mono"
-          >BrandLogoRegisterSection Organism</span
+          >BrandLogoSection sem subtítulo</span
         >
         <div
           class="flex justify-center p-8 bg-background rounded-2xl border border-border"
         >
-          <BrandLogoRegisterSection />
+          <BrandLogoSection />
         </div>
       </div>
 

@@ -1,6 +1,6 @@
 <script lang="ts">
   import CenteredContent from "$lib/components/layouts/CenteredContent/CenteredContent.svelte";
-  import BrandLogoLoginSection from "$lib/components/organisms/BrandLogoLoginSection/BrandLogoLoginSection.svelte";
+  import BrandLogoSection from "$lib/components/organisms/BrandLogoSection/BrandLogoSection.svelte";
   import ForgotPasswordForm from "$lib/components/organisms/ForgotPasswordForm/ForgotPasswordForm.svelte";
 
   let showPassword = $state(false);
@@ -22,6 +22,6 @@
 </svelte:head>
 
 <CenteredContent>
-  <BrandLogoLoginSection />
+  <BrandLogoSection subtitle="Plataforma de Colaboração Acadêmica" />
   <ForgotPasswordForm {form} />
 </CenteredContent>
