@@ -1,6 +1,7 @@
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions } from './$types';
 import { authenticateWithPassword, setSessionCookie, type LoginResult } from '$lib/server/session';
+import { safeInternalRedirect } from '$lib/server/redirect';
 
 export const actions: Actions = {
 	default: async ({ request, cookies, url }) => {
@@ -26,7 +27,6 @@ export const actions: Actions = {
 			return fail(503, { error: 'Não foi possível conectar ao servidor.', email });
 		}
 
-		const next = url.searchParams.get('next');
-		throw redirect(303, next?.startsWith('/') ? next : '/');
+		throw redirect(303, safeInternalRedirect(url.searchParams.get('next'), url.origin));
 	}
 };
