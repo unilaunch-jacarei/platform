@@ -36,7 +36,7 @@
 
   const variants: Record<ButtonVariant, string> = {
     default:
-      "bg-gradient-to-r from-primary to-accent text-white shadow-[0_0_20px_rgba(124,58,237,0.35),0_6px_16px_rgba(99,102,241,0.2)] hover:shadow-[0_0_24px_rgba(124,58,237,0.45),0_8px_20px_rgba(99,102,241,0.25)] hover:brightness-110 hover:-translate-y-0.5 active:translate-y-0 active:brightness-100",
+      "bg-linear-to-r from-primary to-accent text-white shadow-[0_0_20px_rgba(124,58,237,0.35),0_6px_16px_rgba(99,102,241,0.2)] hover:shadow-[0_0_24px_rgba(124,58,237,0.45),0_8px_20px_rgba(99,102,241,0.25)] hover:brightness-110 hover:-translate-y-0.5 active:translate-y-0 active:brightness-100",
     destructive:
       "bg-destructive text-destructive-foreground hover:opacity-90 hover:-translate-y-0.5 active:translate-y-0",
     outline:
@@ -55,7 +55,7 @@
   };
 
   const baseClasses =
-    "inline-flex items-center justify-center gap-2 font-semibold whitespace-nowrap transition-all duration-200 ease-out outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&>svg]:size-4 [&>svg]:shrink-0 cursor-pointer select-none";
+    "inline-flex items-center justify-center gap-2 font-semibold whitespace-nowrap transition-all duration-200 ease-out outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&>svg]:size-4 [&>svg]:shrink-0 cursor-pointer select-none";
 </script>
 
 {#if href}
