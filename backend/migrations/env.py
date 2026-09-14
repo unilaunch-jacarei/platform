@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from backend.config import get_settings
 from backend.database import Base
+from backend.domains.leads import models as _lead_models  # noqa: F401
 from backend.domains.usuarios import models as _usuarios_models  # noqa: F401
 
 config = context.config
