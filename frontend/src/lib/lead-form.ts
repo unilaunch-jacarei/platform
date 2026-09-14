@@ -6,4 +6,5 @@ export type LeadFormValues = {
 	company_size?: string;
 	website?: string;
 	message?: string;
+	privacy_consent?: boolean;
 };

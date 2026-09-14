@@ -31,7 +31,7 @@
 
 			<label class="flex flex-col gap-1.5">
 				<span class="text-[0.92rem] font-semibold text-foreground">Tamanho da empresa</span>
-				<select name="company_size" class="h-9 rounded-md border border-border bg-input-background px-3 text-sm text-foreground">
+				<select name="company_size" value={form?.values?.company_size ?? ''} class="h-9 rounded-md border border-border bg-input-background px-3 text-sm text-foreground">
 					<option value="">Selecione</option>
 					<option value="1-10">1 a 10</option>
 					<option value="11-50">11 a 50</option>
@@ -47,7 +47,7 @@
 				<textarea name="message" rows="4" class="rounded-md border border-border bg-input-background px-3 py-2 text-sm text-foreground">{form?.values?.message ?? ''}</textarea>
 			</label>
 
-			<FormCheckbox id="privacy_consent" name="privacy_consent" label="Aceito a política de privacidade." required />
+			<FormCheckbox id="privacy_consent" name="privacy_consent" label="Aceito a política de privacidade." checked={form?.values?.privacy_consent ?? false} required />
 			<FormButton {submitting} loadingText="Enviando...">Enviar meus dados</FormButton>
 		</form>
 	{/if}

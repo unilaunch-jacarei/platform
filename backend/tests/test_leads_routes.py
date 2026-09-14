@@ -90,6 +90,35 @@ async def test_public_lead_submission_is_rate_limited(lead_client: AsyncClient):
 
 
 @pytest.mark.asyncio
+async def test_public_routes_validate_request_data(lead_client: AsyncClient):
+    missing_key = await lead_client.post("/api/v1/public/leads/views")
+    assert missing_key.status_code == 422
+
+    invalid_lead = await lead_client.post(
+        "/api/v1/public/leads?o=instagram",
+        json={"full_name": "A", "email": "invalid", "company_name": "", "privacy_consent": False},
+    )
+    assert invalid_lead.status_code == 422
+
+    invalid_id = await lead_client.get("/api/v1/leads/not-an-uuid")
+    assert invalid_id.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_public_lead_accepts_only_required_fields(lead_client: AsyncClient):
+    response = await lead_client.post(
+        "/api/v1/public/leads?o=direct",
+        json={
+            "full_name": "Katherine Johnson",
+            "email": "katherine@example.com",
+            "company_name": "Orbital Systems",
+            "privacy_consent": True,
+        },
+    )
+    assert response.status_code == 201
+
+
+@pytest.mark.asyncio
 async def test_authenticated_lead_management(lead_client: AsyncClient):
     await lead_client.post(
         "/api/v1/auth/register",

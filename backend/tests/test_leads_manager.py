@@ -72,3 +72,13 @@ async def test_record_page_view_is_idempotent(lead_session: AsyncSession):
 async def test_get_missing_lead_raises(lead_session: AsyncSession):
     with pytest.raises(NotFoundError):
         await LeadService().get(lead_session, uuid.uuid4())
+
+
+def test_lead_schema_rejects_without_privacy_consent():
+    with pytest.raises(ValueError):
+        LeadCreate(
+            full_name="Alan Turing",
+            email="alan@example.com",
+            company_name="Computing Ltd",
+            privacy_consent=False,
+        )
