@@ -1,6 +1,7 @@
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions } from './$types';
 import { backendFetch } from '$lib/server/backend';
+import { authenticateWithPassword, setSessionCookie, type LoginResult } from '$lib/server/session';
 
 export const actions: Actions = {
 	default: async ({ request, cookies }) => {
@@ -64,27 +65,11 @@ export const actions: Actions = {
 			}
 
 			// 2. Fazer login automático pós-cadastro
-			const loginParams = new URLSearchParams();
-			loginParams.append('username', email);
-			loginParams.append('password', password);
-
-			const loginResponse = await backendFetch('/api/v1/auth/jwt/login', {
-				method: 'POST',
-				headers: {
-					'content-type': 'application/x-www-form-urlencoded'
-				},
-				body: loginParams.toString()
-			});
+			const loginResponse = await authenticateWithPassword(email, password);
 
 			if (loginResponse.ok) {
-				const body = (await loginResponse.json()) as { access_token: string };
-				cookies.set('session_token', body.access_token, {
-					path: '/',
-					httpOnly: true,
-					secure: !import.meta.env.DEV,
-					sameSite: 'lax',
-					maxAge: 60 * 60 * 24 * 7 // 7 dias
-				});
+				const body = (await loginResponse.json()) as LoginResult;
+				setSessionCookie(cookies, body.access_token);
 				throw redirect(303, '/');
 			}
 		} catch (err) {
