@@ -47,16 +47,6 @@
     />
 
     <FormField
-      id="cpf"
-      name="cpf"
-      label="CPF"
-      type="text"
-      placeholder="000.000.000-00"
-      value={form?.cpf ?? ""}
-      required
-    />
-
-    <FormField
       id="password"
       name="password"
       label="Senha"
@@ -64,6 +54,7 @@
       placeholder="••••••••"
       autocomplete="new-password"
       minlength={8}
+      error={form?.errors?.passwordConfirmation}
       required
     />
 

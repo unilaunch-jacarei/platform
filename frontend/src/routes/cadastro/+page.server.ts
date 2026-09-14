@@ -10,12 +10,16 @@ export const actions: Actions = {
 		const nome = String(form.get('nome') ?? '').trim();
 		const email = String(form.get('email') ?? '').trim();
 		const password = String(form.get('password') ?? '');
+		const passwordConfirmation = String(form.get('passwordConfirmation') ?? '');
 
-		if (!nome || !email || !password) {
+		if (!nome || !email || !password || !passwordConfirmation) {
 			return fail(400, {
 				error: 'Preencha todos os campos.',
 				nome,
-				email
+				email,
+				errors: {
+					passwordConfirmation: !passwordConfirmation ? 'Confirme sua senha.' : undefined
+				}
 			});
 		}
 
@@ -24,6 +28,15 @@ export const actions: Actions = {
 				error: 'A senha deve possuir pelo menos 8 caracteres.',
 				nome,
 				email
+			});
+		}
+
+		if (password !== passwordConfirmation) {
+			return fail(400, {
+				error: 'Revise os dados informados.',
+				nome,
+				email,
+				errors: { passwordConfirmation: 'As senhas não conferem.' }
 			});
 		}
 
