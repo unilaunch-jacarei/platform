@@ -51,6 +51,14 @@ class Settings(BaseSettings):
         validation_alias="PUBLIC_APP_URL",
     )
 
+    # Entrega de e-mails transacionais
+    smtp_host: str | None = Field(default=None, validation_alias="SMTP_HOST")
+    smtp_port: int = Field(default=587, validation_alias="SMTP_PORT")
+    smtp_username: str | None = Field(default=None, validation_alias="SMTP_USERNAME")
+    smtp_password: str | None = Field(default=None, validation_alias="SMTP_PASSWORD")
+    smtp_from_email: str | None = Field(default=None, validation_alias="SMTP_FROM_EMAIL")
+    smtp_starttls: bool = Field(default=True, validation_alias="SMTP_STARTTLS")
+
     @model_validator(mode="after")
     def validate_production_secrets(self) -> "Settings":
         if self.environment.lower() == "production":
@@ -60,6 +68,8 @@ class Settings(BaseSettings):
                     "e não utilizar o valor padrão!"
                 )
                 raise ValueError(msg)
+            if not self.smtp_host or not self.smtp_from_email:
+                raise ValueError("Em produção, SMTP_HOST e SMTP_FROM_EMAIL são obrigatórios")
         return self
 
     @computed_field  # type: ignore[prop-decorator]

@@ -21,7 +21,7 @@
 
   <IconFormHeader
     title="Recuperar senha"
-    description="Informe seu e-mail cadastrado e enviaremos um link de recuperação."
+    description="Informe seu e-mail e, se houver uma conta, enviaremos as instruções."
   >
     {#snippet icon()}
       <MailIcon />
@@ -36,7 +36,7 @@
     {#if form?.success}
       <FormAlert
         variant="success"
-        message={form.message ?? "E-mail de redefinição enviado com sucesso!"}
+        message={form.message ?? "Se existir uma conta com esse e-mail, você receberá as instruções."}
       />
     {/if}
 
