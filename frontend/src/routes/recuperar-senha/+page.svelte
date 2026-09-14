@@ -3,17 +3,7 @@
   import BrandLogoSection from "$lib/components/organisms/BrandLogoSection/BrandLogoSection.svelte";
   import ForgotPasswordForm from "$lib/components/organisms/ForgotPasswordForm/ForgotPasswordForm.svelte";
 
-  let showPassword = $state(false);
-  let submitting = $state(false);
   let { form } = $props();
-
-  function handleSubmit() {
-    submitting = true;
-    return async ({ update }: { update: () => Promise<void> }) => {
-      await update();
-      submitting = false;
-    };
-  }
 </script>
 
 <svelte:head>
