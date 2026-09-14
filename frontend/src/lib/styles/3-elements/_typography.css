@@ -1,0 +1,19 @@
+/* src/lib/styles/3-elements/_typography.css */
+
+@layer base {
+  body {
+    font-family: var(--app-font-body);
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    margin: 0;
+    font-family: var(--app-font-display);
+    color: var(--foreground);
+    text-wrap: balance;
+  }
+}

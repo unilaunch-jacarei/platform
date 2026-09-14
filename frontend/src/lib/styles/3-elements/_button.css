@@ -1,0 +1,13 @@
+@layer base {
+  button,
+  [role="button"] {
+    color: inherit;
+    font: inherit;
+    -webkit-tap-highlight-color: transparent;
+
+    &:disabled,
+    &[aria-disabled="true"] {
+      cursor: not-allowed;
+    }
+  }
+}

@@ -1,0 +1,7 @@
+:root {
+  --app-radius: 0.875rem;
+  --app-radius-sm: calc(var(--app-radius) - 0.25rem);
+  --app-radius-md: calc(var(--app-radius) - 0.125rem);
+  --app-radius-lg: var(--app-radius);
+  --app-radius-xl: calc(var(--app-radius) + 0.25rem);
+}

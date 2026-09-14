@@ -61,6 +61,8 @@ def test_production_secret_validation():
         _env_file=None,
         ENVIRONMENT="production",
         JWT_SECRET="super-strong-production-entropy-key-64-bytes-long-random-string!",
+        SMTP_HOST="smtp.example.com",
+        SMTP_FROM_EMAIL="contato@example.com",
     )
     assert valid_settings.environment == "production"
 

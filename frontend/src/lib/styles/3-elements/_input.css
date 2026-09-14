@@ -1,0 +1,9 @@
+@layer base {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]) {
+    font: inherit;
+
+    &::placeholder {
+      opacity: 0.8;
+    }
+  }
+}

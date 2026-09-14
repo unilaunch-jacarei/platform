@@ -25,6 +25,9 @@ export const actions: Actions = {
 			return fail(503, { error: 'Não foi possível conectar ao servidor.', email });
 		}
 
-		return { success: true };
+		return {
+			success: true,
+			message: 'Se existir uma conta com esse e-mail, você receberá as instruções.'
+		};
 	}
 };

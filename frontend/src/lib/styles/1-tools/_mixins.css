@@ -1,0 +1,30 @@
+/* Efeito Glassmorphism (Vidro Fosco) */
+@utility glass-panel {
+  background-color: var(--surface-glass);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border);
+}
+
+/* Efeito de Brilho / Neon para Cards e Botões */
+@utility glow-primary {
+  box-shadow: var(--glow-primary);
+}
+
+@utility glow-accent {
+  box-shadow: var(--glow-accent);
+}
+
+/* Utilitário para Esconder Scrollbar mantendo a rolagem */
+@utility no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Truncamento de texto com reticências em N linhas (ex: line-clamp-2) */
+@utility text-balance {
+  text-wrap: balance;
+}

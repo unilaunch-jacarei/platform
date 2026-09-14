@@ -1,0 +1,5 @@
+:root {
+  --app-font-display: "Plus Jakarta Sans", system-ui, sans-serif;
+  --app-font-body: "Inter", system-ui, sans-serif;
+  --app-font-mono: "JetBrains Mono", monospace;
+}
