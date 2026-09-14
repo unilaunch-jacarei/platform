@@ -1,7 +1,10 @@
+import logging
+import time
+import uuid
 from contextlib import asynccontextmanager
 
 import uvicorn
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from slowapi.middleware import SlowAPIMiddleware
 
@@ -11,6 +14,8 @@ from backend.domains.leads.routes import leads_router, public_leads_router
 from backend.domains.usuarios.routes import auth_router, users_router
 from backend.error import register_exception_handlers
 from backend.infra.limiter import limiter
+
+request_logger = logging.getLogger("backend.request")
 
 
 @asynccontextmanager
@@ -39,6 +44,26 @@ def create_app() -> FastAPI:
 
     # Rate Limiter Middleware
     app.add_middleware(SlowAPIMiddleware)
+
+    @app.middleware("http")
+    async def request_tracing(request: Request, call_next):
+        request_id = request.headers.get("X-Request-ID")
+        if not request_id or len(request_id) > 128:
+            request_id = str(uuid.uuid4())
+
+        started_at = time.perf_counter()
+        response = await call_next(request)
+        elapsed_ms = (time.perf_counter() - started_at) * 1000
+        response.headers["X-Request-ID"] = request_id
+        request_logger.info(
+            "request_completed request_id=%s method=%s path=%s status=%s duration_ms=%.2f",
+            request_id,
+            request.method,
+            request.url.path,
+            response.status_code,
+            elapsed_ms,
+        )
+        return response
 
     # CORS
     app.add_middleware(

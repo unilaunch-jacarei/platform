@@ -1,6 +1,6 @@
 import uuid
 
-from fastapi import APIRouter, Depends, Header, Query, Response, status
+from fastapi import APIRouter, Depends, Header, Query, Request, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.database import get_db
@@ -14,6 +14,7 @@ from backend.domains.leads.schemas import (
 )
 from backend.domains.usuarios.auth import current_active_user
 from backend.domains.usuarios.models import User
+from backend.infra.limiter import limiter
 
 public_leads_router = APIRouter(prefix="/public/leads", tags=["public-leads"])
 leads_router = APIRouter(prefix="/leads", tags=["leads"])
@@ -24,7 +25,9 @@ leads_router = APIRouter(prefix="/leads", tags=["leads"])
     status_code=status.HTTP_204_NO_CONTENT,
     response_class=Response,
 )
+@limiter.limit("30/minute")
 async def register_lead_page_view(
+    request: Request,
     response: Response,
     o: str = Query(default="direct", max_length=255),
     idempotency_key: str = Header(..., alias="Idempotency-Key", max_length=255),
@@ -43,7 +46,9 @@ async def register_lead_page_view(
     response_model=LeadSubmissionRead,
     status_code=status.HTTP_201_CREATED,
 )
+@limiter.limit("5/hour")
 async def create_public_lead(
+    request: Request,
     data: LeadCreate,
     o: str = Query(default="direct", max_length=255),
     session: AsyncSession = Depends(get_db),

@@ -7,11 +7,13 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 
 from backend.config import Settings, get_settings
 from backend.database import Base, get_db
+from backend.infra.limiter import limiter
 from backend.main import create_app
 
 
 @pytest_asyncio.fixture
 async def lead_client():
+    limiter.reset()
     settings = Settings(
         DATABASE_URL="sqlite+aiosqlite:///:memory:",
         JWT_SECRET="test-jwt-secret-key-minimum-32-chars-long!",
@@ -50,6 +52,9 @@ def lead_payload() -> dict:
 
 @pytest.mark.asyncio
 async def test_public_lead_submission_and_page_view(lead_client: AsyncClient):
+    trace = await lead_client.get("/health", headers={"X-Request-ID": "trace-test-1"})
+    assert trace.headers["X-Request-ID"] == "trace-test-1"
+
     view_headers = {"Idempotency-Key": "view-request-1"}
     first_view = await lead_client.post(
         "/api/v1/public/leads/views?o=instagram", headers=view_headers
@@ -68,6 +73,20 @@ async def test_public_lead_submission_and_page_view(lead_client: AsyncClient):
 
     unauthorized = await lead_client.get("/api/v1/leads")
     assert unauthorized.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_public_lead_submission_is_rate_limited(lead_client: AsyncClient):
+    responses = []
+    for index in range(6):
+        payload = lead_payload()
+        payload["email"] = f"rate-{index}@example.com"
+        responses.append(
+            await lead_client.post("/api/v1/public/leads", json=payload)
+        )
+
+    assert [response.status_code for response in responses[:5]] == [201] * 5
+    assert responses[5].status_code == 429
 
 
 @pytest.mark.asyncio
