@@ -1,7 +1,8 @@
-import { redirect } from '@sveltejs/kit';
+import { error, redirect } from '@sveltejs/kit';
 import type { Handle } from '@sveltejs/kit';
 import { backendFetch } from '$lib/server/backend';
 import type { User } from './app';
+import { resolveSession } from '$lib/server/resolve-session';
 
 export const handle: Handle = async ({ event, resolve }) => {
 	const pathname = event.url.pathname;
@@ -17,39 +18,32 @@ export const handle: Handle = async ({ event, resolve }) => {
 	}
 
 	const sessionToken = event.cookies.get('session_token');
-	let sessionIsInvalid = false;
+	let sessionUnavailable = false;
+	event.locals.user = null;
 
 	if (sessionToken) {
-		try {
-			const response = await backendFetch('/api/v1/usuarios/me', sessionToken);
-			if (response.ok) {
-				const user = (await response.json()) as User;
-				if (user && user.id) {
-					event.locals.user = user;
-					event.locals.userId = user.id;
-					event.locals.token = sessionToken;
-				} else {
-					sessionIsInvalid = true;
-				}
-			} else {
-				sessionIsInvalid = true;
-			}
-		} catch {
-			// Erros transitórios de rede não quebram o hook imediatamente
-		}
-	}
+		const session = await resolveSession<User>(sessionToken, (token) =>
+			backendFetch('/api/v1/usuarios/me', token)
+		);
 
-	if (sessionIsInvalid) {
-		event.cookies.delete('session_token', { path: '/' });
-		event.locals.user = null;
-		event.locals.userId = undefined;
-		event.locals.token = undefined;
+		if (session.status === 'authenticated') {
+			event.locals.user = session.user;
+			event.locals.userId = session.user.id;
+			event.locals.token = sessionToken;
+		} else if (session.status === 'invalid') {
+			event.cookies.delete('session_token', { path: '/' });
+		} else {
+			sessionUnavailable = true;
+		}
 	}
 
 	const isApiRoute = pathname.startsWith('/api/');
 	const isPublicPage = ['/login', '/cadastro', '/recuperar-senha', '/reset-password', '/playground'].some(
 		(path) => pathname === path || pathname.startsWith(`${path}/`)
 	);
+	if (sessionUnavailable && !isApiRoute && !isPublicPage) {
+		throw error(503, 'Não foi possível validar sua sessão. Tente novamente em instantes.');
+	}
 
 	if (!event.locals.user && !isApiRoute && !isPublicPage) {
 		const next = `${pathname}${event.url.search}`;
