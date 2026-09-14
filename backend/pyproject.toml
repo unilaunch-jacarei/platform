@@ -50,4 +50,4 @@ ignore = ["UP006", "UP035", "B008"]
 asyncio_mode = "auto"
 testpaths = ["tests"]
 pythonpath = ["src"]
-addopts = "--cov=backend --cov-report=term-missing --cov-report=html"
+addopts = "--cov=backend --cov-report=term-missing --cov-report=html --cov-fail-under=90"

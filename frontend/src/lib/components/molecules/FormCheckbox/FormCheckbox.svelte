@@ -7,6 +7,7 @@
     name?: string;
     label: string;
     checked?: boolean;
+    required?: boolean;
     disabled?: boolean;
     class?: string;
   };
@@ -16,13 +17,14 @@
     name,
     label,
     checked = $bindable(false),
+    required = false,
     disabled = false,
     class: className = "",
   }: FormCheckboxProps = $props();
 </script>
 
 <div class="flex items-center gap-2 pt-1 {className}">
-  <Checkbox {id} {name} bind:checked {disabled}>
+  <Checkbox {id} {name} bind:checked {disabled} {required}>
     <Typography
       variant="caption"
       class="text-xs text-muted cursor-pointer select-none"
