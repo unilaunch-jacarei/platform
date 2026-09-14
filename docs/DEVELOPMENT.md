@@ -68,6 +68,7 @@ Para validar a formatação, o linter e a suíte completa de testes:
 ```bash
 # Frontend
 cd frontend
+bun run test
 bun run check
 bun run build
 
