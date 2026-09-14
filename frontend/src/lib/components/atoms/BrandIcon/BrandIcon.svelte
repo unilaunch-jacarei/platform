@@ -20,7 +20,7 @@
 </script>
 
 <div
-  class="flex items-center justify-center bg-linear-to-br from-[#7C3AED] to-[#6366F1] text-white shadow-[0_0_25px_rgba(124,58,237,0.45)] transition-transform duration-300 hover:scale-105 {sizeClasses[
+  class="flex items-center justify-center bg-linear-to-br from-[#7C3AED] to-[#6366F1] text-primary-foreground shadow-[0_0_25px_rgba(124,58,237,0.45)] transition-transform duration-300 hover:scale-105 {sizeClasses[
     size
   ]} {className}"
 >

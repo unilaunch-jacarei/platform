@@ -5,7 +5,7 @@
 
   body {
     min-height: 100vh;
-    font-family: var(--font-body);
+    font-family: var(--app-font-body);
     background-color: var(--background);
     color: var(--foreground);
     text-rendering: optimizeLegibility;

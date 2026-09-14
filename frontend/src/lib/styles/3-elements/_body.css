@@ -10,7 +10,7 @@ html.light {
 /* Seleção de Texto */
 ::selection {
   background-color: var(--accent-soft);
-  color: var(--text);
+  color: var(--foreground);
 }
 
 /* Links sem classe */

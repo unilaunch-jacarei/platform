@@ -3,8 +3,6 @@
   --font-size: 16px;
   --font-weight-medium: 500;
   --font-weight-normal: 400;
-  --radius: 0.875rem;
-
   --background: #08091a;
   --foreground: #f1f5f9;
   --card: #0d1126;
@@ -22,10 +20,19 @@
   --destructive: #ef4444;
   --destructive-foreground: #ffffff;
   --border: rgba(124, 58, 237, 0.18);
+  --border-strong: rgba(124, 58, 237, 0.3);
+  --surface: rgba(14, 14, 18, 0.9);
+  --surface-soft: #1a1f3a;
+  --surface-strong: #111827;
+  --accent-soft: rgba(124, 58, 237, 0.12);
   --input: transparent;
   --input-background: #111827;
   --switch-background: #374151;
   --ring: rgba(124, 58, 237, 0.5);
+  --green: #4ade80;
+  --yellow: #fbbf24;
+  --blue: #7dd3fc;
+  --cyan: #2dd4bf;
 
   --chart-1: #7c3aed;
   --chart-2: #6366f1;
@@ -121,6 +128,11 @@ body.light {
   --destructive: #dc2626;
   --destructive-foreground: #ffffff;
   --border: rgba(124, 58, 237, 0.15);
+  --border-strong: rgba(124, 58, 237, 0.3);
+  --surface: rgba(255, 255, 255, 0.9);
+  --surface-soft: #f0ebff;
+  --surface-strong: #ffffff;
+  --accent-soft: rgba(124, 58, 237, 0.1);
   --input: transparent;
   --input-background: #fafafa;
   --switch-background: #ddd6fe;
@@ -171,8 +183,4 @@ body.light {
   --sm-item-color: #18113a;
   --sm-logo-color: #18113a;
   --topbar-bg: rgba(245, 243, 255, 0.97);
-}
-
-html.light .text-white {
-  color: var(--foreground);
 }

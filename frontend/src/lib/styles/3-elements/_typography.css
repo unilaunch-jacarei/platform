@@ -2,7 +2,7 @@
 
 @layer base {
   body {
-    font-family: var(--font-body);
+    font-family: var(--app-font-body);
   }
 
   h1,
@@ -12,7 +12,7 @@
   h5,
   h6 {
     margin: 0;
-    font-family: var(--font-display);
+    font-family: var(--app-font-display);
     color: var(--foreground);
     text-wrap: balance;
   }

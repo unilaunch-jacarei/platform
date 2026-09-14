@@ -134,7 +134,7 @@
 
   <!-- Descrição Auxiliar -->
   {#if description && !error}
-    <Typography variant="caption" class="text-xs text-muted">
+    <Typography variant="caption" class="text-xs text-muted-foreground">
       {description}
     </Typography>
   {/if}

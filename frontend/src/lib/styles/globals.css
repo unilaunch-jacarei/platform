@@ -2,7 +2,6 @@
 
 @source "../../../src";
 
-@import "./0-settings/_colors.css";
 @import "./0-settings/_radius.css";
 @import "./0-settings/_shadow.css";
 @import "./0-settings/_spacing.css";
