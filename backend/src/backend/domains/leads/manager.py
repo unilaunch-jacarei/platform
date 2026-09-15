@@ -6,21 +6,20 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.domains.leads.models import Lead, LeadPageView
-from backend.domains.leads.schemas import LeadCreate, LeadStatusUpdate, LeadViewCreate
+from backend.domains.leads.schemas import (
+    LeadCreate,
+    LeadStatusUpdate,
+    LeadViewCreate,
+    StudentLeadCreate,
+)
 from backend.error import NotFoundError
 
 
 class LeadService:
     """Application operations for public lead capture and administration."""
 
-    async def create(self, session: AsyncSession, data: LeadCreate) -> Lead:
-        values = data.model_dump()
-        if values["website"] is not None:
-            values["website"] = str(values["website"])
-        if values["company_size"] is not None:
-            values["company_size"] = str(values["company_size"])
-
-        lead = Lead(**values)
+    async def create(self, session: AsyncSession, data: LeadCreate | StudentLeadCreate) -> Lead:
+        lead = Lead(**data.model_dump(mode="json"))
         session.add(lead)
         await session.commit()
         await session.refresh(lead)
@@ -82,9 +81,7 @@ class LeadService:
         return result.rowcount or 0
 
     async def _find_page_view(self, session: AsyncSession, event_key: str) -> LeadPageView | None:
-        return await session.scalar(
-            select(LeadPageView).where(LeadPageView.event_key == event_key)
-        )
+        return await session.scalar(select(LeadPageView).where(LeadPageView.event_key == event_key))
 
 
 lead_service = LeadService()

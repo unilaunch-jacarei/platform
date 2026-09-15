@@ -1,4 +1,4 @@
-from backend.domains.leads.models import CompanySize, Lead, LeadPageView, LeadStatus
+from backend.domains.leads.models import CompanySize, Lead, LeadPageView, LeadStatus, LeadType
 from backend.domains.leads.schemas import (
     LeadCompanyInput,
     LeadContactInput,
@@ -8,6 +8,9 @@ from backend.domains.leads.schemas import (
     LeadStatusUpdate,
     LeadSubmissionRead,
     LeadViewCreate,
+    StudentLeadCreate,
+    StudentLeadInput,
+    StudentLeadPublicCreate,
 )
 
 __all__ = [
@@ -15,6 +18,7 @@ __all__ = [
     "Lead",
     "LeadPageView",
     "LeadStatus",
+    "LeadType",
     "LeadCompanyInput",
     "LeadContactInput",
     "LeadCreate",
@@ -23,4 +27,7 @@ __all__ = [
     "LeadSubmissionRead",
     "LeadStatusUpdate",
     "LeadViewCreate",
+    "StudentLeadCreate",
+    "StudentLeadInput",
+    "StudentLeadPublicCreate",
 ]

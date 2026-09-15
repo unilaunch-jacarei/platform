@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 
 from backend.config import Settings, get_settings
 from backend.database import Base, get_db
+from backend.domains.leads.models import Lead, LeadType
 from backend.domains.usuarios.models import User
 from backend.infra.limiter import limiter
 from backend.main import create_app
@@ -74,9 +75,7 @@ async def test_public_lead_submission_and_page_view(lead_client: AsyncClient):
     assert first_view.status_code == 204
     assert duplicate_view.status_code == 204
 
-    response = await lead_client.post(
-        "/api/v1/public/leads?o=linkedin", json=lead_payload()
-    )
+    response = await lead_client.post("/api/v1/public/leads?o=linkedin", json=lead_payload())
     assert response.status_code == 201
     assert set(response.json()) == {"id", "created_at"}
 
@@ -155,6 +154,75 @@ async def test_public_lead_accepts_only_required_fields(lead_client: AsyncClient
 
 
 @pytest.mark.asyncio
+async def test_public_student_lead_submission(lead_client: AsyncClient):
+    response = await lead_client.post(
+        "/api/v1/public/leads/students?o=campus",
+        json={
+            "full_name": "Mary Jackson",
+            "email": "mary@example.com",
+            "institution_name": "Hampton Institute",
+            "course_name": "Engineering",
+            "semester": "6th semester",
+            "linkedin_url": "https://linkedin.com/in/mary-jackson",
+            "github_url": "https://github.com/mary-jackson",
+            "area_of_interest": "Aerospace",
+            "message": "I want to learn more",
+            "privacy_consent": True,
+        },
+    )
+
+    assert response.status_code == 201
+    async with lead_client.lead_session_factory() as session:
+        lead = await session.get(Lead, uuid.UUID(response.json()["id"]))
+    assert lead.lead_type == LeadType.STUDENT
+    assert lead.company_name is None
+    assert lead.institution_name == "Hampton Institute"
+    assert lead.course_name == "Engineering"
+    assert lead.source == "campus"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "payload",
+    [
+        {
+            "full_name": "Mary Jackson",
+            "email": "mary@example.com",
+            "course_name": "Engineering",
+            "privacy_consent": True,
+        },
+        {
+            "full_name": "Mary Jackson",
+            "email": "mary@example.com",
+            "institution_name": "Hampton Institute",
+            "course_name": "Engineering",
+            "privacy_consent": False,
+        },
+        {
+            "full_name": "Mary Jackson",
+            "email": "mary@example.com",
+            "institution_name": "Hampton Institute",
+            "course_name": "Engineering",
+            "linkedin_url": "not-a-url",
+            "privacy_consent": True,
+        },
+        {
+            "full_name": "Mary Jackson",
+            "email": "mary@example.com",
+            "institution_name": "Hampton Institute",
+            "course_name": "Engineering",
+            "company_name": "Unexpected Company",
+            "privacy_consent": True,
+        },
+    ],
+)
+async def test_public_student_lead_validates_request(lead_client: AsyncClient, payload: dict):
+    response = await lead_client.post("/api/v1/public/leads/students", json=payload)
+
+    assert response.status_code == 422
+
+
+@pytest.mark.asyncio
 async def test_authenticated_lead_management(lead_client: AsyncClient):
     await lead_client.post(
         "/api/v1/auth/register",
@@ -174,14 +242,29 @@ async def test_authenticated_lead_management(lead_client: AsyncClient):
     )
     headers = {"Authorization": f"Bearer {login.json()['access_token']}"}
 
-    created = await lead_client.post(
-        "/api/v1/public/leads?o=eventox", json=lead_payload()
-    )
+    created = await lead_client.post("/api/v1/public/leads?o=eventox", json=lead_payload())
     lead_id = created.json()["id"]
 
     listed = await lead_client.get("/api/v1/leads", headers=headers)
     assert listed.status_code == 200
     assert listed.json()[0]["source"] == "eventox"
+    assert listed.json()[0]["lead_type"] == "company"
+
+    student = await lead_client.post(
+        "/api/v1/public/leads/students?o=campus",
+        json={
+            "full_name": "Annie Easley",
+            "email": "annie@example.com",
+            "institution_name": "Cleveland State University",
+            "course_name": "Mathematics",
+            "privacy_consent": True,
+        },
+    )
+    student_admin = await lead_client.get(f"/api/v1/leads/{student.json()['id']}", headers=headers)
+    assert student_admin.status_code == 200
+    assert student_admin.json()["lead_type"] == "student"
+    assert student_admin.json()["company_name"] is None
+    assert student_admin.json()["institution_name"] == "Cleveland State University"
 
     updated = await lead_client.patch(
         f"/api/v1/leads/{lead_id}/status",

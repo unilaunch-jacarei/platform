@@ -12,6 +12,8 @@ from backend.domains.leads.schemas import (
     LeadStatusUpdate,
     LeadSubmissionRead,
     LeadViewCreate,
+    StudentLeadCreate,
+    StudentLeadPublicCreate,
 )
 from backend.domains.usuarios.auth import current_superuser
 from backend.domains.usuarios.models import User
@@ -56,6 +58,23 @@ async def create_public_lead(
 ) -> LeadSubmissionRead:
     data = LeadCreate.model_validate({**data.model_dump(), "source": o})
     lead = await lead_service.create(session, data)
+    return LeadSubmissionRead.model_validate(lead)
+
+
+@public_leads_router.post(
+    "/students",
+    response_model=LeadSubmissionRead,
+    status_code=status.HTTP_201_CREATED,
+)
+@limiter.limit("5/hour")
+async def create_public_student_lead(
+    request: Request,
+    data: StudentLeadPublicCreate,
+    o: str = Query(default="direct", max_length=255),
+    session: AsyncSession = Depends(get_db),
+) -> LeadSubmissionRead:
+    create_data = StudentLeadCreate.model_validate({**data.model_dump(), "source": o})
+    lead = await lead_service.create(session, create_data)
     return LeadSubmissionRead.model_validate(lead)
 
 

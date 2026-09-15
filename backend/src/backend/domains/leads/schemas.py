@@ -1,9 +1,10 @@
 import uuid
 from datetime import datetime
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, HttpUrl, field_validator
 
-from backend.domains.leads.models import CompanySize, LeadStatus
+from backend.domains.leads.models import CompanySize, LeadStatus, LeadType
 
 
 class LeadContactInput(BaseModel):
@@ -25,6 +26,17 @@ class LeadContactInput(BaseModel):
         return str(value).strip().lower()
 
 
+class LeadPrivacyInput(BaseModel):
+    privacy_consent: bool = Field(..., description="Must be true to submit a lead")
+
+    @field_validator("privacy_consent")
+    @classmethod
+    def require_privacy_consent(cls, value: bool) -> bool:
+        if not value:
+            raise ValueError("privacy_consent must be true")
+        return value
+
+
 class LeadCompanyInput(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -42,19 +54,41 @@ class LeadCompanyInput(BaseModel):
         return " ".join(value.split())
 
 
-class LeadPublicCreate(LeadContactInput, LeadCompanyInput):
-    privacy_consent: bool = Field(..., description="Must be true to submit a lead")
+class StudentLeadInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
 
-    @field_validator("privacy_consent")
+    institution_name: str = Field(min_length=2, max_length=255)
+    course_name: str = Field(min_length=2, max_length=255)
+    semester: str | None = Field(default=None, max_length=50)
+    linkedin_url: HttpUrl | None = Field(default=None, max_length=2048)
+    github_url: HttpUrl | None = Field(default=None, max_length=2048)
+    area_of_interest: str | None = Field(default=None, max_length=255)
+    message: str | None = Field(default=None, max_length=2000)
+
+    @field_validator(
+        "institution_name",
+        "course_name",
+        "semester",
+        "area_of_interest",
+        "message",
+        mode="before",
+    )
     @classmethod
-    def require_privacy_consent(cls, value: bool) -> bool:
-        if not value:
-            raise ValueError("privacy_consent must be true")
-        return value
+    def normalize_text(cls, value: str | None) -> str | None:
+        if value is None or not isinstance(value, str):
+            return value
+        return " ".join(value.split())
 
 
-class LeadCreate(LeadPublicCreate):
-    privacy_consent: bool = Field(..., description="Must be true to submit a lead")
+class LeadPublicCreate(LeadContactInput, LeadCompanyInput, LeadPrivacyInput):
+    pass
+
+
+class StudentLeadPublicCreate(LeadContactInput, StudentLeadInput, LeadPrivacyInput):
+    pass
+
+
+class LeadSourceInput(BaseModel):
     source: str = Field(default="direct", min_length=1, max_length=255)
 
     @field_validator("source", mode="before")
@@ -63,16 +97,31 @@ class LeadCreate(LeadPublicCreate):
         return value.strip()
 
 
+class LeadCreate(LeadPublicCreate, LeadSourceInput):
+    lead_type: Literal[LeadType.COMPANY] = LeadType.COMPANY
+
+
+class StudentLeadCreate(StudentLeadPublicCreate, LeadSourceInput):
+    lead_type: Literal[LeadType.STUDENT] = LeadType.STUDENT
+
+
 class LeadRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: uuid.UUID
+    lead_type: LeadType
     full_name: str
     email: EmailStr
-    company_name: str
+    company_name: str | None
     job_title: str | None
     company_size: CompanySize | None
     website: HttpUrl | None
+    institution_name: str | None
+    course_name: str | None
+    semester: str | None
+    linkedin_url: HttpUrl | None
+    github_url: HttpUrl | None
+    area_of_interest: str | None
     message: str | None
     privacy_consent: bool
     privacy_policy_version: str

@@ -27,6 +27,11 @@ class LeadStatus(StrEnum):
     DISCARDED = "discarded"
 
 
+class LeadType(StrEnum):
+    COMPANY = "company"
+    STUDENT = "student"
+
+
 class Lead(Base):
     __tablename__ = "leads"
     __table_args__ = (
@@ -40,15 +45,31 @@ class Lead(Base):
             name="ck_leads_status",
         ),
         CheckConstraint("privacy_consent = true", name="ck_leads_privacy_consent"),
+        CheckConstraint("lead_type IN ('company', 'student')", name="ck_leads_type"),
+        CheckConstraint(
+            "(lead_type = 'company' AND company_name IS NOT NULL) OR "
+            "(lead_type = 'student' AND institution_name IS NOT NULL "
+            "AND course_name IS NOT NULL)",
+            name="ck_leads_type_required_fields",
+        ),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(GUID(), primary_key=True, default=uuid.uuid4)
+    lead_type: Mapped[str] = mapped_column(
+        String(20), nullable=False, default=LeadType.COMPANY, server_default=LeadType.COMPANY
+    )
     full_name: Mapped[str] = mapped_column(String(255), nullable=False)
     email: Mapped[str] = mapped_column(String(320), nullable=False, index=True)
-    company_name: Mapped[str] = mapped_column(String(255), nullable=False)
+    company_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
     job_title: Mapped[str | None] = mapped_column(String(120), nullable=True)
     company_size: Mapped[str | None] = mapped_column(String(20), nullable=True)
     website: Mapped[str | None] = mapped_column(String(2048), nullable=True)
+    institution_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    course_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    semester: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    linkedin_url: Mapped[str | None] = mapped_column(String(2048), nullable=True)
+    github_url: Mapped[str | None] = mapped_column(String(2048), nullable=True)
+    area_of_interest: Mapped[str | None] = mapped_column(String(255), nullable=True)
     message: Mapped[str | None] = mapped_column(Text, nullable=True)
     privacy_consent: Mapped[bool] = mapped_column(Boolean, nullable=False)
     privacy_policy_version: Mapped[str] = mapped_column(

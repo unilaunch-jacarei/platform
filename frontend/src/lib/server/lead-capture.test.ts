@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { buildLeadPayload, getBackendError, getLeadErrorStatus, normalizeLeadSource, readLeadForm, validateLeadForm } from './lead-capture';
+import { buildLeadPayload, buildStudentLeadPayload, getBackendError, getLeadErrorStatus, normalizeLeadSource, readLeadForm, readStudentLeadForm, validateLeadForm, validateStudentLeadForm } from './lead-capture';
 
 describe('lead capture helpers', () => {
 	test('normalizes form data and keeps required fields', () => {
@@ -55,5 +55,20 @@ describe('lead capture helpers', () => {
 		expect(normalizeLeadSource('   ')).toBe('direct');
 		expect(normalizeLeadSource('  campaign  ')).toBe('campaign');
 		expect(normalizeLeadSource('a'.repeat(300))).toHaveLength(255);
+	});
+
+	test('reads and validates a student lead', () => {
+		const form = new FormData();
+		form.set('full_name', '  Katherine Johnson ');
+		form.set('email', 'katherine@example.com');
+		form.set('institution_name', ' Fatec Jacareí ');
+		form.set('course_name', 'DSM');
+		form.set('privacy_consent', 'on');
+
+		const values = readStudentLeadForm(form);
+		expect(values.institution_name).toBe('Fatec Jacareí');
+		expect(validateStudentLeadForm(values)).toBeUndefined();
+		expect(buildStudentLeadPayload(values).github_url).toBeUndefined();
+		expect(validateStudentLeadForm({})).toContain('campos obrigatórios');
 	});
 });

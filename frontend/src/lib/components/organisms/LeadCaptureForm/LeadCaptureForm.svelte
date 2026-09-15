@@ -27,6 +27,9 @@
 				<p class="mt-4 max-w-sm text-sm leading-6 text-slate-300">
 					Conte o momento da sua empresa. Nossa equipe analisa o contexto antes da primeira conversa.
 				</p>
+				<a href="/captura-lead/aluno" class="mt-5 inline-flex w-fit items-center gap-2 rounded-full border border-indigo-300/20 bg-indigo-300/10 px-3 py-1.5 text-xs font-semibold text-indigo-200 transition-colors hover:border-indigo-300/40 hover:bg-indigo-300/15">
+					Sou estudante <span aria-hidden="true">→</span>
+				</a>
 
 				<div class="mt-7 grid gap-3 sm:grid-cols-3 lg:mt-auto lg:grid-cols-1 lg:pt-10">
 					<div class="flex items-center gap-3 text-sm text-slate-200">
@@ -96,7 +99,7 @@
 						<textarea id="message" name="message" rows="4" maxlength="2000" placeholder="Compartilhe seu desafio, objetivo ou ideia." class="min-h-28 resize-y rounded-md border border-border bg-input-background px-3 py-3 text-sm text-foreground outline-hidden transition-all duration-150 placeholder:text-muted-foreground focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">{form?.values?.message ?? ''}</textarea>
 					</label>
 
-					<FormCheckbox class="rounded-xl border border-border bg-input-background/50 p-4 [&_label]:items-start" id="privacy_consent" name="privacy_consent" checked={form?.values?.privacy_consent ?? false} required>
+					<FormCheckbox class="rounded-xl border border-border bg-input-background/50 p-4" id="privacy_consent" name="privacy_consent" checked={form?.values?.privacy_consent ?? false} required>
 						<span class="text-sm leading-5 text-slate-300">Li e aceito a <a href="/politica-privacidade" target="_blank" rel="noreferrer" class="font-semibold text-indigo-300 underline decoration-indigo-300/40 underline-offset-2 transition-colors hover:text-indigo-200">política de privacidade</a>.</span>
 					</FormCheckbox>
 					<FormButton {submitting} loadingText="Enviando..." class="mt-0 h-12">Enviar para análise</FormButton>
