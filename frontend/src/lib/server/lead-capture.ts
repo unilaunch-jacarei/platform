@@ -1,0 +1,48 @@
+import type { LeadFormValues } from '$lib/lead-form';
+
+export function readLeadForm(form: FormData): LeadFormValues {
+	return {
+		full_name: String(form.get('full_name') ?? '').trim(),
+		email: String(form.get('email') ?? '').trim(),
+		company_name: String(form.get('company_name') ?? '').trim(),
+		job_title: String(form.get('job_title') ?? '').trim(),
+		company_size: String(form.get('company_size') ?? '').trim(),
+		website: String(form.get('website') ?? '').trim(),
+		message: String(form.get('message') ?? '').trim(),
+		privacy_consent: form.get('privacy_consent') === 'on'
+	};
+}
+
+export function validateLeadForm(values: LeadFormValues): string | undefined {
+	if (!values.full_name || !values.email || !values.company_name || !values.privacy_consent) {
+		return 'Preencha os campos obrigatórios e aceite a política de privacidade.';
+	}
+}
+
+export function buildLeadPayload(values: LeadFormValues): LeadFormValues {
+	const optional = (value?: string) => value || undefined;
+	return {
+		...values,
+		job_title: optional(values.job_title),
+		company_size: optional(values.company_size),
+		website: optional(values.website),
+		message: optional(values.message)
+	};
+}
+
+export function getBackendError(body: unknown): string | undefined {
+	if (!body || typeof body !== 'object') return undefined;
+	const data = body as { error?: unknown; detail?: unknown };
+	if (typeof data.error === 'string') return data.error;
+	if (typeof data.detail === 'string') return data.detail;
+	if (Array.isArray(data.detail)) {
+		const messages = data.detail.flatMap((item) => {
+			if (item && typeof item === 'object' && 'msg' in item) {
+				const message = (item as { msg?: unknown }).msg;
+				return typeof message === 'string' ? [message] : [];
+			}
+			return [];
+		});
+		return messages.length ? messages.join(' ') : undefined;
+	}
+}
