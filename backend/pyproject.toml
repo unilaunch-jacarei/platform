@@ -24,6 +24,7 @@ dependencies = [
 [project.scripts]
 backend = "backend.main:start"
 purge-leads = "backend.cleanup:run"
+reconcile-student-leads = "backend.domains.leads.reconciliation:run"
 
 [dependency-groups]
 dev = [
