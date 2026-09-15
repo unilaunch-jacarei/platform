@@ -10,7 +10,16 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 
 from backend.config import Settings, get_settings
 from backend.database import Base, get_db
-from backend.domains.leads.models import Lead, LeadType
+from backend.domains.leads.models import (
+    AcademicCourse,
+    CatalogStatus,
+    EducationalInstitution,
+    EducationalInstitutionAlias,
+    InterestArea,
+    Lead,
+    LeadInterestArea,
+    LeadType,
+)
 from backend.domains.usuarios.models import User
 from backend.infra.limiter import limiter
 from backend.main import create_app
@@ -179,6 +188,8 @@ async def test_public_student_lead_submission(lead_client: AsyncClient):
     assert lead.institution_name == "Hampton Institute"
     assert lead.course_name == "Engineering"
     assert lead.source == "campus"
+    assert lead.institution_id is not None
+    assert lead.course_id is not None
 
 
 @pytest.mark.asyncio
@@ -220,6 +231,200 @@ async def test_public_student_lead_validates_request(lead_client: AsyncClient, p
     response = await lead_client.post("/api/v1/public/leads/students", json=payload)
 
     assert response.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_public_catalogs_only_return_available_items(lead_client: AsyncClient):
+    async with lead_client.lead_session_factory() as session:
+        approved = EducationalInstitution(
+            name="Faculdade de Tecnologia de Jacareí",
+            normalized_name="faculdade de tecnologia de jacarei",
+            status=CatalogStatus.APPROVED,
+        )
+        session.add_all(
+            [
+                approved,
+                EducationalInstitution(
+                    name="Fatec Pendente",
+                    normalized_name="fatec pendente",
+                    status=CatalogStatus.PENDING,
+                ),
+                AcademicCourse(
+                    name="Análise e Desenvolvimento de Sistemas",
+                    normalized_name="analise e desenvolvimento de sistemas",
+                    status=CatalogStatus.APPROVED,
+                ),
+                InterestArea(code="backend", name="Backend"),
+                InterestArea(code="inactive", name="Inativa", active=False),
+            ]
+        )
+        await session.flush()
+        session.add(
+            EducationalInstitutionAlias(
+                institution_id=approved.id,
+                name="Fatec Jacareí",
+                normalized_name="fatec jacarei",
+            )
+        )
+        await session.commit()
+
+    institutions = await lead_client.get("/api/v1/public/leads/catalog/institutions?q=FATEC")
+    courses = await lead_client.get("/api/v1/public/leads/catalog/courses?q=desenvolvimento")
+    areas = await lead_client.get("/api/v1/public/leads/catalog/interest-areas")
+
+    assert institutions.status_code == 200
+    assert [item["name"] for item in institutions.json()] == ["Faculdade de Tecnologia de Jacareí"]
+    assert [item["name"] for item in courses.json()] == ["Análise e Desenvolvimento de Sistemas"]
+    assert [item["code"] for item in areas.json()] == ["backend"]
+    assert (
+        await lead_client.get("/api/v1/public/leads/catalog/institutions?q=x")
+    ).status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_public_student_lead_accepts_normalized_catalog_ids(lead_client: AsyncClient):
+    async with lead_client.lead_session_factory() as session:
+        institution = EducationalInstitution(
+            name="Universidade de São Paulo",
+            normalized_name="universidade de sao paulo",
+            status=CatalogStatus.APPROVED,
+        )
+        course = AcademicCourse(
+            name="Sistemas de Informação",
+            normalized_name="sistemas de informacao",
+            status=CatalogStatus.APPROVED,
+        )
+        backend = InterestArea(code="backend", name="Backend")
+        product = InterestArea(code="product", name="Produto")
+        session.add_all([institution, course, backend, product])
+        await session.commit()
+
+    response = await lead_client.post(
+        "/api/v1/public/leads/students?o=campus",
+        json={
+            "full_name": "Radia Perlman",
+            "email": "radia@example.com",
+            "institution_id": str(institution.id),
+            "course_id": str(course.id),
+            "semester_number": 7,
+            "interest_area_ids": [str(product.id), str(backend.id)],
+            "privacy_consent": True,
+        },
+    )
+
+    assert response.status_code == 201
+    async with lead_client.lead_session_factory() as session:
+        lead = await session.get(Lead, uuid.UUID(response.json()["id"]))
+        links = list(
+            await session.scalars(
+                select(LeadInterestArea).where(LeadInterestArea.lead_id == lead.id)
+            )
+        )
+    assert lead.institution_name == "Universidade de São Paulo"
+    assert lead.course_name == "Sistemas de Informação"
+    assert lead.semester == "7º semestre"
+    assert lead.semester_number == 7
+    assert lead.area_of_interest == "Produto"
+    assert {link.interest_area_id for link in links} == {product.id, backend.id}
+
+
+@pytest.mark.asyncio
+async def test_public_student_lead_creates_hidden_pending_catalogs(lead_client: AsyncClient):
+    response = await lead_client.post(
+        "/api/v1/public/leads/students",
+        json={
+            "full_name": "Evelyn Boyd Granville",
+            "email": "evelyn@example.com",
+            "institution_name": "  Nova   Universidade ",
+            "course_name": "Computação Aplicada",
+            "semester_number": 2,
+            "interest_area_ids": [],
+            "privacy_consent": True,
+        },
+    )
+
+    assert response.status_code == 201
+    duplicate = await lead_client.post(
+        "/api/v1/public/leads/students",
+        json={
+            "full_name": "Karen Spärck Jones",
+            "email": "karen@example.com",
+            "institution_name": "NOVA UNIVERSIDADE",
+            "course_name": "Computação Aplicada",
+            "privacy_consent": True,
+        },
+    )
+    assert duplicate.status_code == 201
+    async with lead_client.lead_session_factory() as session:
+        institution = await session.scalar(
+            select(EducationalInstitution).where(
+                EducationalInstitution.normalized_name == "nova universidade"
+            )
+        )
+        course = await session.scalar(
+            select(AcademicCourse).where(AcademicCourse.normalized_name == "computacao aplicada")
+        )
+        institution_count = len(list(await session.scalars(select(EducationalInstitution))))
+        course_count = len(list(await session.scalars(select(AcademicCourse))))
+    assert institution is not None and institution.status == CatalogStatus.PENDING
+    assert course is not None and course.status == CatalogStatus.PENDING
+    assert institution_count == 1
+    assert course_count == 1
+
+    hidden = await lead_client.get("/api/v1/public/leads/catalog/institutions?q=nova universidade")
+    assert hidden.json() == []
+
+
+@pytest.mark.asyncio
+async def test_normalized_student_payload_rejects_ambiguous_or_invalid_catalogs(
+    lead_client: AsyncClient,
+):
+    pending = EducationalInstitution(
+        name="Instituição Pendente",
+        normalized_name="instituicao pendente",
+        status=CatalogStatus.PENDING,
+    )
+    async with lead_client.lead_session_factory() as session:
+        session.add(pending)
+        await session.commit()
+
+    base = {
+        "full_name": "Barbara Liskov",
+        "email": "barbara@example.com",
+        "institution_name": "MIT",
+        "course_name": "Computer Science",
+        "privacy_consent": True,
+    }
+    ambiguous = await lead_client.post(
+        "/api/v1/public/leads/students",
+        json={**base, "institution_id": str(pending.id)},
+    )
+    unavailable = await lead_client.post(
+        "/api/v1/public/leads/students",
+        json={
+            **base,
+            "institution_id": str(pending.id),
+            "institution_name": None,
+        },
+    )
+    duplicate_areas = await lead_client.post(
+        "/api/v1/public/leads/students",
+        json={**base, "interest_area_ids": [str(uuid.uuid4())] * 2},
+    )
+    invalid_semester = await lead_client.post(
+        "/api/v1/public/leads/students",
+        json={**base, "semester_number": True},
+    )
+    unknown_area = await lead_client.post(
+        "/api/v1/public/leads/students",
+        json={**base, "interest_area_ids": [str(uuid.uuid4())]},
+    )
+
+    assert ambiguous.status_code == 422
+    assert unavailable.status_code == 422
+    assert duplicate_areas.status_code == 422
+    assert invalid_semester.status_code == 422
+    assert unknown_area.status_code == 422
 
 
 @pytest.mark.asyncio

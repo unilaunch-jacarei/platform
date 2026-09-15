@@ -13,6 +13,9 @@ from backend.domains.leads.models import (
     LeadType,
 )
 from backend.domains.leads.schemas import (
+    CatalogItemRead,
+    CatalogReferenceRead,
+    InterestAreaRead,
     LeadCompanyInput,
     LeadContactInput,
     LeadCreate,
@@ -40,6 +43,9 @@ __all__ = [
     "LeadStatus",
     "LeadType",
     "LeadCompanyInput",
+    "CatalogItemRead",
+    "CatalogReferenceRead",
+    "InterestAreaRead",
     "LeadContactInput",
     "LeadCreate",
     "LeadRead",

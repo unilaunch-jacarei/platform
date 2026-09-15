@@ -2,9 +2,17 @@ import uuid
 from datetime import datetime
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, HttpUrl, field_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    EmailStr,
+    Field,
+    HttpUrl,
+    field_validator,
+    model_validator,
+)
 
-from backend.domains.leads.models import CompanySize, LeadStatus, LeadType
+from backend.domains.leads.models import CatalogStatus, CompanySize, LeadStatus, LeadType
 
 
 class LeadContactInput(BaseModel):
@@ -57,8 +65,12 @@ class LeadCompanyInput(BaseModel):
 class StudentLeadInput(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    institution_name: str = Field(min_length=2, max_length=255)
-    course_name: str = Field(min_length=2, max_length=255)
+    institution_id: uuid.UUID | None = None
+    institution_name: str | None = Field(default=None, min_length=2, max_length=255)
+    course_id: uuid.UUID | None = None
+    course_name: str | None = Field(default=None, min_length=2, max_length=255)
+    semester_number: int | None = Field(default=None, ge=1, le=12, strict=True)
+    interest_area_ids: list[uuid.UUID] | None = Field(default=None, max_length=3)
     semester: str | None = Field(default=None, max_length=50)
     linkedin_url: HttpUrl | None = Field(default=None, max_length=2048)
     github_url: HttpUrl | None = Field(default=None, max_length=2048)
@@ -78,6 +90,22 @@ class StudentLeadInput(BaseModel):
         if value is None or not isinstance(value, str):
             return value
         return " ".join(value.split())
+
+    @model_validator(mode="after")
+    def validate_catalog_selection(self):
+        if (self.institution_id is None) == (self.institution_name is None):
+            raise ValueError("send exactly one of institution_id or institution_name")
+        if (self.course_id is None) == (self.course_name is None):
+            raise ValueError("send exactly one of course_id or course_name")
+        if self.semester is not None and self.semester_number is not None:
+            raise ValueError("semester and semester_number cannot be sent together")
+        if self.area_of_interest is not None and self.interest_area_ids is not None:
+            raise ValueError("area_of_interest and interest_area_ids cannot be sent together")
+        if self.interest_area_ids is not None and len(set(self.interest_area_ids)) != len(
+            self.interest_area_ids
+        ):
+            raise ValueError("interest_area_ids must be distinct")
+        return self
 
 
 class LeadPublicCreate(LeadContactInput, LeadCompanyInput, LeadPrivacyInput):
@@ -105,6 +133,21 @@ class StudentLeadCreate(StudentLeadPublicCreate, LeadSourceInput):
     lead_type: Literal[LeadType.STUDENT] = LeadType.STUDENT
 
 
+class CatalogItemRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    name: str
+
+
+class InterestAreaRead(CatalogItemRead):
+    code: str
+
+
+class CatalogReferenceRead(CatalogItemRead):
+    status: CatalogStatus
+
+
 class LeadRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -122,6 +165,10 @@ class LeadRead(BaseModel):
     linkedin_url: HttpUrl | None
     github_url: HttpUrl | None
     area_of_interest: str | None
+    institution: CatalogReferenceRead | None
+    course: CatalogReferenceRead | None
+    semester_number: int | None
+    interest_areas: list[InterestAreaRead]
     message: str | None
     privacy_consent: bool
     privacy_policy_version: str

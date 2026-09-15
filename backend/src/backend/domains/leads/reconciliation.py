@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from backend.database import close_db, get_session_factory
-from backend.domains.leads.catalog import normalize_catalog_name
+from backend.domains.leads.catalog import LEGACY_INTEREST_AREA_CODES, normalize_catalog_name
 from backend.domains.leads.models import (
     AcademicCourse,
     AcademicCourseAlias,
@@ -20,14 +20,6 @@ from backend.domains.leads.models import (
     LeadInterestArea,
     LeadType,
 )
-
-LEGACY_INTEREST_CODES = {
-    "backend": "backend",
-    "frontend": "frontend",
-    "devops": "devops-cloud",
-    "produto": "product",
-    "ux ui": "ux-ui",
-}
 
 
 def parse_legacy_semester(value: str | None) -> int | None:
@@ -85,7 +77,7 @@ async def _resolve_or_create[NamedCatalog: (EducationalInstitution, AcademicCour
 def _interest_area_lookup(areas: Sequence[InterestArea]) -> dict[str, InterestArea]:
     by_code = {area.code: area for area in areas if area.active}
     lookup = {normalize_catalog_name(area.name): area for area in areas if area.active}
-    for legacy_name, code in LEGACY_INTEREST_CODES.items():
+    for legacy_name, code in LEGACY_INTEREST_AREA_CODES.items():
         if area := by_code.get(code):
             lookup[legacy_name] = area
     return lookup

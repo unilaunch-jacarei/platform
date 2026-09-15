@@ -5,6 +5,14 @@ from dataclasses import dataclass
 
 CATALOG_NAMESPACE = uuid.UUID("8c7bc184-f3d8-41ec-adb7-246953ff9347")
 
+LEGACY_INTEREST_AREA_CODES = {
+    "backend": "backend",
+    "frontend": "frontend",
+    "devops": "devops-cloud",
+    "produto": "product",
+    "ux ui": "ux-ui",
+}
+
 
 def normalize_catalog_name(value: str) -> str:
     decomposed = unicodedata.normalize("NFKD", value)

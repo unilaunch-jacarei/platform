@@ -6,6 +6,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from backend.database import get_db
 from backend.domains.leads.manager import lead_service
 from backend.domains.leads.schemas import (
+    CatalogItemRead,
+    InterestAreaRead,
     LeadCreate,
     LeadPublicCreate,
     LeadRead,
@@ -76,6 +78,49 @@ async def create_public_student_lead(
     create_data = StudentLeadCreate.model_validate({**data.model_dump(), "source": o})
     lead = await lead_service.create(session, create_data)
     return LeadSubmissionRead.model_validate(lead)
+
+
+@public_leads_router.get(
+    "/catalog/institutions",
+    response_model=list[CatalogItemRead],
+)
+@limiter.limit("60/minute")
+async def search_public_institutions(
+    request: Request,
+    q: str = Query(min_length=2, max_length=255),
+    limit: int = Query(default=10, ge=1, le=20),
+    session: AsyncSession = Depends(get_db),
+) -> list[CatalogItemRead]:
+    items = await lead_service.search_institutions(session, q, limit)
+    return [CatalogItemRead.model_validate(item) for item in items]
+
+
+@public_leads_router.get(
+    "/catalog/courses",
+    response_model=list[CatalogItemRead],
+)
+@limiter.limit("60/minute")
+async def search_public_courses(
+    request: Request,
+    q: str = Query(min_length=2, max_length=255),
+    limit: int = Query(default=10, ge=1, le=20),
+    session: AsyncSession = Depends(get_db),
+) -> list[CatalogItemRead]:
+    items = await lead_service.search_courses(session, q, limit)
+    return [CatalogItemRead.model_validate(item) for item in items]
+
+
+@public_leads_router.get(
+    "/catalog/interest-areas",
+    response_model=list[InterestAreaRead],
+)
+@limiter.limit("60/minute")
+async def list_public_interest_areas(
+    request: Request,
+    session: AsyncSession = Depends(get_db),
+) -> list[InterestAreaRead]:
+    items = await lead_service.list_interest_areas(session)
+    return [InterestAreaRead.model_validate(item) for item in items]
 
 
 @leads_router.get("", response_model=list[LeadRead])
