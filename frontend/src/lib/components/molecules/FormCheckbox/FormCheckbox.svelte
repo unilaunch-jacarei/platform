@@ -26,7 +26,7 @@
   }: FormCheckboxProps = $props();
 </script>
 
-<div class="flex items-center gap-2 pt-1 {className}">
+<div class="flex items-center gap-2 {className}">
   <Checkbox {id} {name} bind:checked {disabled} {required}>
     {#if children}
       {@render children()}
