@@ -11,7 +11,7 @@
 	<meta name="description" content="Entre em contato com a UniLaunch." />
 </svelte:head>
 
-<CenteredContent class="justify-start overflow-y-auto px-4 py-8 sm:px-6 sm:py-12 lg:justify-center">
+<CenteredContent class="justify-start px-4 py-8 sm:px-6 sm:py-12 lg:justify-center">
 	<div aria-hidden="true" class="pointer-events-none absolute -top-40 left-1/2 size-96 -translate-x-1/2 rounded-full bg-primary/15 blur-3xl"></div>
 	<div aria-hidden="true" class="pointer-events-none absolute right-0 bottom-0 size-80 translate-x-1/3 translate-y-1/3 rounded-full bg-accent/10 blur-3xl"></div>
 	<div class="relative z-10 flex w-full flex-col items-center">
