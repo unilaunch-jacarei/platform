@@ -19,6 +19,8 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 # Copy application source code
 COPY backend/src ./src
 COPY backend/README.md ./
+COPY backend/alembic.ini ./
+COPY backend/migrations ./migrations
 
 # Sync project package itself into the virtual environment
 RUN --mount=type=cache,target=/root/.cache/uv \
@@ -45,7 +47,8 @@ RUN groupadd -r appuser && useradd -r -g appuser -d /app -s /sbin/nologin appuse
 # Copy only the compiled virtual environment and code from builder
 COPY --from=builder --chown=appuser:appuser /app/.venv /app/.venv
 COPY --from=builder --chown=appuser:appuser /app/src /app/src
-
+COPY --from=builder --chown=appuser:appuser /app/alembic.ini /app/alembic.ini
+COPY --from=builder --chown=appuser:appuser /app/migrations /app/migrations
 USER appuser
 
 EXPOSE 8000

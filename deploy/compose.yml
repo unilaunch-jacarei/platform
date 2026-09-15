@@ -1,12 +1,38 @@
 services:
+  production-platform-migrate:
+    container_name: production-platform-migrate
+    image: ghcr.io/${GHCR_OWNER:?Defina GHCR_OWNER}/platform-back:${VERSION:?Defina VERSION, por exemplo v1}
+    command: ["alembic", "upgrade", "head"]
+    restart: "no"
+    environment:
+      DATABASE_URL: ${PRODUCTION_DATABASE_URL:?Defina PRODUCTION_DATABASE_URL}
+      JWT_SECRET: ${PRODUCTION_JWT_SECRET:?Defina PRODUCTION_JWT_SECRET}
+      INTERNAL_SECRET: ${PRODUCTION_INTERNAL_SECRET:?Defina PRODUCTION_INTERNAL_SECRET}
+      RATE_LIMIT_STORAGE_URI: ${PRODUCTION_RATE_LIMIT_STORAGE_URI:?Defina PRODUCTION_RATE_LIMIT_STORAGE_URI}
+      METRICS_TOKEN: ${PRODUCTION_METRICS_TOKEN:?Defina PRODUCTION_METRICS_TOKEN}
+      LEAD_RETENTION_DAYS: ${PRODUCTION_LEAD_RETENTION_DAYS:-365}
+      ENVIRONMENT: production
+      PUBLIC_APP_URL: ${PRODUCTION_PUBLIC_APP_URL:?Defina PRODUCTION_PUBLIC_APP_URL}
+      SMTP_HOST: ${PRODUCTION_SMTP_HOST:?Defina PRODUCTION_SMTP_HOST}
+      SMTP_FROM_EMAIL: ${PRODUCTION_SMTP_FROM_EMAIL:?Defina PRODUCTION_SMTP_FROM_EMAIL}
+    networks:
+      - platform
+
   production-platform-back:
     container_name: production-platform-back
     image: ghcr.io/${GHCR_OWNER:?Defina GHCR_OWNER}/platform-back:${VERSION:?Defina VERSION, por exemplo v1}
     restart: unless-stopped
+    depends_on:
+      production-platform-migrate:
+        condition: service_completed_successfully
     environment:
       DATABASE_URL: ${PRODUCTION_DATABASE_URL:?Defina PRODUCTION_DATABASE_URL}
+      JWT_SECRET: ${PRODUCTION_JWT_SECRET:?Defina PRODUCTION_JWT_SECRET}
       INTERNAL_SECRET: ${PRODUCTION_INTERNAL_SECRET:?Defina PRODUCTION_INTERNAL_SECRET}
-      BIND_ADDR: 0.0.0.0:3000
+      RATE_LIMIT_STORAGE_URI: ${PRODUCTION_RATE_LIMIT_STORAGE_URI:?Defina PRODUCTION_RATE_LIMIT_STORAGE_URI}
+      METRICS_TOKEN: ${PRODUCTION_METRICS_TOKEN:?Defina PRODUCTION_METRICS_TOKEN}
+      LEAD_RETENTION_DAYS: ${PRODUCTION_LEAD_RETENTION_DAYS:-365}
+      BIND_ADDR: 0.0.0.0:8000
       PUBLIC_APP_URL: ${PRODUCTION_PUBLIC_APP_URL:?Defina PRODUCTION_PUBLIC_APP_URL}
       SMTP_HOST: ${PRODUCTION_SMTP_HOST:?Defina PRODUCTION_SMTP_HOST}
       SMTP_PORT: ${PRODUCTION_SMTP_PORT:-587}
@@ -15,7 +41,7 @@ services:
       SMTP_FROM_EMAIL: ${PRODUCTION_SMTP_FROM_EMAIL:?Defina PRODUCTION_SMTP_FROM_EMAIL}
       SMTP_STARTTLS: ${PRODUCTION_SMTP_STARTTLS:-true}
     expose:
-      - "3000"
+      - "8000"
     networks:
       - platform
     security_opt:
@@ -29,9 +55,10 @@ services:
     image: ghcr.io/${GHCR_OWNER:?Defina GHCR_OWNER}/platform-front:${VERSION:?Defina VERSION, por exemplo v1}
     restart: unless-stopped
     depends_on:
-      - production-platform-back
+      production-platform-back:
+        condition: service_started
     environment:
-      BACKEND_URL: http://production-platform-back:3000
+      BACKEND_URL: http://production-platform-back:8000
       INTERNAL_SECRET: ${PRODUCTION_INTERNAL_SECRET:?Defina PRODUCTION_INTERNAL_SECRET}
       HOST: 0.0.0.0
       PORT: 3000
@@ -46,14 +73,38 @@ services:
     tmpfs:
       - /tmp
 
+  staging-platform-migrate:
+    container_name: staging-platform-migrate
+    image: ghcr.io/${GHCR_OWNER:?Defina GHCR_OWNER}/platform-back:staging
+    command: ["alembic", "upgrade", "head"]
+    restart: "no"
+    environment:
+      DATABASE_URL: ${STAGING_DATABASE_URL:?Defina STAGING_DATABASE_URL}
+      JWT_SECRET: ${STAGING_JWT_SECRET:?Defina STAGING_JWT_SECRET}
+      INTERNAL_SECRET: ${STAGING_INTERNAL_SECRET:?Defina STAGING_INTERNAL_SECRET}
+      RATE_LIMIT_STORAGE_URI: ${STAGING_RATE_LIMIT_STORAGE_URI:?Defina STAGING_RATE_LIMIT_STORAGE_URI}
+      METRICS_TOKEN: ${STAGING_METRICS_TOKEN:?Defina STAGING_METRICS_TOKEN}
+      LEAD_RETENTION_DAYS: ${STAGING_LEAD_RETENTION_DAYS:-365}
+      ENVIRONMENT: staging
+      PUBLIC_APP_URL: ${STAGING_PUBLIC_APP_URL:?Defina STAGING_PUBLIC_APP_URL}
+    networks:
+      - platform
+
   staging-platform-back:
     container_name: staging-platform-back
     image: ghcr.io/${GHCR_OWNER:?Defina GHCR_OWNER}/platform-back:staging
     restart: unless-stopped
+    depends_on:
+      staging-platform-migrate:
+        condition: service_completed_successfully
     environment:
       DATABASE_URL: ${STAGING_DATABASE_URL:?Defina STAGING_DATABASE_URL}
+      JWT_SECRET: ${STAGING_JWT_SECRET:?Defina STAGING_JWT_SECRET}
       INTERNAL_SECRET: ${STAGING_INTERNAL_SECRET:?Defina STAGING_INTERNAL_SECRET}
-      BIND_ADDR: 0.0.0.0:3000
+      RATE_LIMIT_STORAGE_URI: ${STAGING_RATE_LIMIT_STORAGE_URI:?Defina STAGING_RATE_LIMIT_STORAGE_URI}
+      METRICS_TOKEN: ${STAGING_METRICS_TOKEN:?Defina STAGING_METRICS_TOKEN}
+      LEAD_RETENTION_DAYS: ${STAGING_LEAD_RETENTION_DAYS:-365}
+      BIND_ADDR: 0.0.0.0:8000
       PUBLIC_APP_URL: ${STAGING_PUBLIC_APP_URL:?Defina STAGING_PUBLIC_APP_URL}
       SMTP_HOST: ${STAGING_SMTP_HOST:-}
       SMTP_PORT: ${STAGING_SMTP_PORT:-587}
@@ -62,7 +113,7 @@ services:
       SMTP_FROM_EMAIL: ${STAGING_SMTP_FROM_EMAIL:-}
       SMTP_STARTTLS: ${STAGING_SMTP_STARTTLS:-true}
     expose:
-      - "3000"
+      - "8000"
     networks:
       - platform
     security_opt:
@@ -76,9 +127,10 @@ services:
     image: ghcr.io/${GHCR_OWNER:?Defina GHCR_OWNER}/platform-front:staging
     restart: unless-stopped
     depends_on:
-      - staging-platform-back
+      staging-platform-back:
+        condition: service_started
     environment:
-      BACKEND_URL: http://staging-platform-back:3000
+      BACKEND_URL: http://staging-platform-back:8000
       INTERNAL_SECRET: ${STAGING_INTERNAL_SECRET:?Defina STAGING_INTERNAL_SECRET}
       HOST: 0.0.0.0
       PORT: 3000
