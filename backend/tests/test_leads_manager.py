@@ -349,6 +349,49 @@ async def test_catalog_admin_service_validates_approval_and_merge(lead_session: 
 
 
 @pytest.mark.asyncio
+async def test_catalog_names_follow_successive_merges(lead_session: AsyncSession):
+    institutions = [
+        EducationalInstitution(
+            name=name,
+            normalized_name=name.lower(),
+            status=CatalogStatus.APPROVED,
+        )
+        for name in ("Faculdade A", "Faculdade B", "Faculdade C")
+    ]
+    courses = [
+        AcademicCourse(
+            name=name,
+            normalized_name=name.lower(),
+            status=CatalogStatus.APPROVED,
+        )
+        for name in ("Curso A", "Curso B", "Curso C")
+    ]
+    lead_session.add_all([*institutions, *courses])
+    await lead_session.commit()
+
+    service = LeadService()
+    reviewer_id = uuid.uuid4()
+    await service.merge_institution(
+        lead_session, institutions[0].id, institutions[1].id, reviewer_id
+    )
+    await service.merge_institution(
+        lead_session, institutions[1].id, institutions[2].id, reviewer_id
+    )
+    await service.merge_course(lead_session, courses[0].id, courses[1].id, reviewer_id)
+    await service.merge_course(lead_session, courses[1].id, courses[2].id, reviewer_id)
+
+    resolved_institution = await service._resolve_institution(
+        lead_session, None, institutions[0].name
+    )
+    resolved_course = await service._resolve_course(lead_session, None, courses[0].name)
+
+    assert resolved_institution.id == institutions[2].id
+    assert resolved_institution.status == CatalogStatus.APPROVED
+    assert resolved_course.id == courses[2].id
+    assert resolved_course.status == CatalogStatus.APPROVED
+
+
+@pytest.mark.asyncio
 async def test_student_leads_can_be_summarized_and_purged(lead_session: AsyncSession):
     institution = EducationalInstitution(
         name="Universidade Canônica",

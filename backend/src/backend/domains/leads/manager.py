@@ -339,11 +339,7 @@ class LeadService:
                 .where(alias_model.normalized_name == normalized_name)
             )
         if item is not None:
-            if item.status == CatalogStatus.MERGED and item.merged_into_id is not None:
-                merged_item = await session.get(model, item.merged_into_id)
-                if merged_item is not None:
-                    return merged_item
-            return item
+            return await self._resolve_merge_target(session, model, item, label)
 
         item = model(
             name=name,
@@ -360,6 +356,24 @@ class LeadService:
             )
             if item is None:
                 raise RuntimeError("Catalog conflict could not be resolved") from None
+        return item
+
+    async def _resolve_merge_target(
+        self,
+        session: AsyncSession,
+        model: NamedCatalogModel,
+        item: NamedCatalog,
+        label: str,
+    ) -> NamedCatalog:
+        visited_ids: set[uuid.UUID] = set()
+        while item.status == CatalogStatus.MERGED:
+            if item.id in visited_ids or item.merged_into_id is None:
+                raise RuntimeError(f"Cadeia de mesclagem de {label.lower()} inválida")
+            visited_ids.add(item.id)
+            merged_item = await session.get(model, item.merged_into_id)
+            if merged_item is None:
+                raise RuntimeError(f"Destino da mesclagem de {label.lower()} não encontrado")
+            item = merged_item
         return item
 
     async def _resolve_interest_areas(
