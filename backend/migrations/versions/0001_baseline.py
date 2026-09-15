@@ -7,6 +7,7 @@ from typing import Sequence
 
 import sqlalchemy as sa
 from alembic import op
+from fastapi_users_db_sqlalchemy.generics import GUID
 
 revision: str = "0001_baseline"
 down_revision: str | Sequence[str] | None = None
@@ -30,7 +31,7 @@ def upgrade() -> None:
             server_default=sa.text("CURRENT_TIMESTAMP"),
             nullable=False,
         ),
-        sa.Column("id", sa.CHAR(length=36), nullable=False),
+        sa.Column("id", GUID(), nullable=False),
         sa.Column("email", sa.String(length=320), nullable=False),
         sa.Column("hashed_password", sa.String(length=1024), nullable=False),
         sa.Column("is_active", sa.Boolean(), nullable=False),

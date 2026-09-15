@@ -7,6 +7,7 @@ from typing import Sequence
 
 import sqlalchemy as sa
 from alembic import op
+from fastapi_users_db_sqlalchemy.generics import GUID
 
 revision: str = "0002_leads"
 down_revision: str | Sequence[str] | None = "0001_baseline"
@@ -17,7 +18,7 @@ depends_on: str | Sequence[str] | None = None
 def upgrade() -> None:
     op.create_table(
         "leads",
-        sa.Column("id", sa.CHAR(length=36), nullable=False),
+        sa.Column("id", GUID(), nullable=False),
         sa.Column("full_name", sa.String(length=255), nullable=False),
         sa.Column("email", sa.String(length=320), nullable=False),
         sa.Column("company_name", sa.String(length=255), nullable=False),
@@ -52,7 +53,7 @@ def upgrade() -> None:
 
     op.create_table(
         "lead_page_views",
-        sa.Column("id", sa.CHAR(length=36), nullable=False),
+        sa.Column("id", GUID(), nullable=False),
         sa.Column("event_key", sa.String(length=255), nullable=False),
         sa.Column("source", sa.String(length=255), nullable=False),
         sa.Column(
