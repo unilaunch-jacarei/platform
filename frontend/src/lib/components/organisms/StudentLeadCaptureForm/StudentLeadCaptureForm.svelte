@@ -6,11 +6,18 @@
 	import FormButton from '$lib/components/molecules/FormButton/FormButton.svelte';
 	import FormCheckbox from '$lib/components/molecules/FormCheckbox/FormCheckbox.svelte';
 	import FormField from '$lib/components/molecules/FormField/FormField.svelte';
+	import CreatableCombobox from '$lib/components/molecules/CreatableCombobox/CreatableCombobox.svelte';
+	import InterestAreaMultiSelect from '$lib/components/molecules/InterestAreaMultiSelect/InterestAreaMultiSelect.svelte';
+	import SemesterSelect from '$lib/components/molecules/SemesterSelect/SemesterSelect.svelte';
 	import { trackFormSubmission } from '$lib/forms';
-	import type { StudentLeadFormValues } from '$lib/lead-form';
+	import type { InterestAreaOption, StudentLeadFormValues } from '$lib/lead-form';
 
 	type StudentLeadFormState = { error?: string; success?: boolean; values?: StudentLeadFormValues } | null;
-	let { form }: { form: StudentLeadFormState } = $props();
+	let {
+		form,
+		interestAreas = [],
+		catalogError = ''
+	}: { form: StudentLeadFormState; interestAreas?: InterestAreaOption[]; catalogError?: string } = $props();
 	let submitting = $state(false);
 	const handleSubmit = trackFormSubmission((value) => (submitting = value));
 </script>
@@ -59,17 +66,15 @@
 					<div class="grid gap-4 sm:grid-cols-2">
 						<FormField class="[&_input]:h-11" id="full_name" name="full_name" label="Nome completo" autocomplete="name" value={form?.values?.full_name ?? ''} required />
 						<FormField class="[&_input]:h-11" id="email" name="email" label="E-mail" type="email" autocomplete="email" value={form?.values?.email ?? ''} required />
-						<FormField class="[&_input]:h-11" id="institution_name" name="institution_name" label="Instituição de ensino" autocomplete="organization" value={form?.values?.institution_name ?? ''} required />
-						<FormField class="[&_input]:h-11" id="course_name" name="course_name" label="Curso" value={form?.values?.course_name ?? ''} required />
-						<FormField class="[&_input]:h-11" id="semester" name="semester" label="Semestre ou período" placeholder="Ex.: 4º semestre" value={form?.values?.semester ?? ''} />
-						<label class="flex flex-col gap-1.5" for="area_of_interest">
-							<span class="text-[0.92rem] font-semibold text-foreground">Área de interesse</span>
-							<select id="area_of_interest" name="area_of_interest" value={form?.values?.area_of_interest ?? ''} class="h-11 rounded-md border border-border bg-input-background px-3 text-sm text-foreground outline-hidden transition-all duration-150 focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
-								<option value="">Selecione</option><option value="Frontend">Frontend</option><option value="Backend">Backend</option><option value="Dados e IA">Dados e IA</option><option value="UX/UI">UX/UI</option><option value="Produto">Produto</option><option value="DevOps">DevOps</option><option value="Ainda estou explorando">Ainda estou explorando</option>
-							</select>
-						</label>
+						<CreatableCombobox id="institution" idName="institution_id" name="institution_name" label="Instituição de ensino" endpoint="/api/leads/catalog/institutions" value={form?.values?.institution_name_display || form?.values?.institution_name || ''} selectedId={form?.values?.institution_id || ''} placeholder="Digite para buscar" description="Se não encontrar, adicione o nome para revisão." required />
+						<CreatableCombobox id="course" idName="course_id" name="course_name" label="Curso" endpoint="/api/leads/catalog/courses" value={form?.values?.course_name_display || form?.values?.course_name || ''} selectedId={form?.values?.course_id || ''} placeholder="Digite para buscar" description="Se não encontrar, adicione o nome para revisão." required />
+						<SemesterSelect value={form?.values?.semester_number ?? ''} />
 						<FormField class="[&_input]:h-11" id="linkedin_url" name="linkedin_url" label="LinkedIn" type="url" autocomplete="url" placeholder="https://linkedin.com/in/..." value={form?.values?.linkedin_url ?? ''} />
 						<FormField class="[&_input]:h-11" id="github_url" name="github_url" label="GitHub" type="url" autocomplete="url" placeholder="https://github.com/..." value={form?.values?.github_url ?? ''} />
+						<div class="sm:col-span-2">
+							<InterestAreaMultiSelect name="interest_area_ids" options={interestAreas} selectedIds={form?.values?.interest_area_ids ?? []} />
+							{#if catalogError}<p class="mt-2 text-xs text-destructive" role="status">{catalogError}</p>{/if}
+						</div>
 					</div>
 					<label class="flex flex-col gap-1.5" for="message"><span class="text-[0.92rem] font-semibold text-foreground">O que você quer aprender ou construir?</span><textarea id="message" name="message" rows="4" maxlength="2000" placeholder="Conte seus objetivos, experiências ou ideias." class="min-h-28 resize-y rounded-md border border-border bg-input-background px-3 py-3 text-sm text-foreground outline-hidden transition-all duration-150 placeholder:text-muted-foreground focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">{form?.values?.message ?? ''}</textarea></label>
 					<FormCheckbox class="rounded-xl border border-border bg-input-background/50 p-4" id="privacy_consent" name="privacy_consent" checked={form?.values?.privacy_consent ?? false} required>

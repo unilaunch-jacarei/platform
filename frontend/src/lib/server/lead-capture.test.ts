@@ -63,12 +63,64 @@ describe('lead capture helpers', () => {
 		form.set('email', 'katherine@example.com');
 		form.set('institution_name', ' Fatec Jacareí ');
 		form.set('course_name', 'DSM');
+		form.set('semester_number', '4');
+		form.append('interest_area_ids', 'area-1');
+		form.append('interest_area_ids', 'area-2');
 		form.set('privacy_consent', 'on');
 
 		const values = readStudentLeadForm(form);
 		expect(values.institution_name).toBe('Fatec Jacareí');
+		expect(values.interest_area_ids).toEqual(['area-1', 'area-2']);
 		expect(validateStudentLeadForm(values)).toBeUndefined();
-		expect(buildStudentLeadPayload(values).github_url).toBeUndefined();
+		const payload = buildStudentLeadPayload(values);
+		expect(payload.github_url).toBeUndefined();
+		expect(payload.semester_number).toBe(4);
+		expect(payload.interest_area_ids).toEqual(['area-1', 'area-2']);
 		expect(validateStudentLeadForm({})).toContain('campos obrigatórios');
+	});
+
+	test('restores selected catalogs without sending display names', () => {
+		const form = new FormData();
+		form.set('full_name', 'Grace Hopper');
+		form.set('email', 'grace@example.com');
+		form.set('institution_id', 'institution-id');
+		form.set('institution_name_display', 'Universidade Canônica');
+		form.set('course_id', 'course-id');
+		form.set('course_name_display', 'Curso Canônico');
+		form.set('privacy_consent', 'on');
+
+		const values = readStudentLeadForm(form);
+		expect(validateStudentLeadForm(values)).toBeUndefined();
+		expect(buildStudentLeadPayload(values)).toEqual({
+			full_name: 'Grace Hopper',
+			email: 'grace@example.com',
+			institution_id: 'institution-id',
+			institution_name: undefined,
+			course_id: 'course-id',
+			course_name: undefined,
+			semester_number: undefined,
+			linkedin_url: undefined,
+			github_url: undefined,
+			interest_area_ids: [],
+			message: undefined,
+			privacy_consent: true
+		});
+	});
+
+	test('rejects invalid semester and interest area selections', () => {
+		const base = {
+			full_name: 'Ada Lovelace',
+			email: 'ada@example.com',
+			institution_name: 'Universidade',
+			course_name: 'Computação',
+			privacy_consent: true
+		};
+		expect(validateStudentLeadForm({ ...base, semester_number: '4.5' })).toContain('semestre');
+		expect(
+			validateStudentLeadForm({ ...base, interest_area_ids: ['1', '2', '3', '4'] })
+		).toContain('três áreas');
+		expect(validateStudentLeadForm({ ...base, interest_area_ids: ['1', '1'] })).toContain(
+			'três áreas'
+		);
 	});
 });
