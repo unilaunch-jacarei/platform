@@ -15,36 +15,20 @@
 	const handleSubmit = trackFormSubmission((value) => (submitting = value));
 </script>
 
-<Card style="max-width: min(64rem, 100%);" class="overflow-hidden border-primary/25 bg-card/95 p-0 shadow-[0_24px_80px_rgba(0,0,0,0.42),0_0_0_1px_rgba(124,58,237,0.06)] backdrop-blur-xl">
-	<div class="grid lg:grid-cols-[0.72fr_1.28fr]">
-		<section class="relative overflow-hidden border-b border-border bg-linear-to-br from-primary/20 via-card to-accent/10 p-6 sm:p-8 lg:border-r lg:border-b-0 lg:p-10">
-			<div aria-hidden="true" class="absolute -top-20 -left-20 size-56 rounded-full bg-primary/20 blur-3xl"></div>
-			<div class="relative flex h-full flex-col">
-				<p class="mb-4 text-xs font-bold tracking-[0.18em] text-indigo-300 uppercase">Parceria sob medida</p>
-				<Typography variant="h1" class="max-w-sm text-3xl leading-[1.05] sm:text-4xl lg:text-[2.7rem]">
-					Vamos construir seu próximo passo.
+<Card style="max-width: min(68rem, 100%);" class="overflow-hidden border-primary/25 bg-card/95 p-0 shadow-[0_24px_80px_rgba(0,0,0,0.42),0_0_0_1px_rgba(124,58,237,0.06)] backdrop-blur-xl">
+	<div class="grid lg:grid-cols-[0.9fr_1.1fr]">
+		<section class="relative min-h-96 overflow-hidden border-b border-border bg-card lg:min-h-[46rem] lg:border-r lg:border-b-0">
+			<img src="https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=1200&q=85" alt="Equipe reunida em uma dinâmica de planejamento" class="absolute inset-0 size-full object-cover" />
+			<div aria-hidden="true" class="absolute inset-0 bg-linear-to-t from-[#08091a] via-[#08091a]/35 to-primary/10"></div>
+			<div class="absolute inset-x-0 bottom-0 p-6 sm:p-8 lg:p-10">
+				<p class="mb-3 text-xs font-bold tracking-[0.18em] text-indigo-300 uppercase">Parcerias feitas por pessoas</p>
+				<Typography variant="h1" class="max-w-md text-3xl leading-[1.08] text-white sm:text-4xl">
+					Boas ideias crescem quando pessoas se encontram.
 				</Typography>
-				<p class="mt-4 max-w-sm text-sm leading-6 text-slate-300">
-					Conte o momento da sua empresa. Nossa equipe analisa o contexto antes da primeira conversa.
-				</p>
-				<a href="/captura-lead/aluno" class="mt-5 inline-flex w-fit items-center gap-2 rounded-full border border-indigo-300/20 bg-indigo-300/10 px-3 py-1.5 text-xs font-semibold text-indigo-200 transition-colors hover:border-indigo-300/40 hover:bg-indigo-300/15">
-					Sou estudante <span aria-hidden="true">→</span>
+				<p class="mt-4 max-w-md text-sm leading-6 text-slate-200">Queremos entender sua história, seu momento e o impacto que podemos construir juntos.</p>
+				<a href="/captura-lead/aluno" class="mt-5 inline-flex w-fit items-center gap-2 text-sm font-semibold text-indigo-200 underline decoration-indigo-300/40 underline-offset-4 transition-colors hover:text-white">
+					Procurando oportunidades como estudante? <span aria-hidden="true">→</span>
 				</a>
-
-				<div class="mt-7 grid gap-3 sm:grid-cols-3 lg:mt-auto lg:grid-cols-1 lg:pt-10">
-					<div class="flex items-center gap-3 text-sm text-slate-200">
-						<span class="flex size-7 shrink-0 items-center justify-center rounded-full border border-indigo-400/30 bg-indigo-400/10 text-xs font-bold text-indigo-300">1</span>
-						<span>Você envia o contexto</span>
-					</div>
-					<div class="flex items-center gap-3 text-sm text-slate-200">
-						<span class="flex size-7 shrink-0 items-center justify-center rounded-full border border-indigo-400/30 bg-indigo-400/10 text-xs font-bold text-indigo-300">2</span>
-						<span>Nós avaliamos o cenário</span>
-					</div>
-					<div class="flex items-center gap-3 text-sm text-slate-200">
-						<span class="flex size-7 shrink-0 items-center justify-center rounded-full border border-indigo-400/30 bg-indigo-400/10 text-xs font-bold text-indigo-300">3</span>
-						<span>Marcamos uma conversa</span>
-					</div>
-				</div>
 			</div>
 		</section>
 
