@@ -21,6 +21,10 @@ from backend.domains.leads.models import (
     LeadType,
 )
 
+NamedCatalog = EducationalInstitution | AcademicCourse
+NamedCatalogModel = type[EducationalInstitution] | type[AcademicCourse]
+NamedAliasModel = type[EducationalInstitutionAlias] | type[AcademicCourseAlias]
+
 
 def parse_legacy_semester(value: str | None) -> int | None:
     numbers = re.findall(r"\d+", value or "")
@@ -30,10 +34,10 @@ def parse_legacy_semester(value: str | None) -> int | None:
     return semester if 1 <= semester <= 12 else None
 
 
-async def _named_lookup[NamedCatalog: (EducationalInstitution, AcademicCourse)](
+async def _named_lookup(
     session: AsyncSession,
-    model: type[NamedCatalog],
-    alias_model: type[EducationalInstitutionAlias] | type[AcademicCourseAlias],
+    model: NamedCatalogModel,
+    alias_model: NamedAliasModel,
 ) -> dict[str, NamedCatalog]:
     items = list(await session.scalars(select(model)))
     by_id = {item.id: item for item in items}
@@ -46,9 +50,9 @@ async def _named_lookup[NamedCatalog: (EducationalInstitution, AcademicCourse)](
     return lookup
 
 
-async def _resolve_or_create[NamedCatalog: (EducationalInstitution, AcademicCourse)](
+async def _resolve_or_create(
     session: AsyncSession,
-    model: type[NamedCatalog],
+    model: NamedCatalogModel,
     lookup: dict[str, NamedCatalog],
     value: str | None,
 ) -> NamedCatalog | None:

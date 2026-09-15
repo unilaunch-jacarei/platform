@@ -7,11 +7,13 @@ import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.orm import selectinload
 
 from backend.config import Settings, get_settings
 from backend.database import Base, get_db
 from backend.domains.leads.models import (
     AcademicCourse,
+    AcademicCourseAlias,
     CatalogStatus,
     EducationalInstitution,
     EducationalInstitutionAlias,
@@ -279,6 +281,7 @@ async def test_public_catalogs_only_return_available_items(lead_client: AsyncCli
     assert (
         await lead_client.get("/api/v1/public/leads/catalog/institutions?q=x")
     ).status_code == 422
+    assert (await lead_client.get("/api/v1/public/leads/catalog/institutions?q=!!")).json() == []
 
 
 @pytest.mark.asyncio
@@ -510,3 +513,198 @@ async def test_regular_user_cannot_manage_leads(lead_client: AsyncClient):
 
     response = await lead_client.get("/api/v1/leads", headers=headers)
     assert response.status_code == 403
+    catalogs = await lead_client.get("/api/v1/leads/catalog/institutions", headers=headers)
+    assert catalogs.status_code == 403
+
+
+@pytest.mark.asyncio
+async def test_superuser_approves_and_merges_catalogs(lead_client: AsyncClient):
+    await lead_client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "catalog-admin@example.com",
+            "password": "SenhaSegura12345",
+            "nome": "Catalog Admin",
+        },
+    )
+    async with lead_client.lead_session_factory() as session:
+        user = await session.scalar(select(User).where(User.email == "catalog-admin@example.com"))
+        user.is_superuser = True
+
+        institution_target = EducationalInstitution(
+            name="Universidade Canônica",
+            normalized_name="universidade canonica",
+            status=CatalogStatus.APPROVED,
+        )
+        institution_source = EducationalInstitution(
+            name="Universidade Antiga",
+            normalized_name="universidade antiga",
+            status=CatalogStatus.PENDING,
+        )
+        institution_to_approve = EducationalInstitution(
+            name="Universidade para Aprovar",
+            normalized_name="universidade para aprovar",
+            status=CatalogStatus.PENDING,
+        )
+        course_target = AcademicCourse(
+            name="Curso Canônico",
+            normalized_name="curso canonico",
+            status=CatalogStatus.APPROVED,
+        )
+        course_source = AcademicCourse(
+            name="Curso Antigo",
+            normalized_name="curso antigo",
+            status=CatalogStatus.PENDING,
+        )
+        course_to_approve = AcademicCourse(
+            name="Curso para Aprovar",
+            normalized_name="curso para aprovar",
+            status=CatalogStatus.PENDING,
+        )
+        session.add_all(
+            [
+                institution_target,
+                institution_source,
+                institution_to_approve,
+                course_target,
+                course_source,
+                course_to_approve,
+            ]
+        )
+        await session.flush()
+        session.add_all(
+            [
+                EducationalInstitutionAlias(
+                    institution_id=institution_source.id,
+                    name="UA",
+                    normalized_name="ua",
+                ),
+                AcademicCourseAlias(
+                    course_id=course_source.id,
+                    name="CA",
+                    normalized_name="ca",
+                ),
+                Lead(
+                    lead_type=LeadType.STUDENT,
+                    full_name="Frances Allen",
+                    email="frances@example.com",
+                    institution_id=institution_source.id,
+                    institution_name=institution_source.name,
+                    course_id=course_source.id,
+                    course_name=course_source.name,
+                    privacy_consent=True,
+                ),
+            ]
+        )
+        await session.commit()
+
+    login = await lead_client.post(
+        "/api/v1/auth/jwt/login",
+        data={"username": "catalog-admin@example.com", "password": "SenhaSegura12345"},
+    )
+    headers = {"Authorization": f"Bearer {login.json()['access_token']}"}
+
+    pending = await lead_client.get("/api/v1/leads/catalog/institutions", headers=headers)
+    pending_courses = await lead_client.get("/api/v1/leads/catalog/courses", headers=headers)
+    assert pending.status_code == 200
+    assert {item["name"] for item in pending.json()} == {
+        "Universidade Antiga",
+        "Universidade para Aprovar",
+    }
+    assert {item["name"] for item in pending_courses.json()} == {
+        "Curso Antigo",
+        "Curso para Aprovar",
+    }
+
+    approved = await lead_client.patch(
+        f"/api/v1/leads/catalog/institutions/{institution_to_approve.id}/approve",
+        headers=headers,
+    )
+    approved_course = await lead_client.patch(
+        f"/api/v1/leads/catalog/courses/{course_to_approve.id}/approve",
+        headers=headers,
+    )
+    institution_merge = await lead_client.post(
+        f"/api/v1/leads/catalog/institutions/{institution_source.id}/merge",
+        headers=headers,
+        json={"target_id": str(institution_target.id)},
+    )
+    course_merge = await lead_client.post(
+        f"/api/v1/leads/catalog/courses/{course_source.id}/merge",
+        headers=headers,
+        json={"target_id": str(course_target.id)},
+    )
+
+    assert approved.status_code == 200
+    assert approved_course.status_code == 200
+    assert approved.json()["status"] == "approved"
+    assert approved.json()["reviewed_by_id"] == str(user.id)
+    assert institution_merge.status_code == 200
+    assert institution_merge.json()["status"] == "merged"
+    assert institution_merge.json()["merged_into_id"] == str(institution_target.id)
+    assert course_merge.status_code == 200
+
+    async with lead_client.lead_session_factory() as session:
+        lead = await session.scalar(select(Lead).where(Lead.email == "frances@example.com"))
+        target = await session.scalar(
+            select(EducationalInstitution)
+            .where(EducationalInstitution.id == institution_target.id)
+            .options(selectinload(EducationalInstitution.aliases))
+        )
+        merged_course = await session.scalar(
+            select(AcademicCourse)
+            .where(AcademicCourse.id == course_target.id)
+            .options(selectinload(AcademicCourse.aliases))
+        )
+    assert lead.institution_id == institution_target.id
+    assert lead.institution_name == institution_target.name
+    assert lead.course_id == course_target.id
+    assert lead.course_name == course_target.name
+    assert {alias.normalized_name for alias in target.aliases} == {"ua", "universidade antiga"}
+    assert {alias.normalized_name for alias in merged_course.aliases} == {"ca", "curso antigo"}
+
+    normalized_from_merged_name = await lead_client.post(
+        "/api/v1/public/leads/students",
+        json={
+            "full_name": "Jean Sammet",
+            "email": "jean@example.com",
+            "institution_name": institution_source.name,
+            "course_name": course_source.name,
+            "privacy_consent": True,
+        },
+    )
+    assert normalized_from_merged_name.status_code == 201
+    async with lead_client.lead_session_factory() as session:
+        normalized_lead = await session.scalar(select(Lead).where(Lead.email == "jean@example.com"))
+    assert normalized_lead.institution_id == institution_target.id
+    assert normalized_lead.course_id == course_target.id
+
+    self_merge = await lead_client.post(
+        f"/api/v1/leads/catalog/institutions/{institution_target.id}/merge",
+        headers=headers,
+        json={"target_id": str(institution_target.id)},
+    )
+    assert self_merge.status_code == 409
+    already_approved = await lead_client.patch(
+        f"/api/v1/leads/catalog/institutions/{institution_target.id}/approve",
+        headers=headers,
+    )
+    missing_merge = await lead_client.post(
+        f"/api/v1/leads/catalog/institutions/{uuid.uuid4()}/merge",
+        headers=headers,
+        json={"target_id": str(institution_target.id)},
+    )
+    merged_again = await lead_client.post(
+        f"/api/v1/leads/catalog/institutions/{institution_source.id}/merge",
+        headers=headers,
+        json={"target_id": str(institution_target.id)},
+    )
+    invalid_target = await lead_client.post(
+        f"/api/v1/leads/catalog/institutions/{institution_target.id}/merge",
+        headers=headers,
+        json={"target_id": str(institution_source.id)},
+    )
+    assert already_approved.status_code == 409
+    assert missing_merge.status_code == 404
+    assert merged_again.status_code == 409
+    assert invalid_target.status_code == 409

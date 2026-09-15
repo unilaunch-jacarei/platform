@@ -6,7 +6,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from backend.database import get_db
 from backend.domains.leads.manager import lead_service
 from backend.domains.leads.schemas import (
+    CatalogAdminRead,
     CatalogItemRead,
+    CatalogMergeInput,
+    CatalogStatus,
     InterestAreaRead,
     LeadCreate,
     LeadPublicCreate,
@@ -121,6 +124,90 @@ async def list_public_interest_areas(
 ) -> list[InterestAreaRead]:
     items = await lead_service.list_interest_areas(session)
     return [InterestAreaRead.model_validate(item) for item in items]
+
+
+@leads_router.get(
+    "/catalog/institutions",
+    response_model=list[CatalogAdminRead],
+)
+async def list_admin_institutions(
+    catalog_status: CatalogStatus | None = Query(default=CatalogStatus.PENDING, alias="status"),
+    limit: int = Query(default=100, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
+    _user: User = Depends(current_superuser),
+    session: AsyncSession = Depends(get_db),
+) -> list[CatalogAdminRead]:
+    items = await lead_service.list_institutions(session, catalog_status, limit, offset)
+    return [CatalogAdminRead.model_validate(item) for item in items]
+
+
+@leads_router.patch(
+    "/catalog/institutions/{item_id}/approve",
+    response_model=CatalogAdminRead,
+)
+async def approve_admin_institution(
+    item_id: uuid.UUID,
+    user: User = Depends(current_superuser),
+    session: AsyncSession = Depends(get_db),
+) -> CatalogAdminRead:
+    item = await lead_service.approve_institution(session, item_id, user.id)
+    return CatalogAdminRead.model_validate(item)
+
+
+@leads_router.post(
+    "/catalog/institutions/{item_id}/merge",
+    response_model=CatalogAdminRead,
+)
+async def merge_admin_institution(
+    item_id: uuid.UUID,
+    data: CatalogMergeInput,
+    user: User = Depends(current_superuser),
+    session: AsyncSession = Depends(get_db),
+) -> CatalogAdminRead:
+    item = await lead_service.merge_institution(session, item_id, data.target_id, user.id)
+    return CatalogAdminRead.model_validate(item)
+
+
+@leads_router.get(
+    "/catalog/courses",
+    response_model=list[CatalogAdminRead],
+)
+async def list_admin_courses(
+    catalog_status: CatalogStatus | None = Query(default=CatalogStatus.PENDING, alias="status"),
+    limit: int = Query(default=100, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
+    _user: User = Depends(current_superuser),
+    session: AsyncSession = Depends(get_db),
+) -> list[CatalogAdminRead]:
+    items = await lead_service.list_courses(session, catalog_status, limit, offset)
+    return [CatalogAdminRead.model_validate(item) for item in items]
+
+
+@leads_router.patch(
+    "/catalog/courses/{item_id}/approve",
+    response_model=CatalogAdminRead,
+)
+async def approve_admin_course(
+    item_id: uuid.UUID,
+    user: User = Depends(current_superuser),
+    session: AsyncSession = Depends(get_db),
+) -> CatalogAdminRead:
+    item = await lead_service.approve_course(session, item_id, user.id)
+    return CatalogAdminRead.model_validate(item)
+
+
+@leads_router.post(
+    "/catalog/courses/{item_id}/merge",
+    response_model=CatalogAdminRead,
+)
+async def merge_admin_course(
+    item_id: uuid.UUID,
+    data: CatalogMergeInput,
+    user: User = Depends(current_superuser),
+    session: AsyncSession = Depends(get_db),
+) -> CatalogAdminRead:
+    item = await lead_service.merge_course(session, item_id, data.target_id, user.id)
+    return CatalogAdminRead.model_validate(item)
 
 
 @leads_router.get("", response_model=list[LeadRead])

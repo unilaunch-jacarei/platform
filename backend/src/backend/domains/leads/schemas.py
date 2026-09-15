@@ -148,6 +148,28 @@ class CatalogReferenceRead(CatalogItemRead):
     status: CatalogStatus
 
 
+class CatalogAliasRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    name: str
+
+
+class CatalogAdminRead(CatalogReferenceRead):
+    aliases: list[CatalogAliasRead]
+    merged_into_id: uuid.UUID | None
+    reviewed_by_id: uuid.UUID | None
+    reviewed_at: datetime | None
+    created_at: datetime
+    updated_at: datetime
+
+
+class CatalogMergeInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    target_id: uuid.UUID
+
+
 class LeadRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
