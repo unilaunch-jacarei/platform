@@ -1,7 +1,24 @@
 services:
+  migrate:
+    image: ghcr.io/${GHCR_OWNER:?Defina GHCR_OWNER}/platform-back:staging
+    command: ["alembic", "upgrade", "head"]
+    restart: "no"
+    environment:
+      DATABASE_URL: ${DATABASE_URL:?Defina DATABASE_URL}
+      JWT_SECRET: ${JWT_SECRET:?Defina JWT_SECRET}
+      INTERNAL_SECRET: ${INTERNAL_SECRET:?Defina INTERNAL_SECRET}
+      RATE_LIMIT_STORAGE_URI: ${RATE_LIMIT_STORAGE_URI:?Defina RATE_LIMIT_STORAGE_URI, por exemplo redis://redis:6379/0}
+      ENVIRONMENT: staging
+      PUBLIC_APP_URL: ${PUBLIC_APP_URL:?Defina PUBLIC_APP_URL}
+    networks:
+      - platform
+
   backend:
     image: ghcr.io/${GHCR_OWNER:?Defina GHCR_OWNER}/platform-back:staging
     restart: unless-stopped
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
     environment:
       DATABASE_URL: ${DATABASE_URL:?Defina DATABASE_URL}
       JWT_SECRET: ${JWT_SECRET:?Defina JWT_SECRET}
@@ -30,7 +47,8 @@ services:
     image: ghcr.io/${GHCR_OWNER:?Defina GHCR_OWNER}/platform-front:staging
     restart: unless-stopped
     depends_on:
-      - backend
+      backend:
+        condition: service_started
     environment:
       BACKEND_URL: http://backend:8000
       INTERNAL_SECRET: ${INTERNAL_SECRET:?Defina INTERNAL_SECRET}
