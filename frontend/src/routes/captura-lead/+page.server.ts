@@ -5,6 +5,7 @@ import type { LeadFormValues } from '$lib/lead-form';
 
 const getSource = (value: string | null) => value ?? 'direct';
 const optionalValue = (value: string) => value || undefined;
+const getRequestId = (request: Request) => request.headers.get('X-Request-ID') ?? crypto.randomUUID();
 
 function getBackendError(body: unknown): string | undefined {
 	if (!body || typeof body !== 'object') return undefined;
@@ -24,7 +25,7 @@ function getBackendError(body: unknown): string | undefined {
 	return undefined;
 }
 
-export const load: PageServerLoad = async ({ url, getClientAddress }) => {
+export const load: PageServerLoad = async ({ url, request, getClientAddress }) => {
 	const source = getSource(url.searchParams.get('o'));
 
 	try {
@@ -32,8 +33,11 @@ export const load: PageServerLoad = async ({ url, getClientAddress }) => {
 			method: 'POST',
 			headers: {
 				'Idempotency-Key': crypto.randomUUID(),
-				'X-Forwarded-For': getClientAddress()
+				'X-Forwarded-For': getClientAddress(),
+				'X-Request-ID': getRequestId(request)
 			}
+		}).then((response) => {
+			if (!response.ok) console.warn('lead_view_tracking_failed', response.status);
 		});
 	} catch {
 		// A tracking failure must not block the public form.
@@ -52,8 +56,8 @@ export const actions: Actions = {
 			job_title: String(form.get('job_title') ?? '').trim(),
 			company_size: String(form.get('company_size') ?? '').trim(),
 			website: String(form.get('website') ?? '').trim(),
-			message: String(form.get('message') ?? '').trim()
-			, privacy_consent: form.get('privacy_consent') === 'on'
+			message: String(form.get('message') ?? '').trim(),
+			privacy_consent: form.get('privacy_consent') === 'on'
 		};
 
 		if (!values.full_name || !values.email || !values.company_name || !values.privacy_consent) {
@@ -69,7 +73,8 @@ export const actions: Actions = {
 				method: 'POST',
 				headers: {
 					'content-type': 'application/json',
-					'X-Forwarded-For': getClientAddress()
+					'X-Forwarded-For': getClientAddress(),
+					'X-Request-ID': getRequestId(request)
 				},
 				body: JSON.stringify({
 					...values,

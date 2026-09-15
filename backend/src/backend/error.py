@@ -68,7 +68,11 @@ def register_exception_handlers(app: FastAPI) -> None:
     @app.exception_handler(AppException)
     async def app_exception_handler(request: Request, exc: AppException) -> JSONResponse:
         if exc.status_code >= 500:
-            logger.error("Erro interno da aplicação: %s", exc.message, exc_info=True)
+            logger.error(
+                "Erro interno da aplicação code=%s status=%s",
+                exc.code,
+                exc.status_code,
+            )
         return JSONResponse(
             status_code=exc.status_code,
             content={
@@ -93,7 +97,7 @@ def register_exception_handlers(app: FastAPI) -> None:
 
     @app.exception_handler(Exception)
     async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
-        logger.error("Exceção não tratada na requisição: %s", exc, exc_info=True)
+        logger.error("Exceção não tratada na requisição tipo=%s", type(exc).__name__)
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content={"error": "Erro interno da aplicação", "code": "internal_error"},

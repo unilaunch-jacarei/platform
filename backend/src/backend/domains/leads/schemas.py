@@ -75,6 +75,7 @@ class LeadRead(BaseModel):
     website: HttpUrl | None
     message: str | None
     privacy_consent: bool
+    privacy_policy_version: str
     privacy_consent_at: datetime
     source: str
     status: LeadStatus

@@ -58,6 +58,10 @@ async def test_public_lead_submission_and_page_view(lead_client: AsyncClient):
     trace = await lead_client.get("/health", headers={"X-Request-ID": "trace-test-1"})
     assert trace.headers["X-Request-ID"] == "trace-test-1"
 
+    metrics = await lead_client.get("/metrics")
+    assert metrics.status_code == 200
+    assert b"http_requests_total" in metrics.content
+
     view_headers = {"Idempotency-Key": "view-request-1"}
     first_view = await lead_client.post(
         "/api/v1/public/leads/views?o=instagram", headers=view_headers

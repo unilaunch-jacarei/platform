@@ -4,8 +4,9 @@ import uuid
 from contextlib import asynccontextmanager
 
 import uvicorn
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
+from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 from slowapi.middleware import SlowAPIMiddleware
 
 from backend.config import get_settings
@@ -14,6 +15,7 @@ from backend.domains.leads.routes import leads_router, public_leads_router
 from backend.domains.usuarios.routes import auth_router, users_router
 from backend.error import register_exception_handlers
 from backend.infra.limiter import limiter
+from backend.infra.metrics import http_request_duration, http_request_errors, http_requests
 
 request_logger = logging.getLogger("backend.request")
 
@@ -50,8 +52,25 @@ def create_app() -> FastAPI:
             request_id = str(uuid.uuid4())
 
         started_at = time.perf_counter()
-        response = await call_next(request)
+        try:
+            response = await call_next(request)
+        except Exception:
+            route = request.scope.get("route")
+            route_name = route.path if route is not None else "unmatched"
+            labels = {"method": request.method, "route": route_name}
+            http_requests.labels(**labels, status_code="500").inc()
+            http_request_errors.labels(**labels, status_class="5xx").inc()
+            http_request_duration.labels(**labels).observe(time.perf_counter() - started_at)
+            raise
+
         elapsed_ms = (time.perf_counter() - started_at) * 1000
+        route = request.scope.get("route")
+        route_name = route.path if route is not None else "unmatched"
+        labels = {"method": request.method, "route": route_name}
+        http_requests.labels(**labels, status_code=str(response.status_code)).inc()
+        if response.status_code >= 500:
+            http_request_errors.labels(**labels, status_class="5xx").inc()
+        http_request_duration.labels(**labels).observe(elapsed_ms / 1000)
         response.headers["X-Request-ID"] = request_id
         request_logger.info(
             "request_completed request_id=%s method=%s path=%s status=%s duration_ms=%.2f",
@@ -79,6 +98,10 @@ def create_app() -> FastAPI:
     @app.get("/health", tags=["health"])
     async def health():
         return {"status": "ok"}
+
+    @app.get("/metrics", include_in_schema=False)
+    async def metrics() -> Response:
+        return Response(content=generate_latest(), media_type=CONTENT_TYPE_LATEST)
 
     # Include Routers with /api/v1 prefix
     app.include_router(auth_router, prefix="/api/v1")

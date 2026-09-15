@@ -47,7 +47,9 @@
 				<textarea name="message" rows="4" class="rounded-md border border-border bg-input-background px-3 py-2 text-sm text-foreground">{form?.values?.message ?? ''}</textarea>
 			</label>
 
-			<FormCheckbox id="privacy_consent" name="privacy_consent" label="Aceito a política de privacidade." checked={form?.values?.privacy_consent ?? false} required />
+			<FormCheckbox id="privacy_consent" name="privacy_consent" checked={form?.values?.privacy_consent ?? false} required>
+				<span>Aceito a <a href="/politica-privacidade" class="text-accent underline">política de privacidade</a>.</span>
+			</FormCheckbox>
 			<FormButton {submitting} loadingText="Enviando...">Enviar meus dados</FormButton>
 		</form>
 	{/if}

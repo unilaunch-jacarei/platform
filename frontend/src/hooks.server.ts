@@ -38,7 +38,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 	}
 
 	const isApiRoute = pathname.startsWith('/api/');
-	const isPublicPage = ['/login', '/cadastro', '/recuperar-senha', '/reset-password', '/playground', '/captura-lead'].some(
+	const isPublicPage = ['/login', '/cadastro', '/recuperar-senha', '/reset-password', '/playground', '/captura-lead', '/politica-privacidade'].some(
 		(path) => pathname === path || pathname.startsWith(`${path}/`)
 	);
 	if (sessionUnavailable && !isApiRoute && !isPublicPage) {
