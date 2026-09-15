@@ -3,7 +3,7 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 import pytest_asyncio
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
@@ -346,3 +346,80 @@ async def test_catalog_admin_service_validates_approval_and_merge(lead_session: 
     with pytest.raises(ConflictError):
         await service.merge_institution(lead_session, source.id, target.id, reviewer_id)
     await lead_session.rollback()
+
+
+@pytest.mark.asyncio
+async def test_student_leads_can_be_summarized_and_purged(lead_session: AsyncSession):
+    institution = EducationalInstitution(
+        name="Universidade Canônica",
+        normalized_name="universidade canonica",
+        status=CatalogStatus.APPROVED,
+    )
+    course = AcademicCourse(
+        name="Sistemas de Informação",
+        normalized_name="sistemas de informacao",
+        status=CatalogStatus.APPROVED,
+    )
+    backend = InterestArea(code="backend", name="Backend")
+    product = InterestArea(code="product", name="Produto")
+    lead_session.add_all([institution, course, backend, product])
+    await lead_session.commit()
+
+    service = LeadService()
+    first = await service.create(
+        lead_session,
+        StudentLeadCreate(
+            full_name="Ada Lovelace",
+            email="ada.summary@example.com",
+            institution_id=institution.id,
+            course_id=course.id,
+            semester_number=3,
+            interest_area_ids=[backend.id, product.id],
+            privacy_consent=True,
+        ),
+    )
+    second = await service.create(
+        lead_session,
+        StudentLeadCreate(
+            full_name="Grace Hopper",
+            email="grace.summary@example.com",
+            institution_id=institution.id,
+            course_id=course.id,
+            semester_number=3,
+            interest_area_ids=[backend.id],
+            privacy_consent=True,
+        ),
+    )
+
+    academic_summary = list(
+        await lead_session.execute(
+            select(
+                Lead.institution_id,
+                Lead.course_id,
+                Lead.semester_number,
+                func.count(Lead.id),
+            )
+            .where(Lead.lead_type == LeadType.STUDENT)
+            .group_by(Lead.institution_id, Lead.course_id, Lead.semester_number)
+        )
+    )
+    area_summary = dict(
+        (
+            await lead_session.execute(
+                select(
+                    LeadInterestArea.interest_area_id, func.count(LeadInterestArea.lead_id)
+                ).group_by(LeadInterestArea.interest_area_id)
+            )
+        ).all()
+    )
+
+    assert academic_summary == [(institution.id, course.id, 3, 2)]
+    assert area_summary == {backend.id: 2, product.id: 1}
+
+    first.created_at = datetime.now(UTC) - timedelta(days=400)
+    second.created_at = datetime.now(UTC) - timedelta(days=400)
+    await lead_session.commit()
+    assert await service.purge_before(lead_session, datetime.now(UTC)) == 2
+    assert await lead_session.scalar(select(func.count()).select_from(LeadInterestArea)) == 0
+    assert await lead_session.scalar(select(func.count()).select_from(InterestArea)) == 2
+    assert await lead_session.scalar(select(func.count()).select_from(EducationalInstitution)) == 1

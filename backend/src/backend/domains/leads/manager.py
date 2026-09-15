@@ -131,6 +131,10 @@ class LeadService:
         await session.commit()
 
     async def purge_before(self, session: AsyncSession, cutoff: datetime) -> int:
+        expired_leads = select(Lead.id).where(Lead.created_at < cutoff)
+        await session.execute(
+            delete(LeadInterestArea).where(LeadInterestArea.lead_id.in_(expired_leads))
+        )
         result = await session.execute(delete(Lead).where(Lead.created_at < cutoff))
         await session.commit()
         return result.rowcount or 0
