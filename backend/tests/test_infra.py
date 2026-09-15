@@ -6,6 +6,7 @@ from httpx import ASGITransport, AsyncClient
 
 from backend.error import UnauthorizedError
 from backend.infra.hmac import HmacAuthMiddleware, verify_hmac_signature
+from backend.infra.limiter import get_client_address
 from backend.infra.password import hash_password, verify_password
 from backend.infra.security import CurrentUserId, get_current_user_id
 
@@ -120,3 +121,17 @@ async def test_get_current_user_id_fallback():
     empty_req = Request({"type": "http", "headers": []})
     with pytest.raises(UnauthorizedError):
         await get_current_user_id(empty_req)
+
+
+def test_client_address_rejects_invalid_forwarded_ip():
+    request = Request(
+        {
+            "type": "http",
+            "headers": [
+                (b"x-client-ip", b"not-an-ip"),
+                (b"x-client-ip-signature", b"invalid"),
+            ],
+            "client": ("127.0.0.1", 1234),
+        }
+    )
+    assert get_client_address(request) == "127.0.0.1"

@@ -1,21 +1,28 @@
+import logging
+import secrets
+import time
+import uuid
 from contextlib import asynccontextmanager
 
 import uvicorn
-from fastapi import FastAPI
+from fastapi import FastAPI, Header, HTTPException, Request, Response, status
 from fastapi.middleware.cors import CORSMiddleware
+from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 from slowapi.middleware import SlowAPIMiddleware
 
 from backend.config import get_settings
-from backend.database import close_db, init_db
+from backend.database import close_db
+from backend.domains.leads.routes import leads_router, public_leads_router
 from backend.domains.usuarios.routes import auth_router, users_router
 from backend.error import register_exception_handlers
 from backend.infra.limiter import limiter
+from backend.infra.metrics import http_request_duration, http_request_errors, http_requests
+
+request_logger = logging.getLogger("backend.request")
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Initialize database schemas
-    await init_db()
     yield
     # Cleanup database connection pool
     await close_db()
@@ -39,6 +46,44 @@ def create_app() -> FastAPI:
     # Rate Limiter Middleware
     app.add_middleware(SlowAPIMiddleware)
 
+    @app.middleware("http")
+    async def request_tracing(request: Request, call_next):
+        request_id = request.headers.get("X-Request-ID")
+        if not request_id or len(request_id) > 128:
+            request_id = str(uuid.uuid4())
+
+        started_at = time.perf_counter()
+        try:
+            response = await call_next(request)
+        except Exception:
+            route = request.scope.get("route")
+            route_name = route.path if route is not None else "unmatched"
+            labels = {"method": request.method, "route": route_name}
+            http_requests.labels(**labels, status_code="500").inc()
+            http_request_errors.labels(**labels, status_class="5xx").inc()
+            http_request_duration.labels(**labels).observe(time.perf_counter() - started_at)
+            raise
+
+        elapsed_ms = (time.perf_counter() - started_at) * 1000
+        route = request.scope.get("route")
+        route_name = route.path if route is not None else "unmatched"
+        labels = {"method": request.method, "route": route_name}
+        http_requests.labels(**labels, status_code=str(response.status_code)).inc()
+        if response.status_code >= 400:
+            status_class = f"{response.status_code // 100}xx"
+            http_request_errors.labels(**labels, status_class=status_class).inc()
+        http_request_duration.labels(**labels).observe(elapsed_ms / 1000)
+        response.headers["X-Request-ID"] = request_id
+        request_logger.info(
+            "request_completed request_id=%s method=%s path=%s status=%s duration_ms=%.2f",
+            request_id,
+            request.method,
+            request.url.path,
+            response.status_code,
+            elapsed_ms,
+        )
+        return response
+
     # CORS
     app.add_middleware(
         CORSMiddleware,
@@ -56,9 +101,19 @@ def create_app() -> FastAPI:
     async def health():
         return {"status": "ok"}
 
+    @app.get("/metrics", include_in_schema=False)
+    async def metrics(authorization: str | None = Header(default=None)) -> Response:
+        if settings.metrics_token:
+            expected = f"Bearer {settings.metrics_token}"
+            if authorization is None or not secrets.compare_digest(authorization, expected):
+                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+        return Response(content=generate_latest(), media_type=CONTENT_TYPE_LATEST)
+
     # Include Routers with /api/v1 prefix
     app.include_router(auth_router, prefix="/api/v1")
     app.include_router(users_router, prefix="/api/v1")
+    app.include_router(public_leads_router, prefix="/api/v1")
+    app.include_router(leads_router, prefix="/api/v1")
 
     return app
 

@@ -29,6 +29,14 @@ class Settings(BaseSettings):
         validation_alias="INTERNAL_SECRET",
     )
 
+    # Shared storage for rate limiting across backend replicas
+    rate_limit_storage_uri: str = Field(
+        default="memory://",
+        validation_alias="RATE_LIMIT_STORAGE_URI",
+    )
+    metrics_token: str | None = Field(default=None, validation_alias="METRICS_TOKEN")
+    lead_retention_days: int = Field(default=365, ge=1, validation_alias="LEAD_RETENTION_DAYS")
+
     # JWT and Auth Settings
     jwt_secret: str = Field(
         default="platform-dev-super-secret-jwt-key-32chars!",
@@ -61,13 +69,26 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def validate_production_secrets(self) -> "Settings":
-        if self.environment.lower() == "production":
+        environment = self.environment.lower()
+        if environment in {"production", "staging"} and (
+            not self.metrics_token or len(self.metrics_token) < 32
+        ):
+            raise ValueError("METRICS_TOKEN deve possuir no mínimo 32 caracteres no deploy")
+        if environment == "production":
             if len(self.jwt_secret) < 32 or "dev" in self.jwt_secret.lower():
                 msg = (
                     "Em produção, JWT_SECRET deve possuir no mínimo 32 caracteres seguros "
                     "e não utilizar o valor padrão!"
                 )
                 raise ValueError(msg)
+            if len(self.internal_secret) < 32 or self.internal_secret == "change-me-in-production":
+                raise ValueError(
+                    "Em produção, INTERNAL_SECRET deve possuir no mínimo 32 caracteres"
+                )
+            if self.rate_limit_storage_uri == "memory://":
+                raise ValueError(
+                    "Em produção, RATE_LIMIT_STORAGE_URI deve usar storage compartilhado"
+                )
             if not self.smtp_host or not self.smtp_from_email:
                 raise ValueError("Em produção, SMTP_HOST e SMTP_FROM_EMAIL são obrigatórios")
         return self
