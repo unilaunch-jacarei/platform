@@ -15,7 +15,7 @@
 	const handleSubmit = trackFormSubmission((value) => (submitting = value));
 </script>
 
-<Card class="max-w-4xl overflow-hidden border-primary/25 bg-card/95 p-0 shadow-[0_24px_80px_rgba(0,0,0,0.42),0_0_0_1px_rgba(124,58,237,0.06)] backdrop-blur-xl">
+<Card style="max-width: min(64rem, 100%);" class="overflow-hidden border-primary/25 bg-card/95 p-0 shadow-[0_24px_80px_rgba(0,0,0,0.42),0_0_0_1px_rgba(124,58,237,0.06)] backdrop-blur-xl">
 	<div class="grid lg:grid-cols-[0.72fr_1.28fr]">
 		<section class="relative overflow-hidden border-b border-border bg-linear-to-br from-primary/20 via-card to-accent/10 p-6 sm:p-8 lg:border-r lg:border-b-0 lg:p-10">
 			<div aria-hidden="true" class="absolute -top-20 -left-20 size-56 rounded-full bg-primary/20 blur-3xl"></div>
