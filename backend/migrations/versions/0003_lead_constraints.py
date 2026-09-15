@@ -3,6 +3,7 @@
 Revision ID: 0003_lead_constraints
 Revises: 0002_leads
 """
+
 from typing import Sequence
 
 from alembic import op

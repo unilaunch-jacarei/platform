@@ -3,6 +3,7 @@
 Revision ID: 0004_privacy_policy_version
 Revises: 0003_lead_constraints
 """
+
 from typing import Sequence
 
 import sqlalchemy as sa

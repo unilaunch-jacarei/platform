@@ -3,6 +3,7 @@
 Revision ID: 0002_leads
 Revises: 0001_baseline
 """
+
 from typing import Sequence
 
 import sqlalchemy as sa

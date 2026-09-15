@@ -3,6 +3,7 @@
 Revision ID: 0001_baseline
 Revises:
 """
+
 from typing import Sequence
 
 import sqlalchemy as sa
