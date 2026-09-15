@@ -3,10 +3,12 @@ import uuid
 import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from backend.config import Settings, get_settings
 from backend.database import Base, get_db
+from backend.domains.usuarios.models import User
 from backend.infra.limiter import limiter
 from backend.main import create_app
 
@@ -36,6 +38,7 @@ async def lead_client():
     app.dependency_overrides[get_settings] = lambda: settings
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
+        client.lead_session_factory = factory
         yield client
     await engine.dispose()
 
@@ -128,6 +131,10 @@ async def test_authenticated_lead_management(lead_client: AsyncClient):
             "nome": "Admin",
         },
     )
+    async with lead_client.lead_session_factory() as session:
+        user = await session.scalar(select(User).where(User.email == "admin@example.com"))
+        user.is_superuser = True
+        await session.commit()
     login = await lead_client.post(
         "/api/v1/auth/jwt/login",
         data={"username": "admin@example.com", "password": "SenhaSegura12345"},
@@ -157,3 +164,23 @@ async def test_authenticated_lead_management(lead_client: AsyncClient):
 
     missing = await lead_client.get(f"/api/v1/leads/{uuid.uuid4()}", headers=headers)
     assert missing.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_regular_user_cannot_manage_leads(lead_client: AsyncClient):
+    await lead_client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "regular@example.com",
+            "password": "SenhaSegura12345",
+            "nome": "Regular",
+        },
+    )
+    login = await lead_client.post(
+        "/api/v1/auth/jwt/login",
+        data={"username": "regular@example.com", "password": "SenhaSegura12345"},
+    )
+    headers = {"Authorization": f"Bearer {login.json()['access_token']}"}
+
+    response = await lead_client.get("/api/v1/leads", headers=headers)
+    assert response.status_code == 403

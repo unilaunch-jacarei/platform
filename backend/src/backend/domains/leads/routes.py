@@ -12,7 +12,7 @@ from backend.domains.leads.schemas import (
     LeadSubmissionRead,
     LeadViewCreate,
 )
-from backend.domains.usuarios.auth import current_active_user
+from backend.domains.usuarios.auth import current_superuser
 from backend.domains.usuarios.models import User
 from backend.infra.limiter import limiter
 
@@ -60,7 +60,7 @@ async def create_public_lead(
 
 @leads_router.get("", response_model=list[LeadRead])
 async def list_leads(
-    _user: User = Depends(current_active_user),
+    _user: User = Depends(current_superuser),
     limit: int = Query(default=100, ge=1, le=100),
     offset: int = Query(default=0, ge=0),
     session: AsyncSession = Depends(get_db),
@@ -72,7 +72,7 @@ async def list_leads(
 @leads_router.get("/{lead_id}", response_model=LeadRead)
 async def get_lead(
     lead_id: uuid.UUID,
-    _user: User = Depends(current_active_user),
+    _user: User = Depends(current_superuser),
     session: AsyncSession = Depends(get_db),
 ) -> LeadRead:
     lead = await lead_service.get(session, lead_id)
@@ -83,7 +83,7 @@ async def get_lead(
 async def update_lead_status(
     lead_id: uuid.UUID,
     data: LeadStatusUpdate,
-    _user: User = Depends(current_active_user),
+    _user: User = Depends(current_superuser),
     session: AsyncSession = Depends(get_db),
 ) -> LeadRead:
     lead = await lead_service.update_status(session, lead_id, data)
