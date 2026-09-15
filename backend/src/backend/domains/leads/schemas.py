@@ -7,36 +7,43 @@ from backend.domains.leads.models import CompanySize, LeadStatus
 
 
 class LeadContactInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     full_name: str = Field(min_length=2, max_length=255)
     email: EmailStr
 
-    @field_validator("full_name")
+    @field_validator("full_name", mode="before")
     @classmethod
     def normalize_full_name(cls, value: str) -> str:
+        if not isinstance(value, str):
+            return value
         return " ".join(value.split())
 
-    @field_validator("email")
+    @field_validator("email", mode="before")
     @classmethod
     def normalize_email(cls, value: EmailStr) -> str:
         return str(value).strip().lower()
 
 
 class LeadCompanyInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     company_name: str = Field(min_length=2, max_length=255)
     job_title: str | None = Field(default=None, max_length=120)
     company_size: CompanySize | None = None
     website: HttpUrl | None = None
     message: str | None = Field(default=None, max_length=2000)
 
-    @field_validator("company_name", "job_title", "message")
+    @field_validator("company_name", "job_title", "message", mode="before")
     @classmethod
     def normalize_text(cls, value: str | None) -> str | None:
-        return " ".join(value.split()) if value is not None else None
+        if value is None or not isinstance(value, str):
+            return value
+        return " ".join(value.split())
 
 
-class LeadCreate(LeadContactInput, LeadCompanyInput):
+class LeadPublicCreate(LeadContactInput, LeadCompanyInput):
     privacy_consent: bool = Field(..., description="Must be true to submit a lead")
-    source: str = Field(default="direct", max_length=255)
 
     @field_validator("privacy_consent")
     @classmethod
@@ -45,7 +52,12 @@ class LeadCreate(LeadContactInput, LeadCompanyInput):
             raise ValueError("privacy_consent must be true")
         return value
 
-    @field_validator("source")
+
+class LeadCreate(LeadPublicCreate):
+    privacy_consent: bool = Field(..., description="Must be true to submit a lead")
+    source: str = Field(default="direct", max_length=255)
+
+    @field_validator("source", mode="before")
     @classmethod
     def normalize_source(cls, value: str) -> str:
         return value.strip()
@@ -82,10 +94,11 @@ class LeadStatusUpdate(BaseModel):
 
 
 class LeadViewCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     event_key: str = Field(min_length=1, max_length=255)
     source: str = Field(default="direct", max_length=255)
 
-    @field_validator("event_key", "source")
+    @field_validator("event_key", "source", mode="before")
     @classmethod
     def normalize_value(cls, value: str) -> str:
         return value.strip()

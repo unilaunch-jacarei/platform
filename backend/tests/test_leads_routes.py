@@ -108,6 +108,18 @@ async def test_public_routes_validate_request_data(lead_client: AsyncClient):
     )
     assert invalid_lead.status_code == 422
 
+    extra_field = await lead_client.post(
+        "/api/v1/public/leads",
+        json={
+            "full_name": "Valid Name",
+            "email": "valid@example.com",
+            "company_name": "Valid Company",
+            "privacy_consent": True,
+            "owner_id": str(uuid.uuid4()),
+        },
+    )
+    assert extra_field.status_code == 422
+
     invalid_id = await lead_client.get("/api/v1/leads/not-an-uuid")
     assert invalid_id.status_code == 401
 

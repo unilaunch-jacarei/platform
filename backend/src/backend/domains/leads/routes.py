@@ -7,6 +7,7 @@ from backend.database import get_db
 from backend.domains.leads.manager import lead_service
 from backend.domains.leads.schemas import (
     LeadCreate,
+    LeadPublicCreate,
     LeadRead,
     LeadStatusUpdate,
     LeadSubmissionRead,
@@ -49,11 +50,11 @@ async def register_lead_page_view(
 @limiter.limit("5/hour")
 async def create_public_lead(
     request: Request,
-    data: LeadCreate,
+    data: LeadPublicCreate,
     o: str = Query(default="direct", max_length=255),
     session: AsyncSession = Depends(get_db),
 ) -> LeadSubmissionRead:
-    data = data.model_copy(update={"source": o})
+    data = LeadCreate.model_validate({**data.model_dump(), "source": o})
     lead = await lead_service.create(session, data)
     return LeadSubmissionRead.model_validate(lead)
 

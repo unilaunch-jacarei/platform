@@ -3,7 +3,7 @@ from datetime import datetime
 from enum import StrEnum
 
 from fastapi_users_db_sqlalchemy.generics import GUID
-from sqlalchemy import Boolean, DateTime, String, Text, func
+from sqlalchemy import Boolean, CheckConstraint, DateTime, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from backend.database import Base
@@ -29,6 +29,18 @@ class LeadStatus(StrEnum):
 
 class Lead(Base):
     __tablename__ = "leads"
+    __table_args__ = (
+        CheckConstraint(
+            "company_size IS NULL OR company_size IN "
+            "('1-10', '11-50', '51-200', '201-500', '501+')",
+            name="ck_leads_company_size",
+        ),
+        CheckConstraint(
+            "status IN ('new', 'contacted', 'qualified', 'converted', 'discarded')",
+            name="ck_leads_status",
+        ),
+        CheckConstraint("privacy_consent = true", name="ck_leads_privacy_consent"),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(GUID(), primary_key=True, default=uuid.uuid4)
     full_name: Mapped[str] = mapped_column(String(255), nullable=False)
