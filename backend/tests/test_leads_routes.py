@@ -1,3 +1,5 @@
+import hashlib
+import hmac
 import uuid
 
 import pytest
@@ -93,9 +95,19 @@ async def test_public_lead_submission_is_rate_limited(lead_client: AsyncClient):
     assert [response.status_code for response in responses[:5]] == [201] * 5
     assert responses[5].status_code == 429
 
+    forged_visitor = await lead_client.post(
+        "/api/v1/public/leads",
+        headers={"X-Client-IP": "203.0.113.10", "X-Client-IP-Signature": "invalid"},
+        json={**lead_payload(), "email": "forged-visitor@example.com"},
+    )
+    assert forged_visitor.status_code == 429
+
+    client_ip = "203.0.113.10"
+    secret = "change-me-in-production"
+    signature = hmac.new(secret.encode(), client_ip.encode(), hashlib.sha256).hexdigest()
     other_visitor = await lead_client.post(
         "/api/v1/public/leads",
-        headers={"X-Forwarded-For": "203.0.113.10"},
+        headers={"X-Client-IP": client_ip, "X-Client-IP-Signature": signature},
         json={**lead_payload(), "email": "other-visitor@example.com"},
     )
     assert other_visitor.status_code == 201

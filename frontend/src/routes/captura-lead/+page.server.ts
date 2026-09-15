@@ -1,8 +1,10 @@
 import { fail } from '@sveltejs/kit';
+import { env } from '$env/dynamic/private';
 import type { Actions, PageServerLoad } from './$types';
 import { backendFetch } from '$lib/server/backend';
 import type { LeadFormValues } from '$lib/lead-form';
 import { buildLeadPayload, getBackendError, readLeadForm, validateLeadForm } from '$lib/server/lead-capture';
+import { createClientIpHeaders } from '$lib/server/client-ip';
 
 const getSource = (value: string | null) => value ?? 'direct';
 const getRequestId = (request: Request) => request.headers.get('X-Request-ID') ?? crypto.randomUUID();
@@ -15,7 +17,7 @@ export const load: PageServerLoad = async ({ url, request, getClientAddress }) =
 			method: 'POST',
 			headers: {
 				'Idempotency-Key': crypto.randomUUID(),
-				'X-Forwarded-For': getClientAddress(),
+				...createClientIpHeaders(getClientAddress(), env.INTERNAL_SECRET ?? ''),
 				'X-Request-ID': getRequestId(request)
 			}
 		}).then((response) => {
@@ -45,7 +47,7 @@ export const actions: Actions = {
 				method: 'POST',
 				headers: {
 					'content-type': 'application/json',
-					'X-Forwarded-For': getClientAddress(),
+					...createClientIpHeaders(getClientAddress(), env.INTERNAL_SECRET ?? ''),
 					'X-Request-ID': getRequestId(request)
 				},
 				body: JSON.stringify(buildLeadPayload(values))
