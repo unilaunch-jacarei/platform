@@ -1,4 +1,4 @@
-import type { LeadFormValues, StudentLeadFormValues } from '$lib/lead-form';
+import type { LeadFormValues, StudentLeadFormValues, StudentLeadPayload } from '$lib/lead-form';
 
 export function readLeadForm(form: FormData): LeadFormValues {
 	return {
@@ -34,32 +34,51 @@ export function readStudentLeadForm(form: FormData): StudentLeadFormValues {
 	return {
 		full_name: String(form.get('full_name') ?? '').trim(),
 		email: String(form.get('email') ?? '').trim(),
+		institution_id: String(form.get('institution_id') ?? '').trim(),
 		institution_name: String(form.get('institution_name') ?? '').trim(),
+		institution_name_display: String(form.get('institution_name_display') ?? '').trim(),
+		course_id: String(form.get('course_id') ?? '').trim(),
 		course_name: String(form.get('course_name') ?? '').trim(),
-		semester: String(form.get('semester') ?? '').trim(),
+		course_name_display: String(form.get('course_name_display') ?? '').trim(),
+		semester_number: String(form.get('semester_number') ?? '').trim(),
 		linkedin_url: String(form.get('linkedin_url') ?? '').trim(),
 		github_url: String(form.get('github_url') ?? '').trim(),
-		area_of_interest: String(form.get('area_of_interest') ?? '').trim(),
+		interest_area_ids: form.getAll('interest_area_ids').map(String).filter(Boolean),
 		message: String(form.get('message') ?? '').trim(),
 		privacy_consent: form.get('privacy_consent') === 'on'
 	};
 }
 
 export function validateStudentLeadForm(values: StudentLeadFormValues): string | undefined {
-	if (!values.full_name || !values.email || !values.institution_name || !values.course_name || !values.privacy_consent) {
+	const hasInstitution = Boolean(values.institution_id) !== Boolean(values.institution_name);
+	const hasCourse = Boolean(values.course_id) !== Boolean(values.course_name);
+	if (!values.full_name || !values.email || !hasInstitution || !hasCourse || !values.privacy_consent) {
 		return 'Preencha os campos obrigatórios e aceite a política de privacidade.';
+	}
+	if (values.semester_number && !/^(?:[1-9]|1[0-2])$/.test(values.semester_number)) {
+		return 'Selecione um semestre válido entre 1 e 12.';
+	}
+	const areaIds = values.interest_area_ids ?? [];
+	if (areaIds.length > 3 || new Set(areaIds).size !== areaIds.length) {
+		return 'Escolha no máximo três áreas de interesse diferentes.';
 	}
 }
 
-export function buildStudentLeadPayload(values: StudentLeadFormValues): StudentLeadFormValues {
+export function buildStudentLeadPayload(values: StudentLeadFormValues): StudentLeadPayload {
 	const optional = (value?: string) => value || undefined;
 	return {
-		...values,
-		semester: optional(values.semester),
+		full_name: values.full_name,
+		email: values.email,
+		institution_id: optional(values.institution_id),
+		institution_name: values.institution_id ? undefined : optional(values.institution_name),
+		course_id: optional(values.course_id),
+		course_name: values.course_id ? undefined : optional(values.course_name),
+		semester_number: values.semester_number ? Number(values.semester_number) : undefined,
 		linkedin_url: optional(values.linkedin_url),
 		github_url: optional(values.github_url),
-		area_of_interest: optional(values.area_of_interest),
-		message: optional(values.message)
+		interest_area_ids: values.interest_area_ids ?? [],
+		message: optional(values.message),
+		privacy_consent: values.privacy_consent
 	};
 }
 

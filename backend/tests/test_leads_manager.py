@@ -3,12 +3,25 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 import pytest_asyncio
+from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from backend.database import Base
 from backend.domains.leads.manager import LeadService
-from backend.domains.leads.models import CompanySize, Lead, LeadStatus, LeadType
+from backend.domains.leads.models import (
+    AcademicCourse,
+    AcademicCourseAlias,
+    CatalogStatus,
+    CompanySize,
+    EducationalInstitution,
+    EducationalInstitutionAlias,
+    InterestArea,
+    Lead,
+    LeadInterestArea,
+    LeadStatus,
+    LeadType,
+)
 from backend.domains.leads.schemas import (
     LeadCreate,
     LeadStatusUpdate,
@@ -16,7 +29,7 @@ from backend.domains.leads.schemas import (
     StudentLeadCreate,
     StudentLeadPublicCreate,
 )
-from backend.error import NotFoundError
+from backend.error import ConflictError, NotFoundError
 
 
 @pytest_asyncio.fixture
@@ -214,3 +227,242 @@ async def test_database_enforces_type_required_fields(lead_session: AsyncSession
     lead_session.add(lead)
     with pytest.raises(IntegrityError):
         await lead_session.commit()
+
+
+@pytest.mark.asyncio
+async def test_catalog_queries_and_legacy_area_mapping(lead_session: AsyncSession):
+    institution = EducationalInstitution(
+        name="Universidade de Teste",
+        normalized_name="universidade de teste",
+        status=CatalogStatus.APPROVED,
+    )
+    pending_institution = EducationalInstitution(
+        name="Instituição Pendente",
+        normalized_name="instituicao pendente",
+        status=CatalogStatus.PENDING,
+    )
+    course = AcademicCourse(
+        name="Curso de Teste",
+        normalized_name="curso de teste",
+        status=CatalogStatus.APPROVED,
+    )
+    pending_course = AcademicCourse(
+        name="Curso Pendente",
+        normalized_name="curso pendente",
+        status=CatalogStatus.PENDING,
+    )
+    devops = InterestArea(code="devops-cloud", name="DevOps e cloud")
+    lead_session.add_all([institution, pending_institution, course, pending_course, devops])
+    await lead_session.flush()
+    lead_session.add_all(
+        [
+            EducationalInstitutionAlias(
+                institution_id=institution.id,
+                name="Uni Teste",
+                normalized_name="uni teste",
+            ),
+            AcademicCourseAlias(
+                course_id=course.id,
+                name="CT",
+                normalized_name="ct",
+            ),
+        ]
+    )
+    await lead_session.commit()
+
+    service = LeadService()
+    assert await service.search_institutions(lead_session, "uni teste", 10) == [institution]
+    assert await service.search_courses(lead_session, "CT", 10) == [course]
+    assert await service.search_courses(lead_session, "!!", 10) == []
+    assert len(await service.list_institutions(lead_session, None, 10, 0)) == 2
+    assert len(await service.list_courses(lead_session, None, 10, 0)) == 2
+
+    lead = await service.create(
+        lead_session,
+        StudentLeadCreate(
+            full_name="Margaret Hamilton",
+            email="margaret.legacy@example.com",
+            institution_name="Uni Teste",
+            course_name="CT",
+            area_of_interest="DevOps",
+            privacy_consent=True,
+        ),
+    )
+    link = await lead_session.scalar(
+        select(LeadInterestArea).where(LeadInterestArea.lead_id == lead.id)
+    )
+    assert lead.institution_id == institution.id
+    assert lead.course_id == course.id
+    assert link is not None and link.interest_area_id == devops.id
+
+
+@pytest.mark.asyncio
+async def test_catalog_admin_service_validates_approval_and_merge(lead_session: AsyncSession):
+    reviewer_id = uuid.uuid4()
+    pending = EducationalInstitution(
+        name="Instituição em Revisão",
+        normalized_name="instituicao em revisao",
+        status=CatalogStatus.PENDING,
+    )
+    source = EducationalInstitution(
+        name="Instituição Duplicada",
+        normalized_name="instituicao duplicada",
+        status=CatalogStatus.PENDING,
+    )
+    target = EducationalInstitution(
+        name="Instituição Canônica",
+        normalized_name="instituicao canonica",
+        status=CatalogStatus.APPROVED,
+    )
+    alias_owner = EducationalInstitution(
+        name="Outra Instituição",
+        normalized_name="outra instituicao",
+        status=CatalogStatus.APPROVED,
+    )
+    lead_session.add_all([pending, source, target, alias_owner])
+    await lead_session.flush()
+    lead_session.add(
+        EducationalInstitutionAlias(
+            institution_id=alias_owner.id,
+            name=source.name,
+            normalized_name=source.normalized_name,
+        )
+    )
+    await lead_session.commit()
+
+    service = LeadService()
+    approved = await service.approve_institution(lead_session, pending.id, reviewer_id)
+    assert approved.status == CatalogStatus.APPROVED
+    assert approved.reviewed_by_id == reviewer_id
+
+    with pytest.raises(ConflictError):
+        await service.approve_institution(lead_session, pending.id, reviewer_id)
+    with pytest.raises(NotFoundError):
+        await service.approve_institution(lead_session, uuid.uuid4(), reviewer_id)
+    with pytest.raises(ConflictError):
+        await service.merge_institution(lead_session, source.id, source.id, reviewer_id)
+    with pytest.raises(NotFoundError):
+        await service.merge_institution(lead_session, uuid.uuid4(), target.id, reviewer_id)
+    with pytest.raises(ConflictError):
+        await service.merge_institution(lead_session, source.id, target.id, reviewer_id)
+    await lead_session.rollback()
+
+
+@pytest.mark.asyncio
+async def test_catalog_names_follow_successive_merges(lead_session: AsyncSession):
+    institutions = [
+        EducationalInstitution(
+            name=name,
+            normalized_name=name.lower(),
+            status=CatalogStatus.APPROVED,
+        )
+        for name in ("Faculdade A", "Faculdade B", "Faculdade C")
+    ]
+    courses = [
+        AcademicCourse(
+            name=name,
+            normalized_name=name.lower(),
+            status=CatalogStatus.APPROVED,
+        )
+        for name in ("Curso A", "Curso B", "Curso C")
+    ]
+    lead_session.add_all([*institutions, *courses])
+    await lead_session.commit()
+
+    service = LeadService()
+    reviewer_id = uuid.uuid4()
+    await service.merge_institution(
+        lead_session, institutions[0].id, institutions[1].id, reviewer_id
+    )
+    await service.merge_institution(
+        lead_session, institutions[1].id, institutions[2].id, reviewer_id
+    )
+    await service.merge_course(lead_session, courses[0].id, courses[1].id, reviewer_id)
+    await service.merge_course(lead_session, courses[1].id, courses[2].id, reviewer_id)
+
+    resolved_institution = await service._resolve_institution(
+        lead_session, None, institutions[0].name
+    )
+    resolved_course = await service._resolve_course(lead_session, None, courses[0].name)
+
+    assert resolved_institution.id == institutions[2].id
+    assert resolved_institution.status == CatalogStatus.APPROVED
+    assert resolved_course.id == courses[2].id
+    assert resolved_course.status == CatalogStatus.APPROVED
+
+
+@pytest.mark.asyncio
+async def test_student_leads_can_be_summarized_and_purged(lead_session: AsyncSession):
+    institution = EducationalInstitution(
+        name="Universidade Canônica",
+        normalized_name="universidade canonica",
+        status=CatalogStatus.APPROVED,
+    )
+    course = AcademicCourse(
+        name="Sistemas de Informação",
+        normalized_name="sistemas de informacao",
+        status=CatalogStatus.APPROVED,
+    )
+    backend = InterestArea(code="backend", name="Backend")
+    product = InterestArea(code="product", name="Produto")
+    lead_session.add_all([institution, course, backend, product])
+    await lead_session.commit()
+
+    service = LeadService()
+    first = await service.create(
+        lead_session,
+        StudentLeadCreate(
+            full_name="Ada Lovelace",
+            email="ada.summary@example.com",
+            institution_id=institution.id,
+            course_id=course.id,
+            semester_number=3,
+            interest_area_ids=[backend.id, product.id],
+            privacy_consent=True,
+        ),
+    )
+    second = await service.create(
+        lead_session,
+        StudentLeadCreate(
+            full_name="Grace Hopper",
+            email="grace.summary@example.com",
+            institution_id=institution.id,
+            course_id=course.id,
+            semester_number=3,
+            interest_area_ids=[backend.id],
+            privacy_consent=True,
+        ),
+    )
+
+    academic_summary = list(
+        await lead_session.execute(
+            select(
+                Lead.institution_id,
+                Lead.course_id,
+                Lead.semester_number,
+                func.count(Lead.id),
+            )
+            .where(Lead.lead_type == LeadType.STUDENT)
+            .group_by(Lead.institution_id, Lead.course_id, Lead.semester_number)
+        )
+    )
+    area_summary = dict(
+        (
+            await lead_session.execute(
+                select(
+                    LeadInterestArea.interest_area_id, func.count(LeadInterestArea.lead_id)
+                ).group_by(LeadInterestArea.interest_area_id)
+            )
+        ).all()
+    )
+
+    assert academic_summary == [(institution.id, course.id, 3, 2)]
+    assert area_summary == {backend.id: 2, product.id: 1}
+
+    first.created_at = datetime.now(UTC) - timedelta(days=400)
+    second.created_at = datetime.now(UTC) - timedelta(days=400)
+    await lead_session.commit()
+    assert await service.purge_before(lead_session, datetime.now(UTC)) == 2
+    assert await lead_session.scalar(select(func.count()).select_from(LeadInterestArea)) == 0
+    assert await lead_session.scalar(select(func.count()).select_from(InterestArea)) == 2
+    assert await lead_session.scalar(select(func.count()).select_from(EducationalInstitution)) == 1

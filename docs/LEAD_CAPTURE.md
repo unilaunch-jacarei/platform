@@ -21,6 +21,18 @@ lead nesta primeira versão.
 - `website`: opcional, URL válida
 - `message`: opcional, até 2.000 caracteres
 
+### Estudante
+
+- `institution_id` ou `institution_name`: exatamente uma das alternativas
+- `course_id` ou `course_name`: exatamente uma das alternativas
+- `semester_number`: opcional, inteiro entre 1 e 12
+- `interest_area_ids`: zero a três UUIDs distintos de áreas ativas
+- `linkedin_url` e `github_url`: opcionais, URLs válidas
+- `message`: opcional, até 2.000 caracteres
+
+O contrato normalizado, a compatibilidade temporária e a operação dos catálogos estão em
+[`STUDENT_LEAD_NORMALIZATION.md`](./STUDENT_LEAD_NORMALIZATION.md).
+
 ### Consentimento
 
 - `privacy_consent`: obrigatório e deve ser `true`
@@ -56,6 +68,10 @@ O status inicial será `new`. Os status administrativos serão `new`, `contacted
 
 - `POST /api/v1/public/leads/views?o=...`: registra visualização e retorna `204`
 - `POST /api/v1/public/leads?o=...`: cria lead e retorna `201`
+- `POST /api/v1/public/leads/students?o=...`: cria lead estudantil e retorna `201`
+- `GET /api/v1/public/leads/catalog/institutions?q=...`: pesquisa instituições aprovadas
+- `GET /api/v1/public/leads/catalog/courses?q=...`: pesquisa cursos aprovados
+- `GET /api/v1/public/leads/catalog/interest-areas`: lista áreas ativas
 - `GET /api/v1/leads`: lista leads para um superusuário
 - `GET /api/v1/leads/{id}`: consulta um lead para um superusuário
 - `PATCH /api/v1/leads/{id}/status`: altera status do lead
