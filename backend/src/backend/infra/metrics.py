@@ -7,7 +7,7 @@ http_requests = Counter(
 )
 http_request_errors = Counter(
     "http_request_errors_total",
-    "Total de respostas HTTP 5xx",
+    "Total de respostas HTTP 4xx e 5xx",
     ("method", "route", "status_class"),
 )
 http_request_duration = Histogram(

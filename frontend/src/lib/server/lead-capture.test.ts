@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { buildLeadPayload, getBackendError, readLeadForm, validateLeadForm } from './lead-capture';
+import { buildLeadPayload, getBackendError, getLeadErrorStatus, normalizeLeadSource, readLeadForm, validateLeadForm } from './lead-capture';
 
 describe('lead capture helpers', () => {
 	test('normalizes form data and keeps required fields', () => {
@@ -42,5 +42,18 @@ describe('lead capture helpers', () => {
 		expect(getBackendError({ detail: 'Erro simples' })).toBe('Erro simples');
 		expect(getBackendError({ detail: [{ msg: 'Campo inválido' }] })).toBe('Campo inválido');
 		expect(getBackendError({ detail: [{ loc: ['email'] }] })).toBeUndefined();
+	});
+
+	test('preserves operational error status', () => {
+		expect(getLeadErrorStatus(422)).toBe(400);
+		expect(getLeadErrorStatus(429)).toBe(429);
+		expect(getLeadErrorStatus(500)).toBe(503);
+	});
+
+	test('normalizes and limits the lead source', () => {
+		expect(normalizeLeadSource(null)).toBe('direct');
+		expect(normalizeLeadSource('   ')).toBe('direct');
+		expect(normalizeLeadSource('  campaign  ')).toBe('campaign');
+		expect(normalizeLeadSource('a'.repeat(300))).toHaveLength(255);
 	});
 });

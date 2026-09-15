@@ -89,3 +89,13 @@ async def update_lead_status(
 ) -> LeadRead:
     lead = await lead_service.update_status(session, lead_id, data)
     return LeadRead.model_validate(lead)
+
+
+@leads_router.delete("/{lead_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_lead(
+    lead_id: uuid.UUID,
+    _user: User = Depends(current_superuser),
+    session: AsyncSession = Depends(get_db),
+) -> Response:
+    await lead_service.delete(session, lead_id)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

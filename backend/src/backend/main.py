@@ -1,10 +1,11 @@
 import logging
+import secrets
 import time
 import uuid
 from contextlib import asynccontextmanager
 
 import uvicorn
-from fastapi import FastAPI, Request, Response
+from fastapi import FastAPI, Header, HTTPException, Request, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 from slowapi.middleware import SlowAPIMiddleware
@@ -68,8 +69,9 @@ def create_app() -> FastAPI:
         route_name = route.path if route is not None else "unmatched"
         labels = {"method": request.method, "route": route_name}
         http_requests.labels(**labels, status_code=str(response.status_code)).inc()
-        if response.status_code >= 500:
-            http_request_errors.labels(**labels, status_class="5xx").inc()
+        if response.status_code >= 400:
+            status_class = f"{response.status_code // 100}xx"
+            http_request_errors.labels(**labels, status_class=status_class).inc()
         http_request_duration.labels(**labels).observe(elapsed_ms / 1000)
         response.headers["X-Request-ID"] = request_id
         request_logger.info(
@@ -100,7 +102,11 @@ def create_app() -> FastAPI:
         return {"status": "ok"}
 
     @app.get("/metrics", include_in_schema=False)
-    async def metrics() -> Response:
+    async def metrics(authorization: str | None = Header(default=None)) -> Response:
+        if settings.metrics_token:
+            expected = f"Bearer {settings.metrics_token}"
+            if authorization is None or not secrets.compare_digest(authorization, expected):
+                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
         return Response(content=generate_latest(), media_type=CONTENT_TYPE_LATEST)
 
     # Include Routers with /api/v1 prefix

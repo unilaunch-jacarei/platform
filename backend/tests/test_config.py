@@ -63,10 +63,25 @@ def test_production_secret_validation():
         JWT_SECRET="super-strong-production-entropy-key-64-bytes-long-random-string!",
         INTERNAL_SECRET="super-strong-internal-entropy-key-64-bytes-long-random-string!",
         RATE_LIMIT_STORAGE_URI="redis://redis:6379/0",
+        METRICS_TOKEN="super-strong-metrics-token-64-bytes-long-random-string!",
         SMTP_HOST="smtp.example.com",
         SMTP_FROM_EMAIL="contato@example.com",
     )
     assert valid_settings.environment == "production"
+
+    with pytest.raises(ValidationError, match="METRICS_TOKEN"):
+        Settings(
+            _env_file=None,
+            ENVIRONMENT="production",
+            JWT_SECRET="super-strong-production-entropy-key-64-bytes-long-random-string!",
+            INTERNAL_SECRET="super-strong-internal-entropy-key-64-bytes-long-random-string!",
+            RATE_LIMIT_STORAGE_URI="redis://redis:6379/0",
+            SMTP_HOST="smtp.example.com",
+            SMTP_FROM_EMAIL="contato@example.com",
+        )
+
+    with pytest.raises(ValidationError, match="METRICS_TOKEN"):
+        Settings(_env_file=None, ENVIRONMENT="staging")
 
 
 def test_get_settings():

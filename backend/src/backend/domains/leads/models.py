@@ -52,7 +52,7 @@ class Lead(Base):
     message: Mapped[str | None] = mapped_column(Text, nullable=True)
     privacy_consent: Mapped[bool] = mapped_column(Boolean, nullable=False)
     privacy_policy_version: Mapped[str] = mapped_column(
-        String(50), nullable=False, default="v1", server_default="v1"
+        String(50), nullable=False, default="v1.0", server_default="v1.0"
     )
     privacy_consent_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False

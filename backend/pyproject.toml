@@ -23,6 +23,7 @@ dependencies = [
 
 [project.scripts]
 backend = "backend.main:start"
+purge-leads = "backend.cleanup:run"
 
 [dependency-groups]
 dev = [

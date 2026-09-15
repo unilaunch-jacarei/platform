@@ -46,3 +46,13 @@ export function getBackendError(body: unknown): string | undefined {
 		return messages.length ? messages.join(' ') : undefined;
 	}
 }
+
+export function getLeadErrorStatus(status: number): 400 | 429 | 503 {
+	if (status === 429) return 429;
+	if (status >= 500) return 503;
+	return 400;
+}
+
+export function normalizeLeadSource(source: string | null): string {
+	return (source?.trim() || 'direct').slice(0, 255);
+}

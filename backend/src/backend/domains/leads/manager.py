@@ -1,6 +1,7 @@
 import uuid
+from datetime import datetime
 
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -69,6 +70,16 @@ class LeadService:
         await session.commit()
         await session.refresh(lead)
         return lead
+
+    async def delete(self, session: AsyncSession, lead_id: uuid.UUID) -> None:
+        lead = await self.get(session, lead_id)
+        await session.delete(lead)
+        await session.commit()
+
+    async def purge_before(self, session: AsyncSession, cutoff: datetime) -> int:
+        result = await session.execute(delete(Lead).where(Lead.created_at < cutoff))
+        await session.commit()
+        return result.rowcount or 0
 
     async def _find_page_view(self, session: AsyncSession, event_key: str) -> LeadPageView | None:
         return await session.scalar(

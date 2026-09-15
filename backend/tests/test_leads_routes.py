@@ -198,6 +198,11 @@ async def test_authenticated_lead_management(lead_client: AsyncClient):
     missing = await lead_client.get(f"/api/v1/leads/{uuid.uuid4()}", headers=headers)
     assert missing.status_code == 404
 
+    deleted = await lead_client.delete(f"/api/v1/leads/{lead_id}", headers=headers)
+    assert deleted.status_code == 204
+    deleted_lead = await lead_client.get(f"/api/v1/leads/{lead_id}", headers=headers)
+    assert deleted_lead.status_code == 404
+
 
 @pytest.mark.asyncio
 async def test_regular_user_cannot_manage_leads(lead_client: AsyncClient):

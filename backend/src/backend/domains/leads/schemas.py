@@ -31,7 +31,7 @@ class LeadCompanyInput(BaseModel):
     company_name: str = Field(min_length=2, max_length=255)
     job_title: str | None = Field(default=None, max_length=120)
     company_size: CompanySize | None = None
-    website: HttpUrl | None = None
+    website: HttpUrl | None = Field(default=None, max_length=2048)
     message: str | None = Field(default=None, max_length=2000)
 
     @field_validator("company_name", "job_title", "message", mode="before")
@@ -55,7 +55,7 @@ class LeadPublicCreate(LeadContactInput, LeadCompanyInput):
 
 class LeadCreate(LeadPublicCreate):
     privacy_consent: bool = Field(..., description="Must be true to submit a lead")
-    source: str = Field(default="direct", max_length=255)
+    source: str = Field(default="direct", min_length=1, max_length=255)
 
     @field_validator("source", mode="before")
     @classmethod
@@ -97,7 +97,7 @@ class LeadStatusUpdate(BaseModel):
 class LeadViewCreate(BaseModel):
     model_config = ConfigDict(extra="forbid")
     event_key: str = Field(min_length=1, max_length=255)
-    source: str = Field(default="direct", max_length=255)
+    source: str = Field(default="direct", min_length=1, max_length=255)
 
     @field_validator("event_key", "source", mode="before")
     @classmethod

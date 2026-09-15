@@ -3,14 +3,13 @@ import { env } from '$env/dynamic/private';
 import type { Actions, PageServerLoad } from './$types';
 import { backendFetch } from '$lib/server/backend';
 import type { LeadFormValues } from '$lib/lead-form';
-import { buildLeadPayload, getBackendError, readLeadForm, validateLeadForm } from '$lib/server/lead-capture';
+import { buildLeadPayload, getBackendError, getLeadErrorStatus, normalizeLeadSource, readLeadForm, validateLeadForm } from '$lib/server/lead-capture';
 import { createClientIpHeaders } from '$lib/server/client-ip';
 
-const getSource = (value: string | null) => value ?? 'direct';
 const getRequestId = (request: Request) => request.headers.get('X-Request-ID') ?? crypto.randomUUID();
 
 export const load: PageServerLoad = async ({ url, request, getClientAddress }) => {
-	const source = getSource(url.searchParams.get('o'));
+	const source = normalizeLeadSource(url.searchParams.get('o'));
 
 	try {
 		await backendFetch(`/api/v1/public/leads/views?o=${encodeURIComponent(source)}`, {
@@ -42,7 +41,7 @@ export const actions: Actions = {
 		}
 
 		try {
-			const source = getSource(url.searchParams.get('o'));
+			const source = normalizeLeadSource(url.searchParams.get('o'));
 			const response = await backendFetch(`/api/v1/public/leads?o=${encodeURIComponent(source)}`, {
 				method: 'POST',
 				headers: {
@@ -55,7 +54,7 @@ export const actions: Actions = {
 
 			if (!response.ok) {
 				const errorData = await response.json().catch(() => ({}));
-				return fail(response.status === 429 ? 429 : 400, {
+				return fail(getLeadErrorStatus(response.status), {
 					error: getBackendError(errorData) || 'Não foi possível enviar seus dados.',
 					values
 				});

@@ -1,4 +1,5 @@
 import uuid
+from datetime import UTC, datetime, timedelta
 
 import pytest
 import pytest_asyncio
@@ -74,6 +75,23 @@ async def test_get_missing_lead_raises(lead_session: AsyncSession):
         await LeadService().get(lead_session, uuid.uuid4())
 
 
+@pytest.mark.asyncio
+async def test_delete_and_purge_leads(lead_session: AsyncSession):
+    service = LeadService()
+    old_lead = await service.create(lead_session, lead_data())
+    old_lead.created_at = datetime.now(UTC) - timedelta(days=400)
+    await lead_session.commit()
+
+    assert await service.purge_before(
+        lead_session, datetime.now(UTC) - timedelta(days=365)
+    ) == 1
+
+    current_lead = await service.create(lead_session, lead_data())
+    await service.delete(lead_session, current_lead.id)
+    with pytest.raises(NotFoundError):
+        await service.get(lead_session, current_lead.id)
+
+
 def test_lead_schema_rejects_without_privacy_consent():
     with pytest.raises(ValueError):
         LeadCreate(
@@ -82,3 +100,16 @@ def test_lead_schema_rejects_without_privacy_consent():
             company_name="Computing Ltd",
             privacy_consent=False,
         )
+
+
+def test_lead_schema_rejects_empty_source_and_long_website():
+    base = {
+        "full_name": "Alan Turing",
+        "email": "alan@example.com",
+        "company_name": "Computing Ltd",
+        "privacy_consent": True,
+    }
+    with pytest.raises(ValueError):
+        LeadCreate(**base, source="   ")
+    with pytest.raises(ValueError):
+        LeadCreate(**base, website=f"https://example.com/{'a' * 2048}")
