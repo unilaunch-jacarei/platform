@@ -132,7 +132,10 @@
 		{label}
 		{#if required}<span class="text-xs font-bold text-destructive" title="Campo obrigatório">*</span>{/if}
 	</label>
-	{#if selectedId}<input type="hidden" name={idName} value={selectedId} />{/if}
+	{#if selectedId}
+		<input type="hidden" name={idName} value={selectedId} />
+		<input type="hidden" name={`${name}_display`} value={value} />
+	{/if}
 	<input
 		{id}
 		name={selectedId ? undefined : name}

@@ -3,7 +3,7 @@
 	import BrandLogoSection from '$lib/components/organisms/BrandLogoSection/BrandLogoSection.svelte';
 	import StudentLeadCaptureForm from '$lib/components/organisms/StudentLeadCaptureForm/StudentLeadCaptureForm.svelte';
 
-	let { form } = $props();
+	let { data, form } = $props();
 </script>
 
 <svelte:head>
@@ -16,6 +16,6 @@
 	<div aria-hidden="true" class="pointer-events-none absolute right-0 bottom-0 size-80 translate-x-1/3 translate-y-1/3 rounded-full bg-cyan-400/10 blur-3xl"></div>
 	<div class="relative z-10 flex w-full flex-col items-center">
 		<BrandLogoSection subtitle="Experiência real para quem está começando" class="[&>div]:mb-6 sm:[&>div]:mb-8" />
-		<StudentLeadCaptureForm {form} />
+		<StudentLeadCaptureForm {form} interestAreas={data.interestAreas} catalogError={data.catalogError} />
 	</div>
 </CenteredContent>
