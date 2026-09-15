@@ -15,20 +15,27 @@
 	const handleSubmit = trackFormSubmission((value) => (submitting = value));
 </script>
 
-<Card style="max-width: min(68rem, 100%);" class="overflow-hidden border-primary/25 bg-card/95 p-0 shadow-[0_24px_80px_rgba(0,0,0,0.42),0_0_0_1px_rgba(124,58,237,0.06)] backdrop-blur-xl">
-	<div class="grid lg:grid-cols-[0.9fr_1.1fr]">
-		<section class="relative min-h-96 overflow-hidden border-b border-border bg-card lg:min-h-[53rem] lg:border-r lg:border-b-0">
-			<img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=1200&q=85" alt="Estudantes sorrindo e colaborando em torno de uma mesa" class="absolute inset-0 size-full object-cover" />
-			<div aria-hidden="true" class="absolute inset-0 bg-linear-to-t from-[#08091a] via-[#08091a]/35 to-accent/10"></div>
-			<div class="absolute inset-x-0 bottom-0 p-6 sm:p-8 lg:p-10">
-				<p class="mb-3 text-xs font-bold tracking-[0.18em] text-cyan-300 uppercase">Talento encontra oportunidade</p>
-				<Typography variant="h1" class="max-w-md text-3xl leading-[1.08] text-white sm:text-4xl">
-					Toda carreira começa com alguém acreditando no seu potencial.
+<Card style="max-width: min(64rem, 100%);" class="overflow-hidden border-primary/25 bg-card/95 p-0 shadow-[0_24px_80px_rgba(0,0,0,0.42),0_0_0_1px_rgba(124,58,237,0.06)] backdrop-blur-xl">
+	<div class="grid lg:grid-cols-[0.72fr_1.28fr]">
+		<section class="relative overflow-hidden border-b border-border bg-linear-to-br from-accent/20 via-card to-cyan-400/10 p-6 sm:p-8 lg:border-r lg:border-b-0 lg:p-10">
+			<div aria-hidden="true" class="absolute -top-20 -left-20 size-56 rounded-full bg-accent/20 blur-3xl"></div>
+			<div class="relative flex h-full flex-col">
+				<p class="mb-4 text-xs font-bold tracking-[0.18em] text-cyan-300 uppercase">Comece construindo</p>
+				<Typography variant="h1" class="max-w-sm text-3xl leading-[1.05] sm:text-4xl lg:text-[2.7rem]">
+					Seu talento em projetos reais.
 				</Typography>
-				<p class="mt-4 max-w-md text-sm leading-6 text-slate-200">Queremos conhecer o que move você e conectar essa vontade a experiências que importam.</p>
-				<a href="/captura-lead" class="mt-5 inline-flex w-fit items-center gap-2 text-sm font-semibold text-cyan-100 underline decoration-cyan-300/40 underline-offset-4 transition-colors hover:text-white">
-					Quer conversar sobre sua empresa? <span aria-hidden="true">→</span>
+				<p class="mt-4 max-w-sm text-sm leading-6 text-slate-300">
+					Apresente sua jornada e seus interesses para conectarmos você às oportunidades certas.
+				</p>
+				<a href="/captura-lead" class="mt-5 inline-flex w-fit items-center gap-2 rounded-full border border-cyan-300/20 bg-cyan-300/10 px-3 py-1.5 text-xs font-semibold text-cyan-100 transition-colors hover:border-cyan-300/40 hover:bg-cyan-300/15">
+					Represento uma empresa <span aria-hidden="true">→</span>
 				</a>
+
+				<div class="mt-7 grid gap-3 sm:grid-cols-3 lg:mt-auto lg:grid-cols-1 lg:pt-10">
+					<div class="flex items-center gap-3 text-sm text-slate-200"><span class="flex size-7 shrink-0 items-center justify-center rounded-full border border-cyan-300/30 bg-cyan-300/10 text-xs font-bold text-cyan-200">1</span><span>Compartilhe seu perfil</span></div>
+					<div class="flex items-center gap-3 text-sm text-slate-200"><span class="flex size-7 shrink-0 items-center justify-center rounded-full border border-cyan-300/30 bg-cyan-300/10 text-xs font-bold text-cyan-200">2</span><span>Mapeamos seus interesses</span></div>
+					<div class="flex items-center gap-3 text-sm text-slate-200"><span class="flex size-7 shrink-0 items-center justify-center rounded-full border border-cyan-300/30 bg-cyan-300/10 text-xs font-bold text-cyan-200">3</span><span>Conectamos oportunidades</span></div>
+				</div>
 			</div>
 		</section>
 
