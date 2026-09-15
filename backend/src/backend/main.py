@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from slowapi.middleware import SlowAPIMiddleware
 
 from backend.config import get_settings
-from backend.database import close_db, init_db
+from backend.database import close_db
 from backend.domains.leads.routes import leads_router, public_leads_router
 from backend.domains.usuarios.routes import auth_router, users_router
 from backend.error import register_exception_handlers
@@ -20,8 +20,6 @@ request_logger = logging.getLogger("backend.request")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Initialize database schemas
-    await init_db()
     yield
     # Cleanup database connection pool
     await close_db()
