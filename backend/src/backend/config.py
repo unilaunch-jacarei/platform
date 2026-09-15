@@ -29,6 +29,12 @@ class Settings(BaseSettings):
         validation_alias="INTERNAL_SECRET",
     )
 
+    # Shared storage for rate limiting across backend replicas
+    rate_limit_storage_uri: str = Field(
+        default="memory://",
+        validation_alias="RATE_LIMIT_STORAGE_URI",
+    )
+
     # JWT and Auth Settings
     jwt_secret: str = Field(
         default="platform-dev-super-secret-jwt-key-32chars!",

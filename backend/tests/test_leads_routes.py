@@ -84,12 +84,17 @@ async def test_public_lead_submission_is_rate_limited(lead_client: AsyncClient):
     for index in range(6):
         payload = lead_payload()
         payload["email"] = f"rate-{index}@example.com"
-        responses.append(
-            await lead_client.post("/api/v1/public/leads", json=payload)
-        )
+        responses.append(await lead_client.post("/api/v1/public/leads", json=payload))
 
     assert [response.status_code for response in responses[:5]] == [201] * 5
     assert responses[5].status_code == 429
+
+    other_visitor = await lead_client.post(
+        "/api/v1/public/leads",
+        headers={"X-Forwarded-For": "203.0.113.10"},
+        json={**lead_payload(), "email": "other-visitor@example.com"},
+    )
+    assert other_visitor.status_code == 201
 
 
 @pytest.mark.asyncio

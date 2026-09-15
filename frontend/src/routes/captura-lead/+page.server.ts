@@ -24,13 +24,16 @@ function getBackendError(body: unknown): string | undefined {
 	return undefined;
 }
 
-export const load: PageServerLoad = async ({ url }) => {
+export const load: PageServerLoad = async ({ url, getClientAddress }) => {
 	const source = getSource(url.searchParams.get('o'));
 
 	try {
 		await backendFetch(`/api/v1/public/leads/views?o=${encodeURIComponent(source)}`, {
 			method: 'POST',
-			headers: { 'Idempotency-Key': crypto.randomUUID() }
+			headers: {
+				'Idempotency-Key': crypto.randomUUID(),
+				'X-Forwarded-For': getClientAddress()
+			}
 		});
 	} catch {
 		// A tracking failure must not block the public form.
@@ -40,7 +43,7 @@ export const load: PageServerLoad = async ({ url }) => {
 };
 
 export const actions: Actions = {
-	default: async ({ request, url }) => {
+	default: async ({ request, url, getClientAddress }) => {
 		const form = await request.formData();
 		const values: LeadFormValues = {
 			full_name: String(form.get('full_name') ?? '').trim(),
@@ -64,7 +67,10 @@ export const actions: Actions = {
 			const source = getSource(url.searchParams.get('o'));
 			const response = await backendFetch(`/api/v1/public/leads?o=${encodeURIComponent(source)}`, {
 				method: 'POST',
-				headers: { 'content-type': 'application/json' },
+				headers: {
+					'content-type': 'application/json',
+					'X-Forwarded-For': getClientAddress()
+				},
 				body: JSON.stringify({
 					...values,
 					job_title: optionalValue(values.job_title ?? ''),
