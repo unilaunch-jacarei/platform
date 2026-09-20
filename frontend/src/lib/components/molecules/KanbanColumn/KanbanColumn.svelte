@@ -21,9 +21,10 @@
     description: string;
     accent: "muted" | "accent" | "warning" | "success";
     projects: Project[];
+    onMoveProject: (projectTitle: string) => void;
   };
 
-  let { title, description, accent, projects }: KanbanColumnProps = $props();
+  let { title, description, accent, projects, onMoveProject }: KanbanColumnProps = $props();
 
   const accentClasses = {
     muted: "bg-muted-foreground",
@@ -31,9 +32,20 @@
     warning: "bg-yellow",
     success: "bg-green",
   };
+
+  function handleDrop(event: DragEvent) {
+    event.preventDefault();
+    const projectTitle = event.dataTransfer?.getData("text/plain");
+    if (projectTitle) onMoveProject(projectTitle);
+  }
 </script>
 
-<section class="flex min-w-[18rem] flex-1 flex-col rounded-2xl border border-border/70 bg-surface/60 p-3">
+<section
+  aria-label="Fila {title}"
+  class="flex min-w-[18rem] flex-1 flex-col rounded-2xl border border-border/70 bg-surface/60 p-3 transition-colors hover:border-accent/40"
+  ondragover={(event) => event.preventDefault()}
+  ondrop={handleDrop}
+>
   <header class="mb-3 flex items-start justify-between gap-3 px-2 py-1">
     <div class="flex min-w-0 items-start gap-2.5">
       <span class="mt-1.5 size-2.5 shrink-0 rounded-full {accentClasses[accent]}"></span>
@@ -52,7 +64,10 @@
 
   <div class="flex flex-1 flex-col gap-3">
     {#each projects as project}
-      <ProjectCard {...project} />
+      <ProjectCard
+        {...project}
+        onDragStart={(event) => event.dataTransfer?.setData("text/plain", project.title)}
+      />
     {:else}
       <div class="flex min-h-28 items-center justify-center rounded-xl border border-dashed border-border px-4 text-center">
         <Typography variant="caption">Nenhum projeto nesta etapa</Typography>

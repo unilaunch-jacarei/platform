@@ -17,6 +17,7 @@
     metadata?: string;
     progress?: number;
     class?: string;
+    onDragStart?: (event: DragEvent) => void;
   };
 
   let {
@@ -28,11 +29,14 @@
     metadata,
     progress,
     class: className = "",
+    onDragStart,
   }: ProjectCardProps = $props();
 </script>
 
 <article
-  class="group flex w-full flex-col gap-4 rounded-xl border border-border bg-card p-5 transition-colors duration-200 hover:border-accent/50 {className}"
+  draggable="true"
+  ondragstart={onDragStart}
+  class="group flex w-full cursor-grab flex-col gap-4 rounded-xl border border-border bg-card p-5 transition-colors duration-200 hover:border-accent/50 active:cursor-grabbing {className}"
 >
   <ProjectCardHeader {title} {description} {status} {statusLabel} />
   <ProjectCardTags {tags} />

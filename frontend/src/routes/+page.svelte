@@ -3,7 +3,24 @@
 	import Icon from "$lib/components/atoms/Icon/Icon.svelte";
 	import KanbanColumn from "$lib/components/molecules/KanbanColumn/KanbanColumn.svelte";
 
-	const columns = [
+	type Project = {
+		title: string;
+		description: string;
+		tags: { label: string; variant?: "default" | "accent" | "success" | "warning" | "danger" }[];
+		status?: "default" | "accent" | "success" | "warning" | "danger";
+		statusLabel: string;
+		metadata: string;
+		progress: number;
+	};
+
+	type Column = {
+		title: string;
+		description: string;
+		accent: "muted" | "accent" | "warning" | "success";
+		projects: Project[];
+	};
+
+	let columns = $state<Column[]>([
 		{
 			title: "Backlog",
 			description: "Ideias e próximos passos",
@@ -47,7 +64,27 @@
 				{ title: "Setup do projeto", description: "Estrutura inicial pronta para o time.", tags: [{ label: "DevOps", variant: "accent" as const }], status: "danger" as const, statusLabel: "Alta", metadata: "01/07", progress: 100 },
 			],
 		},
-	];
+	]);
+
+	function moveProject(projectTitle: string, targetColumnTitle: string) {
+		let movedProject: Project | undefined;
+
+		columns = columns.map((column) => {
+			const project = column.projects.find((item) => item.title === projectTitle);
+			if (project) movedProject = project;
+			return project
+				? { ...column, projects: column.projects.filter((item) => item.title !== projectTitle) }
+				: column;
+		});
+
+		if (!movedProject) return;
+
+		columns = columns.map((column) =>
+			column.title === targetColumnTitle
+				? { ...column, projects: [...column.projects, movedProject!] }
+				: column
+		);
+	}
 </script>
 
 <svelte:head>
@@ -70,7 +107,7 @@
 
 		<div class="flex gap-4 overflow-x-auto pb-4">
 			{#each columns as column}
-				<KanbanColumn {...column} />
+				<KanbanColumn {...column} onMoveProject={(projectTitle) => moveProject(projectTitle, column.title)} />
 			{/each}
 		</div>
 	</div>
