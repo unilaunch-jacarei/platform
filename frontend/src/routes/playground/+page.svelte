@@ -10,6 +10,9 @@
   import Input from "$lib/components/atoms/Input/Input.svelte";
   import Checkbox from "$lib/components/atoms/Checkbox/Checkbox.svelte";
   import BrandIcon from "$lib/components/atoms/BrandIcon/BrandIcon.svelte";
+  import Font from "$lib/components/atoms/Font/Font.svelte";
+  import Tag from "$lib/components/atoms/Tag/Tag.svelte";
+  import Icon from "$lib/components/atoms/Icon/Icon.svelte";
 
   // Moléculas
   import FormField from "$lib/components/molecules/FormField/FormField.svelte";
@@ -17,6 +20,7 @@
   import FormFooter from "$lib/components/molecules/FormFooter/FormFooter.svelte";
   import FormCheckbox from "$lib/components/molecules/FormCheckbox/FormCheckbox.svelte";
   import BrandHeader from "$lib/components/molecules/BrandHeader/BrandHeader.svelte";
+  import ProjectCard from "$lib/components/molecules/ProjectCard/ProjectCard.svelte";
 
   // Organismos
   import LoginForm from "$lib/components/organisms/LoginForm/LoginForm.svelte";
@@ -52,6 +56,17 @@
     </div>
 
     <div class="grid gap-3 bg-card/40 p-6 rounded-xl border border-border">
+      <div>
+        <span class="text-xs text-muted-foreground block mb-1 font-mono"
+          >font</span
+        >
+        <div class="flex flex-wrap items-center gap-6 text-lg">
+          <Font family="display" weight="bold">Plus Jakarta Sans</Font>
+          <Font family="body">Inter</Font>
+          <Font family="mono">JetBrains Mono</Font>
+        </div>
+      </div>
+
       <div>
         <span class="text-xs text-muted-foreground block mb-1 font-mono"
           >h1</span
@@ -136,7 +151,38 @@
     </div>
   </section>
 
-  <!-- SEÇÃO 2: BUTTONS -->
+  <!-- SEÇÃO 2: TAGS E ICONS -->
+  <section class="space-y-4">
+    <div class="border-b border-border/50 pb-2">
+      <Typography variant="h2">2. Tags e Icons</Typography>
+    </div>
+
+    <div class="grid gap-6 bg-card/40 p-6 rounded-xl border border-border">
+      <div class="space-y-2">
+        <Typography variant="label">Tags</Typography>
+        <div class="flex flex-wrap items-center gap-2">
+          <Tag>Default</Tag>
+          <Tag variant="accent">Frontend</Tag>
+          <Tag variant="success">Concluído</Tag>
+          <Tag variant="warning">Em revisão</Tag>
+          <Tag variant="danger">Bloqueado</Tag>
+        </div>
+      </div>
+
+      <div class="space-y-2">
+        <Typography variant="label">Icons</Typography>
+        <div class="flex items-center gap-5 text-accent">
+          <Icon name="search" label="Buscar" />
+          <Icon name="plus" label="Adicionar" />
+          <Icon name="check" label="Concluído" />
+          <Icon name="mail" label="E-mail" />
+          <Icon name="spark" label="Destaque" />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SEÇÃO 3: BUTTONS -->
   <section class="space-y-4">
     <div class="border-b border-border/50 pb-2">
       <Typography variant="h2">2. Buttons</Typography>
@@ -170,7 +216,7 @@
     </div>
   </section>
 
-  <!-- SEÇÃO 3: ÁTOMOS (Input, Checkbox & BrandIcon) -->
+  <!-- SEÇÃO 4: ÁTOMOS (Input, Checkbox & BrandIcon) -->
   <section class="space-y-4">
     <div class="border-b border-border/50 pb-2">
       <Typography variant="h2">3. Átomos</Typography>
@@ -337,6 +383,36 @@
           linkLabel="Solicitar acesso"
           linkHref="https://youtu.be/dQw4w9WgXcQ?list=RDdQw4w9WgXcQ"
         />
+      </div>
+
+      <!-- ProjectCard -->
+      <div class="col-span-full space-y-2 border-t border-border/30 pt-4">
+        <span class="text-xs text-muted-foreground block font-mono"
+          >ProjectCard (Typography + Tag + Icon)</span
+        >
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <ProjectCard
+            title="Portal acadêmico"
+            description="Organizar entregas, avisos e atividades da turma."
+            tags={[
+              { label: "Frontend", variant: "accent" },
+              { label: "UI", variant: "success" },
+            ]}
+            status="warning"
+            statusLabel="Em revisão"
+            metadata="Atualizado hoje"
+            progress={72}
+          />
+          <ProjectCard
+            title="Integração de pagamentos"
+            description="Conectar o fluxo de cobrança ao provedor escolhido."
+            tags={[{ label: "Backend", variant: "default" }]}
+            status="success"
+            statusLabel="Concluído"
+            metadata="5 tarefas"
+            progress={100}
+          />
+        </div>
       </div>
     </div>
   </section>
