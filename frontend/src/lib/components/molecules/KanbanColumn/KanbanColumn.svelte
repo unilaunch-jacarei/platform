@@ -22,9 +22,10 @@
     accent: "muted" | "accent" | "warning" | "success";
     projects: Project[];
     onMoveProject: (projectTitle: string) => void;
+    onOpenProject: (project: Project) => void;
   };
 
-  let { title, description, accent, projects, onMoveProject }: KanbanColumnProps = $props();
+  let { title, description, accent, projects, onMoveProject, onOpenProject }: KanbanColumnProps = $props();
 
   const accentClasses = {
     muted: "bg-muted-foreground",
@@ -67,6 +68,7 @@
       <ProjectCard
         {...project}
         onDragStart={(event) => event.dataTransfer?.setData("text/plain", project.title)}
+        onOpen={() => onOpenProject(project)}
       />
     {:else}
       <div class="flex min-h-28 items-center justify-center rounded-xl border border-dashed border-border px-4 text-center">

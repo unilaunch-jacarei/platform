@@ -18,6 +18,7 @@
     progress?: number;
     class?: string;
     onDragStart?: (event: DragEvent) => void;
+    onOpen?: () => void;
   };
 
   let {
@@ -30,15 +31,20 @@
     progress,
     class: className = "",
     onDragStart,
+    onOpen,
   }: ProjectCardProps = $props();
 </script>
 
-<article
+<div
   draggable="true"
   ondragstart={onDragStart}
+  role="button"
+  tabindex="0"
+  onclick={onOpen}
+  onkeydown={(event) => event.key === "Enter" && onOpen?.()}
   class="group flex w-full cursor-grab flex-col gap-4 rounded-xl border border-border bg-card p-5 transition-colors duration-200 hover:border-accent/50 active:cursor-grabbing {className}"
 >
   <ProjectCardHeader {title} {description} {status} {statusLabel} />
   <ProjectCardTags {tags} />
   <ProjectCardMeta {metadata} {progress} />
-</article>
+</div>

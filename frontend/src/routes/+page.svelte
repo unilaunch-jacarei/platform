@@ -2,15 +2,18 @@
 	import Typography from "$lib/components/atoms/Typography/Typography.svelte";
 	import Icon from "$lib/components/atoms/Icon/Icon.svelte";
 	import KanbanColumn from "$lib/components/molecules/KanbanColumn/KanbanColumn.svelte";
+	import TaskModal from "$lib/components/organisms/TaskModal/TaskModal.svelte";
 
 	type Project = {
 		title: string;
-		description: string;
-		tags: { label: string; variant?: "default" | "accent" | "success" | "warning" | "danger" }[];
+		description?: string;
+		tags?: { label: string; variant?: "default" | "accent" | "success" | "warning" | "danger" }[];
 		status?: "default" | "accent" | "success" | "warning" | "danger";
-		statusLabel: string;
-		metadata: string;
-		progress: number;
+		statusLabel?: string;
+		metadata?: string;
+		progress?: number;
+		checklist?: { label: string; completed: boolean }[];
+		comments?: { author: string; text: string; date: string }[];
 	};
 
 	type Column = {
@@ -26,7 +29,7 @@
 			description: "Ideias e próximos passos",
 			accent: "muted" as const,
 			projects: [
-				{ title: "Setup CI/CD pipeline", description: "Automatizar testes e publicação dos serviços.", tags: [{ label: "DevOps", variant: "accent" as const }], statusLabel: "Baixa", metadata: "20/07", progress: 12 },
+				{ title: "Setup CI/CD pipeline", description: "Automatizar testes e publicação dos serviços.", tags: [{ label: "DevOps", variant: "accent" as const }], statusLabel: "Baixa", metadata: "20/07", progress: 12, checklist: [{ label: "GitHub Actions", completed: false }, { label: "Docker build", completed: false }], comments: [{ author: "Lucas M.", text: "A pipeline inicial já está sendo configurada.", date: "hoje" }] },
 				{ title: "Documentação da API", description: "Registrar endpoints e exemplos de integração.", tags: [{ label: "Documentação", variant: "default" as const }, { label: "API", variant: "accent" as const }], status: "warning" as const, statusLabel: "Média", metadata: "25/07", progress: 28 },
 			],
 		},
@@ -66,6 +69,8 @@
 		},
 	]);
 
+	let selectedTask = $state<Project | null>(null);
+
 	function moveProject(projectTitle: string, targetColumnTitle: string) {
 		let movedProject: Project | undefined;
 
@@ -84,6 +89,10 @@
 				? { ...column, projects: [...column.projects, movedProject!] }
 				: column
 		);
+	}
+
+	function openProject(project: Project) {
+		selectedTask = project;
 	}
 </script>
 
@@ -107,8 +116,21 @@
 
 		<div class="flex gap-4 overflow-x-auto pb-4">
 			{#each columns as column}
-				<KanbanColumn {...column} onMoveProject={(projectTitle) => moveProject(projectTitle, column.title)} />
+				<KanbanColumn {...column} onMoveProject={(projectTitle) => moveProject(projectTitle, column.title)} onOpenProject={openProject} />
 			{/each}
 		</div>
 	</div>
 </main>
+
+{#if selectedTask}
+	<TaskModal
+		title={selectedTask.title}
+		description={selectedTask.description}
+		statusLabel={selectedTask.statusLabel}
+		metadata={selectedTask.metadata}
+		progress={selectedTask.progress}
+		checklist={selectedTask.checklist}
+		comments={selectedTask.comments}
+		onClose={() => (selectedTask = null)}
+	/>
+{/if}
