@@ -3,7 +3,8 @@ revision = 3
 requires-python = ">=3.12"
 resolution-markers = [
     "python_full_version >= '3.14'",
-    "python_full_version < '3.14'",
+    "python_full_version == '3.13.*'",
+    "python_full_version < '3.13'",
 ]
 
 [[package]]
@@ -122,7 +123,6 @@ source = { editable = "." }
 dependencies = [
     { name = "alembic" },
     { name = "argon2-cffi" },
-    { name = "fastapi" },
     { name = "fastapi-users", extra = ["sqlalchemy"] },
     { name = "httpx" },
     { name = "prometheus-client" },
@@ -149,7 +149,6 @@ dev = [
 requires-dist = [
     { name = "alembic", specifier = ">=1.16.0" },
     { name = "argon2-cffi", specifier = ">=23.1.0" },
-    { name = "fastapi", specifier = ">=0.115.0" },
     { name = "fastapi-users", extras = ["sqlalchemy"], specifier = ">=15.0.5" },
     { name = "httpx", specifier = ">=0.27.0" },
     { name = "prometheus-client", specifier = ">=0.22.0" },
