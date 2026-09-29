@@ -8,6 +8,7 @@ from slowapi.middleware import SlowAPIMiddleware
 from backend.config import get_settings
 from backend.database import close_db, init_db
 from backend.domains.usuarios.routes import auth_router, users_router
+from backend.domains.tasks.routes import router as tasks_router
 from backend.error import register_exception_handlers
 from backend.infra.limiter import limiter
 
@@ -59,6 +60,7 @@ def create_app() -> FastAPI:
     # Include Routers with /api/v1 prefix
     app.include_router(auth_router, prefix="/api/v1")
     app.include_router(users_router, prefix="/api/v1")
+    app.include_router(tasks_router, prefix="/api/v1")
 
     return app
 
