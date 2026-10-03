@@ -29,6 +29,16 @@ BIND_ADDR=0.0.0.0:8000
 PUBLIC_APP_URL=http://localhost:5173
 ```
 
+O SQLite é o padrão em desenvolvimento e salva os dados em `backend/platform.db`. Não é
+necessário instalar ou iniciar PostgreSQL. Se `DATABASE_URL` não for informada, esse mesmo
+valor será usado automaticamente.
+
+Crie ou atualize as tabelas locais:
+
+```bash
+uv run alembic upgrade head
+```
+
 Para rodar o servidor em modo de desenvolvimento (com auto-reload):
 
 ```bash
@@ -36,6 +46,16 @@ uv run backend
 ```
 
 A documentação interativa Swagger estará disponível em: [http://localhost:8000/docs](http://localhost:8000/docs).
+
+Para usar PostgreSQL também no desenvolvimento, basta trocar a variável e executar as mesmas
+migrações:
+
+```env
+DATABASE_URL=postgresql+psycopg://postgres:postgres@localhost:5432/platform
+```
+
+SQLite é destinado somente ao desenvolvimento e aos testes. Staging e produção rejeitam essa
+configuração e exigem uma URL PostgreSQL explícita.
 
 ---
 

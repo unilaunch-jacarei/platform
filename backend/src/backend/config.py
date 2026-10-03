@@ -19,7 +19,7 @@ class Settings(BaseSettings):
 
     # Database
     database_url: str = Field(
-        default="postgresql+psycopg://postgres:postgres@localhost:5432/platform",
+        default="sqlite+aiosqlite:///platform.db",
         validation_alias="DATABASE_URL",
     )
 
@@ -74,6 +74,10 @@ class Settings(BaseSettings):
             not self.metrics_token or len(self.metrics_token) < 32
         ):
             raise ValueError("METRICS_TOKEN deve possuir no mínimo 32 caracteres no deploy")
+        if environment in {"production", "staging"} and not self.async_database_url.startswith(
+            "postgresql+"
+        ):
+            raise ValueError("DATABASE_URL deve apontar para PostgreSQL em staging e produção")
         if environment == "production":
             if len(self.jwt_secret) < 32 or "dev" in self.jwt_secret.lower():
                 msg = (
