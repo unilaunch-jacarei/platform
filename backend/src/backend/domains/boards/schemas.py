@@ -10,6 +10,7 @@ from pydantic import (
 
 from backend.domains.boards.models import TaskPriority
 
+
 class TaskCreate(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -59,6 +60,7 @@ class TaskRead(BaseModel):
     created_at: datetime
     updated_at: datetime
 
+
 class BoardColumnCreate(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -98,6 +100,7 @@ class BoardColumnRead(BaseModel):
     tasks: list[TaskRead] = Field(default_factory=list)
     created_at: datetime
     updated_at: datetime
+
 
 class BoardCreate(BaseModel):
     model_config = ConfigDict(extra="forbid")

@@ -21,6 +21,7 @@ from backend.domains.usuarios.models import User
 
 boards_router = APIRouter(prefix="/boards", tags=["boards"])
 
+
 @boards_router.get("", response_model=list[BoardRead])
 async def list_boards(
     _user: User = Depends(current_superuser),
@@ -79,6 +80,7 @@ async def delete_board(
     await board_manager.delete(session, board_id)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
+
 @boards_router.post(
     "/columns",
     response_model=BoardColumnRead,
@@ -115,6 +117,7 @@ async def delete_column(
     """Remove uma coluna."""
     await board_manager.delete_column(session, column_id)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
 
 @boards_router.post(
     "/tasks",

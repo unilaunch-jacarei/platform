@@ -19,7 +19,9 @@ from backend.error import NotFoundError
 
 
 class BoardManager:
-    """Gerenciador de regras de negócio e operações de persistência para Boards, Colunas e Tarefas."""
+    """Gerenciador de regras de negócio e operações de persistência
+    para Boards, Colunas e Tarefas.
+    """
 
     async def list(self, session: AsyncSession) -> list[Board]:
         """Lista todos os quadros ordenados pela data de criação, carregando colunas e tarefas."""
@@ -62,7 +64,7 @@ class BoardManager:
         column = BoardColumn(**data.model_dump(mode="json"))
         session.add(column)
         await session.commit()
-        
+
         reloaded = await session.scalar(
             select(BoardColumn)
             .where(BoardColumn.id == column.id)
@@ -145,9 +147,7 @@ class BoardManager:
 
     def _board_query(self):
         """Query padrão para listagem e obtenção de Boards com eager loading."""
-        return select(Board).options(
-            selectinload(Board.columns).selectinload(BoardColumn.tasks)
-        )
+        return select(Board).options(selectinload(Board.columns).selectinload(BoardColumn.tasks))
 
 
 board_manager = BoardManager()

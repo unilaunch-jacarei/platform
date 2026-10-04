@@ -11,6 +11,8 @@ def setup_test_environment():
     os.environ["DATABASE_URL"] = "sqlite+aiosqlite:///:memory:"
     os.environ["JWT_SECRET"] = "test-jwt-secret-key-minimum-32-chars-long!"
     os.environ["ENVIRONMENT"] = "testing"
+    os.environ["SMTP_HOST"] = ""
+    os.environ["SMTP_FROM_EMAIL"] = ""
     get_settings.cache_clear()
     yield
     get_settings.cache_clear()
