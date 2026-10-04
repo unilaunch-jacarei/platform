@@ -54,7 +54,7 @@ async def create_board(
     session: AsyncSession = Depends(get_db),
 ) -> BoardRead:
     """Cria um novo quadro."""
-    board = await board_manager.create(session, data)
+    board = await board_manager.create(session, data, owner_id=_user.id)
     return BoardRead.model_validate(board)
 
 

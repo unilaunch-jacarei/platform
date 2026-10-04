@@ -93,6 +93,45 @@ def test_production_secret_validation():
     with pytest.raises(ValidationError, match="METRICS_TOKEN"):
         Settings(_env_file=None, ENVIRONMENT="staging")
 
+    with pytest.raises(ValidationError, match="INTERNAL_SECRET"):
+        Settings(
+            _env_file=None,
+            ENVIRONMENT="production",
+            DATABASE_URL="postgresql://user:password@database:5432/platform",
+            JWT_SECRET="super-strong-production-entropy-key-64-bytes-long-random-string!",
+            INTERNAL_SECRET="change-me-in-production",
+            RATE_LIMIT_STORAGE_URI="redis://redis:6379/0",
+            METRICS_TOKEN="super-strong-metrics-token-64-bytes-long-random-string!",
+            SMTP_HOST="smtp.example.com",
+            SMTP_FROM_EMAIL="contato@example.com",
+        )
+
+    with pytest.raises(ValidationError, match="RATE_LIMIT_STORAGE_URI"):
+        Settings(
+            _env_file=None,
+            ENVIRONMENT="production",
+            DATABASE_URL="postgresql://user:password@database:5432/platform",
+            JWT_SECRET="super-strong-production-entropy-key-64-bytes-long-random-string!",
+            INTERNAL_SECRET="super-strong-internal-entropy-key-64-bytes-long-random-string!",
+            RATE_LIMIT_STORAGE_URI="memory://",
+            METRICS_TOKEN="super-strong-metrics-token-64-bytes-long-random-string!",
+            SMTP_HOST="smtp.example.com",
+            SMTP_FROM_EMAIL="contato@example.com",
+        )
+
+    with pytest.raises(ValidationError, match="SMTP_HOST e SMTP_FROM_EMAIL"):
+        Settings(
+            _env_file=None,
+            ENVIRONMENT="production",
+            DATABASE_URL="postgresql://user:password@database:5432/platform",
+            JWT_SECRET="super-strong-production-entropy-key-64-bytes-long-random-string!",
+            INTERNAL_SECRET="super-strong-internal-entropy-key-64-bytes-long-random-string!",
+            RATE_LIMIT_STORAGE_URI="redis://redis:6379/0",
+            METRICS_TOKEN="super-strong-metrics-token-64-bytes-long-random-string!",
+            SMTP_HOST="",
+            SMTP_FROM_EMAIL="",
+        )
+
 
 def test_get_settings():
     s = get_settings()

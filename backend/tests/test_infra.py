@@ -86,6 +86,17 @@ async def test_hmac_middleware_and_security_dependency():
         )
         assert res2.status_code == 401
 
+        # Invalid HMAC signature fails with 401
+        res_bad_sig = await client.get(
+            "/protected",
+            headers={
+                "x-user-id": "123",
+                "x-timestamp": str(int(time.time())),
+                "x-signature": "invalid_signature_hex",
+            },
+        )
+        assert res_bad_sig.status_code == 401
+
         # Valid HMAC request
         now = int(time.time())
         secret = "change-me-in-production"

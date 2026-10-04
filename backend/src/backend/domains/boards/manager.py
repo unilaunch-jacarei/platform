@@ -35,9 +35,14 @@ class BoardManager:
             raise NotFoundError("Board não encontrado")
         return board
 
-    async def create(self, session: AsyncSession, data: BoardCreate) -> Board:
+    async def create(
+        self, session: AsyncSession, data: BoardCreate, owner_id: uuid.UUID | None = None
+    ) -> Board:
         """Cria um novo quadro no banco de dados."""
-        board = Board(**data.model_dump(mode="json"))
+        payload = data.model_dump()
+        if owner_id is not None:
+            payload["owner_id"] = owner_id
+        board = Board(**payload)
         session.add(board)
         await session.commit()
         return await self.get(session, board.id)
@@ -61,7 +66,7 @@ class BoardManager:
     async def create_column(self, session: AsyncSession, data: BoardColumnCreate) -> BoardColumn:
         """Adiciona uma nova coluna a um quadro garantindo a existência do Board pai."""
         await self.get(session, data.board_id)
-        column = BoardColumn(**data.model_dump(mode="json"))
+        column = BoardColumn(**data.model_dump())
         session.add(column)
         await session.commit()
 
@@ -91,8 +96,14 @@ class BoardManager:
             setattr(column, key, value)
 
         await session.commit()
-        await session.refresh(column)
-        return column
+        reloaded = await session.scalar(
+            select(BoardColumn)
+            .where(BoardColumn.id == column_id)
+            .options(selectinload(BoardColumn.tasks))
+        )
+        if reloaded is None:
+            raise NotFoundError("Coluna não encontrada")
+        return reloaded
 
     async def delete_column(self, session: AsyncSession, column_id: uuid.UUID) -> None:
         """Deleta uma coluna e suas tarefas associadas."""
@@ -108,7 +119,7 @@ class BoardManager:
         if column is None:
             raise NotFoundError("Coluna de destino não encontrada")
 
-        task = Task(**data.model_dump(mode="json"))
+        task = Task(**data.model_dump())
         session.add(task)
         await session.commit()
         await session.refresh(task)

@@ -136,6 +136,7 @@ class BoardRead(BaseModel):
     id: uuid.UUID
     title: str
     description: str | None
+    owner_id: uuid.UUID
     columns: list[BoardColumnRead] = Field(default_factory=list)
     created_at: datetime
     updated_at: datetime
