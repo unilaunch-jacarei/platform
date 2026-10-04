@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/assets/Logo primária.svg" alt="Platform" width="full" />
+  <img src="docs/assets/Logo primária.png" alt="Platform" width="full" />
 </p>
 
 <h1 align="center">Platform</h1>

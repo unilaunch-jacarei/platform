@@ -1,6 +1,6 @@
 """create boards table
 
-Revision ID: e483311a59d2
+Revision ID: 0008_create_boards_table
 Revises: 0007_normalize_student_leads
 Create Date: 2026-09-27 23:35:47.907394
 """
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 from alembic import op
 from fastapi_users_db_sqlalchemy.generics import GUID
 
-revision: str = "e483311a59d2"
+revision: str = "0008_create_boards_table"
 down_revision: str | Sequence[str] | None = "0007_normalize_student_leads"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
