@@ -15,6 +15,7 @@ from backend.database import close_db
 from backend.domains.boards.routes import boards_router
 from backend.domains.leads.routes import leads_router, public_leads_router
 from backend.domains.usuarios.routes import auth_router, users_router
+from backend.domains.tasks.routes import router as tasks_router
 from backend.error import register_exception_handlers
 from backend.infra.limiter import limiter
 from backend.infra.metrics import http_request_duration, http_request_errors, http_requests
@@ -113,9 +114,12 @@ def create_app() -> FastAPI:
     # Include Routers with /api/v1 prefix
     app.include_router(auth_router, prefix="/api/v1")
     app.include_router(users_router, prefix="/api/v1")
+    app.include_router(auth_router, prefix="/api/v1")
+    app.include_router(users_router, prefix="/api/v1")
     app.include_router(public_leads_router, prefix="/api/v1")
     app.include_router(leads_router, prefix="/api/v1")
     app.include_router(boards_router, prefix="/api/v1")
+    app.include_router(tasks_router, prefix="/api/v1")
 
     return app
 
