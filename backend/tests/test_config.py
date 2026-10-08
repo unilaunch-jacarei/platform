@@ -10,6 +10,7 @@ def test_settings_defaults(monkeypatch):
     monkeypatch.delenv("JWT_SECRET", raising=False)
     settings = Settings(_env_file=None)
     assert settings.environment == "development"
+    assert settings.async_database_url == "sqlite+aiosqlite:///platform.db"
     assert settings.port == 3000
     assert settings.host == "0.0.0.0"
     assert settings.jwt_lifetime_seconds > 0
@@ -60,9 +61,76 @@ def test_production_secret_validation():
     valid_settings = Settings(
         _env_file=None,
         ENVIRONMENT="production",
+        DATABASE_URL="postgresql://user:password@database:5432/platform",
         JWT_SECRET="super-strong-production-entropy-key-64-bytes-long-random-string!",
+        INTERNAL_SECRET="super-strong-internal-entropy-key-64-bytes-long-random-string!",
+        RATE_LIMIT_STORAGE_URI="redis://redis:6379/0",
+        METRICS_TOKEN="super-strong-metrics-token-64-bytes-long-random-string!",
+        SMTP_HOST="smtp.example.com",
+        SMTP_FROM_EMAIL="contato@example.com",
     )
     assert valid_settings.environment == "production"
+
+    with pytest.raises(ValidationError, match="DATABASE_URL"):
+        Settings(
+            _env_file=None,
+            ENVIRONMENT="staging",
+            DATABASE_URL="sqlite+aiosqlite:///staging.db",
+            METRICS_TOKEN="super-strong-metrics-token-64-bytes-long-random-string!",
+        )
+
+    with pytest.raises(ValidationError, match="METRICS_TOKEN"):
+        Settings(
+            _env_file=None,
+            ENVIRONMENT="production",
+            JWT_SECRET="super-strong-production-entropy-key-64-bytes-long-random-string!",
+            INTERNAL_SECRET="super-strong-internal-entropy-key-64-bytes-long-random-string!",
+            RATE_LIMIT_STORAGE_URI="redis://redis:6379/0",
+            SMTP_HOST="smtp.example.com",
+            SMTP_FROM_EMAIL="contato@example.com",
+        )
+
+    with pytest.raises(ValidationError, match="METRICS_TOKEN"):
+        Settings(_env_file=None, ENVIRONMENT="staging")
+
+    with pytest.raises(ValidationError, match="INTERNAL_SECRET"):
+        Settings(
+            _env_file=None,
+            ENVIRONMENT="production",
+            DATABASE_URL="postgresql://user:password@database:5432/platform",
+            JWT_SECRET="super-strong-production-entropy-key-64-bytes-long-random-string!",
+            INTERNAL_SECRET="change-me-in-production",
+            RATE_LIMIT_STORAGE_URI="redis://redis:6379/0",
+            METRICS_TOKEN="super-strong-metrics-token-64-bytes-long-random-string!",
+            SMTP_HOST="smtp.example.com",
+            SMTP_FROM_EMAIL="contato@example.com",
+        )
+
+    with pytest.raises(ValidationError, match="RATE_LIMIT_STORAGE_URI"):
+        Settings(
+            _env_file=None,
+            ENVIRONMENT="production",
+            DATABASE_URL="postgresql://user:password@database:5432/platform",
+            JWT_SECRET="super-strong-production-entropy-key-64-bytes-long-random-string!",
+            INTERNAL_SECRET="super-strong-internal-entropy-key-64-bytes-long-random-string!",
+            RATE_LIMIT_STORAGE_URI="memory://",
+            METRICS_TOKEN="super-strong-metrics-token-64-bytes-long-random-string!",
+            SMTP_HOST="smtp.example.com",
+            SMTP_FROM_EMAIL="contato@example.com",
+        )
+
+    with pytest.raises(ValidationError, match="SMTP_HOST e SMTP_FROM_EMAIL"):
+        Settings(
+            _env_file=None,
+            ENVIRONMENT="production",
+            DATABASE_URL="postgresql://user:password@database:5432/platform",
+            JWT_SECRET="super-strong-production-entropy-key-64-bytes-long-random-string!",
+            INTERNAL_SECRET="super-strong-internal-entropy-key-64-bytes-long-random-string!",
+            RATE_LIMIT_STORAGE_URI="redis://redis:6379/0",
+            METRICS_TOKEN="super-strong-metrics-token-64-bytes-long-random-string!",
+            SMTP_HOST="",
+            SMTP_FROM_EMAIL="",
+        )
 
 
 def test_get_settings():

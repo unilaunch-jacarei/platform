@@ -15,7 +15,7 @@
 </script>
 
 <main
-  class="min-h-screen w-full flex flex-col items-center justify-center p-4 bg-background relative overflow-hidden {className}"
+  class="min-h-screen w-full flex flex-col items-center justify-center p-4 bg-background relative overflow-x-clip {className}"
 >
   {@render children()}
 </main>

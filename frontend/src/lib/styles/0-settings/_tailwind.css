@@ -1,10 +1,10 @@
 @theme {
   /* Cores Básicas */
-  --color-bg: var(--bg);
+  --color-bg: var(--background);
   --color-surface: var(--surface);
   --color-surface-soft: var(--surface-soft);
   --color-surface-strong: var(--surface-strong);
-  --color-text: var(--text);
+  --color-text: var(--foreground);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
   --color-border: var(--border);
@@ -41,31 +41,31 @@
   --font-weight-semibold: 600;
 
   /* Raio de Borda (Rounded) */
-  --radius-sm: var(--radius-sm);
-  --radius-md: var(--radius-md);
-  --radius-lg: var(--radius-lg);
-  --radius-xl: var(--radius-xl);
+  --radius-sm: var(--app-radius-sm);
+  --radius-md: var(--app-radius-md);
+  --radius-lg: var(--app-radius-lg);
+  --radius-xl: var(--app-radius-xl);
 
   /* Sombras */
-  --shadow-card: var(--shadow);
-  --shadow-card-hover: var(--shadow-hover);
+  --shadow-card: var(--app-shadow-card);
+  --shadow-card-hover: var(--app-shadow-card-hover);
 
   /* Espaçamento */
-  --spacing-space-1: var(--space-1);
-  --spacing-space-2: var(--space-2);
-  --spacing-space-3: var(--space-3);
-  --spacing-space-4: var(--space-4);
-  --spacing-space-5: var(--space-5);
-  --spacing-space-6: var(--space-6);
-  --spacing-space-7: var(--space-7);
-  --spacing-space-8: var(--space-8);
+  --spacing-space-1: var(--app-space-1);
+  --spacing-space-2: var(--app-space-2);
+  --spacing-space-3: var(--app-space-3);
+  --spacing-space-4: var(--app-space-4);
+  --spacing-space-5: var(--app-space-5);
+  --spacing-space-6: var(--app-space-6);
+  --spacing-space-7: var(--app-space-7);
+  --spacing-space-8: var(--app-space-8);
 
   /* Transição */
-  --transition-duration-default: var(--transition-duration);
-  --ease-default: var(--transition-timing);
+  --transition-duration-default: var(--app-transition-duration);
+  --ease-default: var(--app-transition-timing);
 
   /* Famílias de Fontes */
-  --font-display: var(--font-display);
-  --font-body: var(--font-body);
-  --font-mono: var(--font-mono);
+  --font-display: var(--app-font-display);
+  --font-body: var(--app-font-body);
+  --font-mono: var(--app-font-mono);
 }

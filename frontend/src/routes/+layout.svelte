@@ -46,14 +46,14 @@
 
   .logo {
     color: var(--primary);
-    font-family: var(--font-display);
+    font-family: var(--app-font-display);
     font-weight: 800;
     text-decoration: none;
   }
 
   .logout-btn {
     border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
+    border-radius: var(--app-radius-sm);
     padding: 0.45rem 0.8rem;
     background: transparent;
     color: var(--foreground);

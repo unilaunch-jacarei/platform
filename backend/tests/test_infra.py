@@ -6,6 +6,7 @@ from httpx import ASGITransport, AsyncClient
 
 from backend.error import UnauthorizedError
 from backend.infra.hmac import HmacAuthMiddleware, verify_hmac_signature
+from backend.infra.limiter import get_client_address
 from backend.infra.password import hash_password, verify_password
 from backend.infra.security import CurrentUserId, get_current_user_id
 
@@ -85,6 +86,17 @@ async def test_hmac_middleware_and_security_dependency():
         )
         assert res2.status_code == 401
 
+        # Invalid HMAC signature fails with 401
+        res_bad_sig = await client.get(
+            "/protected",
+            headers={
+                "x-user-id": "123",
+                "x-timestamp": str(int(time.time())),
+                "x-signature": "invalid_signature_hex",
+            },
+        )
+        assert res_bad_sig.status_code == 401
+
         # Valid HMAC request
         now = int(time.time())
         secret = "change-me-in-production"
@@ -120,3 +132,17 @@ async def test_get_current_user_id_fallback():
     empty_req = Request({"type": "http", "headers": []})
     with pytest.raises(UnauthorizedError):
         await get_current_user_id(empty_req)
+
+
+def test_client_address_rejects_invalid_forwarded_ip():
+    request = Request(
+        {
+            "type": "http",
+            "headers": [
+                (b"x-client-ip", b"not-an-ip"),
+                (b"x-client-ip-signature", b"invalid"),
+            ],
+            "client": ("127.0.0.1", 1234),
+        }
+    )
+    assert get_client_address(request) == "127.0.0.1"

@@ -22,6 +22,7 @@
     class="p-3 text-xs rounded-lg border font-medium {styles[
       variant
     ]} {className}"
+    role={variant === "error" ? "alert" : "status"}
   >
     {message}
   </div>

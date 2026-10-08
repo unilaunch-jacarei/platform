@@ -1,42 +1,39 @@
-# sv
+# Frontend UniLaunch
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+Aplicação SvelteKit 2 com Svelte 5, TypeScript, Tailwind CSS 4 e Bun.
 
-## Creating a project
+## Desenvolvimento
 
-If you're seeing this, you've probably already done this step. Congrats!
-
-```sh
-# create a new project
-npx sv create my-app
-```
-
-To recreate this project with the same configuration:
+Instale as dependências exclusivamente com o lockfile do Bun e inicie o servidor:
 
 ```sh
-# recreate this project
-bun x sv@0.17.0 create --template minimal --types ts --install bun frontend
+bun install --frozen-lockfile
+bun run dev
 ```
 
-## Developing
-
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+Para abrir a aplicação automaticamente no navegador:
 
 ```sh
-npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
+bun run dev -- --open
 ```
 
-## Building
+## Qualidade
 
-To create a production version of your app:
+Execute a suíte completa antes de enviar alterações:
 
 ```sh
-npm run build
+bun run test
+bun run check
+bun run build
 ```
 
-You can preview the production build with `npm run preview`.
+O projeto usa a configuração CSS do Tailwind 4. Novas classes devem seguir a nomenclatura dessa versão.
 
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+## Produção
+
+Gere e visualize a versão de produção com:
+
+```sh
+bun run build
+bun run preview
+```

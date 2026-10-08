@@ -1,21 +1,17 @@
 <script lang="ts">
   import { enhance } from "$app/forms";
-  import Button from "$lib/components/atoms/Button/Button.svelte";
   import FormField from "$lib/components/molecules/FormField/FormField.svelte";
   import FormHeader from "$lib/components/molecules/FormHeader/FormHeader.svelte";
   import FormFooter from "$lib/components/molecules/FormFooter/FormFooter.svelte";
   import Card from "$lib/components/layouts/Card/Card.svelte";
+  import FormAlert from "$lib/components/molecules/FormAlert/FormAlert.svelte";
+  import FormButton from "$lib/components/molecules/FormButton/FormButton.svelte";
+  import { trackFormSubmission, type FormState } from "$lib/forms";
 
   let submitting = $state(false);
-  let { form } = $props();
+  let { form }: { form: FormState } = $props();
 
-  function handleSubmit() {
-    submitting = true;
-    return async ({ update }: { update: () => Promise<void> }) => {
-      await update();
-      submitting = false;
-    };
-  }
+  const handleSubmit = trackFormSubmission((value) => (submitting = value));
 </script>
 
 <Card class="w-full max-w-[400px]">
@@ -26,12 +22,7 @@
 
   <form method="POST" use:enhance={handleSubmit} class="flex flex-col gap-4">
     {#if form?.error}
-      <div
-        class="p-3 text-xs rounded-lg bg-destructive/10 border border-destructive/20 text-destructive font-medium"
-        role="alert"
-      >
-        {form.error}
-      </div>
+      <FormAlert message={form.error} />
     {/if}
 
     <FormField
@@ -56,16 +47,6 @@
     />
 
     <FormField
-      id="cpf"
-      name="cpf"
-      label="CPF"
-      type="text"
-      placeholder="000.000.000-00"
-      value={form?.cpf ?? ""}
-      required
-    />
-
-    <FormField
       id="password"
       name="password"
       label="Senha"
@@ -73,6 +54,7 @@
       placeholder="••••••••"
       autocomplete="new-password"
       minlength={8}
+      error={form?.errors?.passwordConfirmation}
       required
     />
 
@@ -87,9 +69,7 @@
       required
     />
 
-    <Button type="submit" size="lg" class="w-full mt-2" disabled={submitting}>
-      {submitting ? "Criando conta..." : "Criar conta"}
-    </Button>
+    <FormButton {submitting} loadingText="Criando conta...">Criar conta</FormButton>
   </form>
 
   <FormFooter

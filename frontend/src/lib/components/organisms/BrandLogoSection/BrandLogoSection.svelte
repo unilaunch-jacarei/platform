@@ -1,4 +1,3 @@
-<!-- src/lib/components/organisms/BrandLogoSection/BrandLogoSection.svelte -->
 <script lang="ts">
   import BrandHeader from "$lib/components/molecules/BrandHeader/BrandHeader.svelte";
 
@@ -10,10 +9,11 @@
 
   let {
     title = "Unilaunch",
+    subtitle,
     class: className = "",
   }: BrandLogoSectionProps = $props();
 </script>
 
-<section class="flex flex-col items-center justify-center w-full {className}">
-  <BrandHeader {title} />
+<section class="flex w-full flex-col items-center justify-center {className}">
+  <BrandHeader {title} {subtitle} />
 </section>

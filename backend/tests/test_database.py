@@ -32,3 +32,14 @@ async def test_database_lifecycle():
 
     # 5. Close db
     await close_db()
+
+
+@pytest.mark.asyncio
+async def test_get_db_rollback_on_exception():
+    await close_db()
+    gen = get_db()
+    session = await anext(gen)
+    assert session is not None
+    with pytest.raises(RuntimeError):
+        await gen.athrow(RuntimeError("DB Exception"))
+    await close_db()

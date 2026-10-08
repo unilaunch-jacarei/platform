@@ -8,17 +8,12 @@
   import FormField from "$lib/components/molecules/FormField/FormField.svelte";
   import FormButton from "$lib/components/molecules/FormButton/FormButton.svelte";
   import MailIcon from "$lib/components/atoms/MailIcon/MailIcon.svelte";
+  import { trackFormSubmission, type FormState } from "$lib/forms";
 
   let submitting = $state(false);
-  let { form } = $props();
+  let { form }: { form: FormState } = $props();
 
-  function handleSubmit() {
-    submitting = true;
-    return async ({ update }: { update: () => Promise<void> }) => {
-      await update();
-      submitting = false;
-    };
-  }
+  const handleSubmit = trackFormSubmission((value) => (submitting = value));
 </script>
 
 <Card class="w-full max-w-[420px] p-8 flex flex-col gap-6">
@@ -26,7 +21,7 @@
 
   <IconFormHeader
     title="Recuperar senha"
-    description="Informe seu e-mail cadastrado e enviaremos um link de recuperação."
+    description="Informe seu e-mail e, se houver uma conta, enviaremos as instruções."
   >
     {#snippet icon()}
       <MailIcon />
@@ -41,7 +36,7 @@
     {#if form?.success}
       <FormAlert
         variant="success"
-        message={form.message ?? "E-mail de redefinição enviado com sucesso!"}
+        message={form.message ?? "Se existir uma conta com esse e-mail, você receberá as instruções."}
       />
     {/if}
 

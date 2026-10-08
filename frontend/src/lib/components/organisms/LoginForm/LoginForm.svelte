@@ -6,17 +6,13 @@
   import FormCheckbox from "../../molecules/FormCheckbox/FormCheckbox.svelte";
   import Card from "../../layouts/Card/Card.svelte";
   import FormButton from "$lib/components/molecules/FormButton/FormButton.svelte";
+  import FormAlert from "$lib/components/molecules/FormAlert/FormAlert.svelte";
+  import { trackFormSubmission, type FormState } from "$lib/forms";
 
   let submitting = $state(false);
-  let { form } = $props();
+  let { form }: { form: FormState } = $props();
 
-  function handleSubmit() {
-    submitting = true;
-    return async ({ update }: { update: () => Promise<void> }) => {
-      await update();
-      submitting = false;
-    };
-  }
+  const handleSubmit = trackFormSubmission((value) => (submitting = value));
 </script>
 
 <Card class="w-full max-w-[400px]">
@@ -27,11 +23,7 @@
 
   <form method="POST" use:enhance={handleSubmit} class="flex flex-col gap-4">
     {#if form?.error}
-      <div
-        class="p-3 text-xs rounded-lg bg-destructive/10 border border-destructive/20 text-destructive font-medium"
-      >
-        {form.error}
-      </div>
+      <FormAlert message={form.error} />
     {/if}
 
     <FormField

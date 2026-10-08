@@ -41,7 +41,7 @@
              group-hover:border-accent"
     >
       <svg
-        class="size-3.5 stroke-[3] transition-all duration-150 ease-out opacity-0 scale-50 pointer-events-none"
+        class="size-3.5 stroke-3 transition-all duration-150 ease-out opacity-0 scale-50 pointer-events-none"
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"

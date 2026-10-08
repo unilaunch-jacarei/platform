@@ -47,10 +47,10 @@
 
     kicker:
       "mb-2.5 text-[0.82rem] font-bold uppercase tracking-[0.18em] text-accent",
-    caption: "text-[0.92rem] text-muted leading-normal",
+    caption: "text-[0.92rem] text-muted-foreground leading-normal",
     label: "text-[0.92rem] font-semibold text-foreground",
     link: "mt-3 inline-block font-semibold text-accent no-underline hover:underline cursor-pointer transition-colors duration-150",
-    "form-footer": "mt-4.5 text-center text-sm text-muted",
+    "form-footer": "mt-4.5 text-center text-sm text-muted-foreground",
     subtitle: "mb-1.5 text-base font-semibold text-foreground leading-[1.4]",
   };
 
