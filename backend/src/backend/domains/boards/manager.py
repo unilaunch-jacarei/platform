@@ -1,4 +1,3 @@
-# src/backend/domains/boards/manager.py
 from __future__ import annotations
 
 import uuid
@@ -27,7 +26,8 @@ DEFAULT_BOARD_COLUMNS = [
 
 
 class BoardManager:
-    """Gerenciador de regras de negócio e operações de persistência para Boards, Colunas e Tarefas."""
+    """Gerenciador de regras de negócio e operações de persistência para Boards, Colunas e
+    Tarefas."""
 
     async def list(self, session: AsyncSession) -> list[Board]:
         """Lista todos os quadros ordenados pela data de criação, carregando colunas e tarefas."""
