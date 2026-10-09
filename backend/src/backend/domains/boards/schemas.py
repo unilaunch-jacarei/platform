@@ -8,7 +8,46 @@ from pydantic import (
     field_validator,
 )
 
-from backend.domains.boards.models import TaskPriority
+from backend.domains.boards.models import BoardRole, TaskPriority
+
+# --- Member Schemas ---
+
+
+class BoardMemberCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    user_id: uuid.UUID
+    role: BoardRole = Field(default=BoardRole.MEMBER)
+
+
+class BoardMemberUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    role: BoardRole
+
+
+class BoardMemberUserRead(BaseModel):
+    """Informações resumidas do usuário ao retornar dados de membro."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    email: str
+
+
+class BoardMemberRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    board_id: uuid.UUID
+    user_id: uuid.UUID
+    role: BoardRole
+    user: BoardMemberUserRead | None = None
+    created_at: datetime
+    updated_at: datetime
+
+
+# --- Task Schemas ---
 
 
 class TaskCreate(BaseModel):
@@ -61,6 +100,9 @@ class TaskRead(BaseModel):
     updated_at: datetime
 
 
+# --- Column Schemas ---
+
+
 class BoardColumnCreate(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -102,6 +144,9 @@ class BoardColumnRead(BaseModel):
     updated_at: datetime
 
 
+# --- Board Schemas ---
+
+
 class BoardCreate(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -138,5 +183,6 @@ class BoardRead(BaseModel):
     description: str | None
     owner_id: uuid.UUID
     columns: list[BoardColumnRead] = Field(default_factory=list)
+    members: list[BoardMemberRead] = Field(default_factory=list)
     created_at: datetime
     updated_at: datetime

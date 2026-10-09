@@ -6,25 +6,28 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from backend.domains.boards.models import Board, BoardColumn, Task
+from backend.domains.boards.models import Board, BoardColumn, BoardMember, BoardRole, Task
 from backend.domains.boards.schemas import (
     BoardColumnCreate,
     BoardColumnUpdate,
     BoardCreate,
+    BoardMemberCreate,
+    BoardMemberUpdate,
     BoardUpdate,
     TaskCreate,
     TaskUpdate,
 )
-from backend.error import NotFoundError
+from backend.domains.usuarios.models import User
+from backend.error import ConflictError, NotFoundError
 
 
 class BoardManager:
     """Gerenciador de regras de negócio e operações de persistência
-    para Boards, Colunas e Tarefas.
+    para Boards, Colunas, Tarefas e Membros.
     """
 
     async def list(self, session: AsyncSession) -> list[Board]:
-        """Lista todos os quadros ordenados pela data de criação, carregando colunas e tarefas."""
+        """Lista todos os quadros ordenados pela data de criação."""
         result = await session.scalars(self._board_query().order_by(Board.created_at.desc()))
         return list(result)
 
@@ -38,12 +41,20 @@ class BoardManager:
     async def create(
         self, session: AsyncSession, data: BoardCreate, owner_id: uuid.UUID | None = None
     ) -> Board:
-        """Cria um novo quadro no banco de dados."""
+        """Cria um novo quadro no banco de dados e vincula o criador como OWNER."""
         payload = data.model_dump()
         if owner_id is not None:
             payload["owner_id"] = owner_id
+
         board = Board(**payload)
         session.add(board)
+        await session.flush()
+
+        # Vincula o criador automaticamente como membro OWNER
+        if owner_id is not None:
+            owner_member = BoardMember(board_id=board.id, user_id=owner_id, role=BoardRole.OWNER)
+            session.add(owner_member)
+
         await session.commit()
         return await self.get(session, board.id)
 
@@ -62,6 +73,8 @@ class BoardManager:
         board = await self.get(session, board_id)
         await session.delete(board)
         await session.commit()
+
+    # --- Operações de Colunas ---
 
     async def create_column(self, session: AsyncSession, data: BoardColumnCreate) -> BoardColumn:
         """Adiciona uma nova coluna a um quadro garantindo a existência do Board pai."""
@@ -113,6 +126,8 @@ class BoardManager:
         await session.delete(column)
         await session.commit()
 
+    # --- Operações de Tarefas ---
+
     async def create_task(self, session: AsyncSession, data: TaskCreate) -> Task:
         """Cria uma tarefa dentro de uma coluna válida."""
         column = await session.scalar(select(BoardColumn).where(BoardColumn.id == data.column_id))
@@ -156,9 +171,101 @@ class BoardManager:
         await session.delete(task)
         await session.commit()
 
+    # --- Operações de Membros ---
+
+    async def list_members(self, session: AsyncSession, board_id: uuid.UUID) -> list[BoardMember]:
+        """Lista todos os membros associados a um determinado quadro."""
+        await self.get(session, board_id)
+        stmt = (
+            select(BoardMember)
+            .where(BoardMember.board_id == board_id)
+            .options(selectinload(BoardMember.user))
+            .order_by(BoardMember.created_at.asc())
+        )
+        result = await session.scalars(stmt)
+        return list(result)
+
+    async def add_member(
+        self, session: AsyncSession, board_id: uuid.UUID, data: BoardMemberCreate
+    ) -> BoardMember:
+        """Adiciona um novo membro a um quadro existente."""
+        await self.get(session, board_id)
+
+        user = await session.scalar(select(User).where(User.id == data.user_id))
+        if user is None:
+            raise NotFoundError("Usuário não encontrado")
+
+        existing = await session.scalar(
+            select(BoardMember).where(
+                BoardMember.board_id == board_id, BoardMember.user_id == data.user_id
+            )
+        )
+        if existing is not None:
+            raise ConflictError("Usuário já é membro deste quadro")
+
+        member = BoardMember(board_id=board_id, user_id=data.user_id, role=data.role)
+        session.add(member)
+        await session.commit()
+
+        reloaded = await session.scalar(
+            select(BoardMember)
+            .where(BoardMember.id == member.id)
+            .options(selectinload(BoardMember.user))
+        )
+        if reloaded is None:
+            raise RuntimeError("Membro criado não pôde ser recarregado")
+        return reloaded
+
+    async def update_member_role(
+        self,
+        session: AsyncSession,
+        board_id: uuid.UUID,
+        user_id: uuid.UUID,
+        data: BoardMemberUpdate,
+    ) -> BoardMember:
+        """Altera a função/papel de um membro no quadro."""
+        member = await session.scalar(
+            select(BoardMember)
+            .where(BoardMember.board_id == board_id, BoardMember.user_id == user_id)
+            .options(selectinload(BoardMember.user))
+        )
+        if member is None:
+            raise NotFoundError("Membro não encontrado neste quadro")
+
+        member.role = data.role
+        await session.commit()
+
+        reloaded = await session.scalar(
+            select(BoardMember)
+            .where(BoardMember.id == member.id)
+            .options(selectinload(BoardMember.user))
+        )
+        if reloaded is None:
+            raise NotFoundError("Membro não encontrado")
+        return reloaded
+
+    async def remove_member(
+        self, session: AsyncSession, board_id: uuid.UUID, user_id: uuid.UUID
+    ) -> None:
+        """Remove a associação de um membro com um quadro."""
+        member = await session.scalar(
+            select(BoardMember).where(
+                BoardMember.board_id == board_id, BoardMember.user_id == user_id
+            )
+        )
+        if member is None:
+            raise NotFoundError("Membro não encontrado neste quadro")
+
+        await session.delete(member)
+        await session.commit()
+
     def _board_query(self):
-        """Query padrão para listagem e obtenção de Boards com eager loading."""
-        return select(Board).options(selectinload(Board.columns).selectinload(BoardColumn.tasks))
+        """Query padrão para listagem e obtenção de Boards com eager
+        loading das colunas, tarefas e membros."""
+        return select(Board).options(
+            selectinload(Board.columns).selectinload(BoardColumn.tasks),
+            selectinload(Board.members).selectinload(BoardMember.user),
+        )
 
 
 board_manager = BoardManager()

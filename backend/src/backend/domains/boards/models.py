@@ -1,26 +1,42 @@
 import uuid
 from datetime import datetime
 from enum import StrEnum
+from typing import TYPE_CHECKING
 
 from fastapi_users_db_sqlalchemy.generics import GUID
-from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Integer, String, Text, func
+from sqlalchemy import (
+    CheckConstraint,
+    DateTime,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+    func,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from backend.database import Base
 
+if TYPE_CHECKING:
+    from backend.domains.usuarios.models import User
+
 
 class TaskPriority(StrEnum):
-    """Prioridades aceitas para os cards/tarefas."""
-
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
     URGENT = "urgent"
 
 
-class Board(Base):
-    """Quadro de trabalho pertencente a um usuário."""
+class BoardRole(StrEnum):
+    OWNER = "owner"
+    ADMIN = "admin"
+    MEMBER = "member"
+    VIEWER = "viewer"
 
+
+class Board(Base):
     __tablename__ = "boards"
 
     id: Mapped[uuid.UUID] = mapped_column(GUID(), primary_key=True, default=uuid.uuid4)
@@ -33,15 +49,66 @@ class Board(Base):
         index=True,
     )
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), nullable=False
+        DateTime(timezone=True), default=datetime.now, server_default=func.now(), nullable=False
     )
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+        DateTime(timezone=True),
+        default=datetime.now,
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
     )
 
     columns: Mapped[list["BoardColumn"]] = relationship(
         back_populates="board", cascade="all, delete-orphan", lazy="raise"
     )
+    members: Mapped[list["BoardMember"]] = relationship(
+        back_populates="board", cascade="all, delete-orphan", lazy="raise"
+    )
+
+
+class BoardMember(Base):
+    __tablename__ = "board_members"
+    __table_args__ = (
+        UniqueConstraint("board_id", "user_id", name="uq_board_members_board_user"),
+        CheckConstraint(
+            "role IN ('owner', 'admin', 'member', 'viewer')",
+            name="ck_board_members_role",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(GUID(), primary_key=True, default=uuid.uuid4)
+    board_id: Mapped[uuid.UUID] = mapped_column(
+        GUID(),
+        ForeignKey("boards.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        GUID(),
+        ForeignKey("usuarios.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    role: Mapped[str] = mapped_column(
+        String(20),
+        nullable=False,
+        default=BoardRole.MEMBER,
+        server_default=BoardRole.MEMBER,
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=datetime.now, server_default=func.now(), nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=datetime.now,
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
+    )
+
+    board: Mapped[Board] = relationship(back_populates="members", lazy="raise")
+    user: Mapped["User"] = relationship(lazy="raise")
 
 
 class BoardColumn(Base):
@@ -57,10 +124,14 @@ class BoardColumn(Base):
     name: Mapped[str] = mapped_column(String(100), nullable=False)
     position: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), nullable=False
+        DateTime(timezone=True), default=datetime.now, server_default=func.now(), nullable=False
     )
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+        DateTime(timezone=True),
+        default=datetime.now,
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
     )
 
     board: Mapped[Board] = relationship(back_populates="columns", lazy="raise")
@@ -96,10 +167,14 @@ class Task(Base):
     due_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     position: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), nullable=False
+        DateTime(timezone=True), default=datetime.now, server_default=func.now(), nullable=False
     )
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+        DateTime(timezone=True),
+        default=datetime.now,
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
     )
 
     column: Mapped[BoardColumn] = relationship(back_populates="tasks", lazy="raise")
