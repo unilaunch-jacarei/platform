@@ -33,10 +33,14 @@ class Board(Base):
         index=True,
     )
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), nullable=False
+        DateTime(timezone=True), default=datetime.now, server_default=func.now(), nullable=False
     )
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+        DateTime(timezone=True),
+        default=datetime.now,
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
     )
 
     columns: Mapped[list["BoardColumn"]] = relationship(
@@ -57,10 +61,14 @@ class BoardColumn(Base):
     name: Mapped[str] = mapped_column(String(100), nullable=False)
     position: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), nullable=False
+        DateTime(timezone=True), default=datetime.now, server_default=func.now(), nullable=False
     )
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+        DateTime(timezone=True),
+        default=datetime.now,
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
     )
 
     board: Mapped[Board] = relationship(back_populates="columns", lazy="raise")
@@ -96,10 +104,17 @@ class Task(Base):
     due_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     position: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), nullable=False
+        DateTime(timezone=True),
+        default=datetime.now,  # <-- Adicione isso!
+        server_default=func.now(),
+        nullable=False,
     )
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+        DateTime(timezone=True),
+        default=datetime.now,  # <-- Adicione isso!
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
     )
 
     column: Mapped[BoardColumn] = relationship(back_populates="tasks", lazy="raise")
