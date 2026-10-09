@@ -120,7 +120,12 @@ async def test_boards_crud_routes(board_client: AsyncClient):
     assert board_data["title"] == "Engineering Board"
     assert board_data["description"] == "Core tasks"
     assert len(board_data["columns"]) == 4
-    assert [c["name"] for c in board_data["columns"]] == ["A Fazer", "Em andamento", "Em review", "Concluído"]
+    assert [c["name"] for c in board_data["columns"]] == [
+        "A Fazer",
+        "Em andamento",
+        "Em review",
+        "Concluído",
+    ]
     assert "owner_id" in board_data
 
     # Extra forbidden field validation
