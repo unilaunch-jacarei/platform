@@ -119,7 +119,8 @@ async def test_boards_crud_routes(board_client: AsyncClient):
     board_id = board_data["id"]
     assert board_data["title"] == "Engineering Board"
     assert board_data["description"] == "Core tasks"
-    assert board_data["columns"] == []
+    assert len(board_data["columns"]) == 4
+    assert [c["name"] for c in board_data["columns"]] == ["A Fazer", "Em andamento", "Em review", "Concluído"]
     assert "owner_id" in board_data
 
     # Extra forbidden field validation
@@ -293,7 +294,7 @@ async def test_columns_and_tasks_crud_routes(board_client: AsyncClient):
     # Verify board eager loading shows columns and tasks
     board_full = await board_client.get(f"/api/v1/boards/{board_id}", headers=headers)
     assert board_full.status_code == 200
-    assert len(board_full.json()["columns"]) == 2
+    assert len(board_full.json()["columns"]) == 6
 
     # 5. Delete Task
     del_task_res = await board_client.delete(f"/api/v1/boards/tasks/{task_id}", headers=headers)
