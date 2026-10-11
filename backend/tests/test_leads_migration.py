@@ -12,14 +12,14 @@ def run_alembic(database: Path, *arguments: str) -> None:
         **os.environ,
         "DATABASE_URL": f"sqlite+aiosqlite:///{database}",
     }
-    subprocess.run(
+    result = subprocess.run(
         [sys.executable, "-m", "alembic", *arguments],
         cwd=BACKEND_ROOT,
         env=environment,
-        check=True,
         capture_output=True,
         text=True,
     )
+    assert result.returncode == 0, result.stderr
 
 
 def test_normalization_migration_backfills_and_preserves_legacy_data(tmp_path: Path) -> None:
