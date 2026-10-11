@@ -17,11 +17,17 @@ from backend.domains.boards.schemas import (
 )
 from backend.error import NotFoundError
 
+DEFAULT_BOARD_COLUMNS = [
+    ("A Fazer", 0),
+    ("Em andamento", 1),
+    ("Em review", 2),
+    ("Concluído", 3),
+]
+
 
 class BoardManager:
-    """Gerenciador de regras de negócio e operações de persistência
-    para Boards, Colunas e Tarefas.
-    """
+    """Gerenciador de regras de negócio e operações de persistência para Boards, Colunas e
+    Tarefas."""
 
     async def list(self, session: AsyncSession) -> list[Board]:
         """Lista todos os quadros ordenados pela data de criação, carregando colunas e tarefas."""
@@ -35,15 +41,22 @@ class BoardManager:
             raise NotFoundError("Board não encontrado")
         return board
 
-    async def create(
-        self, session: AsyncSession, data: BoardCreate, owner_id: uuid.UUID | None = None
-    ) -> Board:
-        """Cria um novo quadro no banco de dados."""
-        payload = data.model_dump()
-        if owner_id is not None:
-            payload["owner_id"] = owner_id
-        board = Board(**payload)
+    async def create(self, session: AsyncSession, data: BoardCreate, owner_id: uuid.UUID) -> Board:
+        """Cria um novo quadro no banco e popula automaticamente com as colunas padrão."""
+        board = Board(
+            title=data.title,
+            description=data.description,
+            owner_id=owner_id,
+        )
         session.add(board)
+        await session.flush()
+
+        default_columns = [
+            BoardColumn(board_id=board.id, name=name, position=pos)
+            for name, pos in DEFAULT_BOARD_COLUMNS
+        ]
+        session.add_all(default_columns)
+
         await session.commit()
         return await self.get(session, board.id)
 
