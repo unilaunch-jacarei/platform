@@ -20,6 +20,13 @@ from backend.domains.boards.schemas import (
 from backend.domains.usuarios.models import User
 from backend.error import ConflictError, NotFoundError
 
+DEFAULT_BOARD_COLUMNS = [
+    ("A Fazer", 0),
+    ("Em andamento", 1),
+    ("Em review", 2),
+    ("Concluído", 3),
+]
+
 
 class BoardManager:
     """Gerenciador de regras de negócio e operações de persistência
@@ -41,14 +48,26 @@ class BoardManager:
     async def create(
         self, session: AsyncSession, data: BoardCreate, owner_id: uuid.UUID | None = None
     ) -> Board:
-        """Cria um novo quadro no banco de dados e vincula o criador como OWNER."""
-        payload = data.model_dump()
+        """Cria um novo quadro no banco, popula as colunas padrão
+        e vincula automaticamente o criador como OWNER.
+        """
+        payload = {
+            "title": data.title,
+            "description": data.description,
+        }
         if owner_id is not None:
             payload["owner_id"] = owner_id
 
         board = Board(**payload)
         session.add(board)
         await session.flush()
+
+        # Popula as colunas padrão do Kanban
+        default_columns = [
+            BoardColumn(board_id=board.id, name=name, position=pos)
+            for name, pos in DEFAULT_BOARD_COLUMNS
+        ]
+        session.add_all(default_columns)
 
         # Vincula o criador automaticamente como membro OWNER
         if owner_id is not None:
@@ -261,7 +280,8 @@ class BoardManager:
 
     def _board_query(self):
         """Query padrão para listagem e obtenção de Boards com eager
-        loading das colunas, tarefas e membros."""
+        loading das colunas, tarefas e membros.
+        """
         return select(Board).options(
             selectinload(Board.columns).selectinload(BoardColumn.tasks),
             selectinload(Board.members).selectinload(BoardMember.user),
