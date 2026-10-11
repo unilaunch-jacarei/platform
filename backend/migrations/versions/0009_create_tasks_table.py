@@ -1,7 +1,7 @@
 """create tasks table
 
 Revision ID: 0009_create_tasks_table
-Revises: 0008_create_boards_table
+Revises: 93e5ba010a2a
 Create Date: 2026-10-11 12:00:00.000000
 """
 
@@ -12,7 +12,7 @@ from alembic import op
 from fastapi_users_db_sqlalchemy.generics import GUID
 
 revision: str = "0009_create_tasks_table"
-down_revision: str | Sequence[str] | None = "0008_create_boards_table"
+down_revision: str | Sequence[str] | None = "93e5ba010a2a"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
