@@ -7,8 +7,8 @@ from sqlalchemy.orm import Mapped, mapped_column
 from backend.database import Base
 
 
-class Task(Base):
-    __tablename__ = "tasks"
+class UserTask(Base):
+    __tablename__ = "user_tasks"
 
     id: Mapped[uuid.UUID] = mapped_column(
         primary_key=True,

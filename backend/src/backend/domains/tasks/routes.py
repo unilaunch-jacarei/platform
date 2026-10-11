@@ -5,7 +5,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.database import get_db
-from backend.domains.tasks.models import Task
+from backend.domains.tasks.models import UserTask as Task
 from backend.domains.tasks.schemas import TaskCreate, TaskRead, TaskUpdate
 from backend.domains.usuarios.auth import current_active_user
 from backend.domains.usuarios.models import User

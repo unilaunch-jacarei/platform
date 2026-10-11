@@ -19,7 +19,7 @@ depends_on: str | Sequence[str] | None = None
 
 def upgrade() -> None:
     op.create_table(
-        "tasks",
+        "user_tasks",
         sa.Column("id", GUID(), nullable=False),
         sa.Column("title", sa.String(length=255), nullable=False),
         sa.Column("description", sa.String(length=255), nullable=True),
@@ -34,9 +34,9 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(["user_id"], ["usuarios.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),
     )
-    op.create_index(op.f("ix_tasks_user_id"), "tasks", ["user_id"], unique=False)
+    op.create_index(op.f("ix_user_tasks_user_id"), "user_tasks", ["user_id"], unique=False)
 
 
 def downgrade() -> None:
-    op.drop_index(op.f("ix_tasks_user_id"), table_name="tasks")
-    op.drop_table("tasks")
+    op.drop_index(op.f("ix_user_tasks_user_id"), table_name="user_tasks")
+    op.drop_table("user_tasks")
