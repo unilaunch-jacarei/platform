@@ -25,9 +25,13 @@
 {#if data.userId}
   <header class="topbar">
     <a class="logo" href="/">UniLaunch</a>
-    <form method="POST" action="/logout">
-      <button type="submit" class="logout-btn">Sair</button>
-    </form>
+    <strong class="topbar-title">Kanban</strong>
+    <div class="profile-area">
+      <span class="notifications" aria-label="4 notificações">♧<b>4</b></span>
+      <form method="POST" action="/logout">
+        <button type="submit" class="avatar" aria-label="Sair da conta" title="Sair">L</button>
+      </form>
+    </div>
   </header>
 {/if}
 
@@ -35,35 +39,47 @@
 
 <style>
   .topbar {
+    position: relative;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0.85rem 1.5rem;
-    background: var(--topbar-bg, var(--surface));
+    min-height: 4.4rem;
+    box-sizing: border-box;
+    padding: 0.85rem 1.85rem;
+    background: #090b1d;
     color: var(--foreground);
     border-bottom: 1px solid var(--border);
   }
 
   .logo {
-    color: var(--primary);
+    color: #dfe4f3;
     font-family: var(--app-font-display);
     font-weight: 800;
     text-decoration: none;
   }
 
-  .logout-btn {
-    border: 1px solid var(--border);
-    border-radius: var(--app-radius-sm);
-    padding: 0.45rem 0.8rem;
-    background: transparent;
-    color: var(--foreground);
-    cursor: pointer;
-    font: inherit;
-    font-size: 0.85rem;
-    transition: background-color var(--transition);
+  .topbar-title {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    color: #f2f3fb;
+    font-family: var(--app-font-display);
+    font-size: 0.95rem;
   }
 
-  .logout-btn:hover {
-    background: var(--surface-soft);
+  .profile-area { display: flex; align-items: center; gap: 0.65rem; }
+  .notifications { position: relative; display: grid; width: 2.45rem; height: 2.45rem; place-items: center; border: 1px solid #2b315a; border-radius: 50%; color: #70809e; font-size: 1rem; }
+  .notifications b { position: absolute; top: -0.3rem; right: -0.18rem; display: grid; width: 1.2rem; height: 1.2rem; place-items: center; border-radius: 50%; background: #744cf0; color: #fff; font-size: 0.63rem; }
+  .avatar {
+    display: grid;
+    width: 2.5rem;
+    height: 2.5rem;
+    place-items: center;
+    border: 0;
+    border-radius: 50%;
+    background: #7351ed;
+    color: #fff;
+    cursor: pointer;
+    font: 800 .9rem var(--app-font-display);
   }
 </style>

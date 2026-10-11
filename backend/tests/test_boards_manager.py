@@ -56,7 +56,8 @@ async def test_create_and_get_board(board_session: AsyncSession, board_user: Use
     assert board.title == "Sprint 1 Board"
     assert board.description == "Board for sprint 1 tasks"
     assert board.owner_id == board_user.id
-    assert board.columns == []
+    assert len(board.columns) == 4
+    assert [c.name for c in board.columns] == ["A Fazer", "Em andamento", "Em review", "Concluído"]
 
     fetched = await manager.get(board_session, board.id)
     assert fetched.id == board.id
