@@ -1,5 +1,6 @@
 import uuid
 from datetime import datetime
+
 from pydantic import BaseModel, ConfigDict, Field
 
 
@@ -21,6 +22,6 @@ class TaskRead(BaseModel):
     completed: bool
     user_id: uuid.UUID
     created_at: datetime
-    update_at: datetime
+    updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)

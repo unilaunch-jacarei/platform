@@ -1,6 +1,7 @@
 import uuid
 from datetime import datetime
-from sqlalchemy import Boolean, Datetime, ForeignKey, String, Text, func
+
+from sqlalchemy import Boolean, DateTime, ForeignKey, String, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from backend.database import Base
@@ -24,13 +25,13 @@ class Task(Base):
     )
 
     created_at: Mapped[datetime] = mapped_column(
-        Datetime(timezone=True),
+        DateTime(timezone=True),
         server_default=func.now(),
         nullable=False,
     )
 
-    update_at: Mapped[datetime] = mapped_column(
-        Datetime(timezone=True),
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
         server_default=func.now(),
         onupdate=func.now(),
         nullable=False,

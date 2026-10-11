@@ -14,8 +14,8 @@ from backend.config import get_settings
 from backend.database import close_db
 from backend.domains.boards.routes import boards_router
 from backend.domains.leads.routes import leads_router, public_leads_router
-from backend.domains.usuarios.routes import auth_router, users_router
 from backend.domains.tasks.routes import router as tasks_router
+from backend.domains.usuarios.routes import auth_router, users_router
 from backend.error import register_exception_handlers
 from backend.infra.limiter import limiter
 from backend.infra.metrics import http_request_duration, http_request_errors, http_requests

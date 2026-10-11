@@ -9,6 +9,7 @@ from backend.config import get_settings
 from backend.database import Base
 from backend.domains.boards import models as _board_models  # noqa: F401
 from backend.domains.leads import models as _lead_models  # noqa: F401
+from backend.domains.tasks import models as _task_models  # noqa: F401
 from backend.domains.usuarios import models as _usuarios_models  # noqa: F401
 
 config = context.config

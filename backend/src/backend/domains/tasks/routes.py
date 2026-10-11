@@ -1,4 +1,5 @@
 import uuid
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -110,7 +111,7 @@ async def delete_task(
     result = await session.execute(
         select(Task).where(
             Task.id == task_id,
-            Task.user_id == current_active_user,
+            Task.user_id == current_user.id,
         )
     )
     task = result.scalar_one_or_none()
