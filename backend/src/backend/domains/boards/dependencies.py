@@ -1,3 +1,5 @@
+# ruff: noqa: I001
+
 import uuid
 from typing import Annotated, Callable, Coroutine, Sequence
 
@@ -7,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.database import get_db
 from backend.domains.boards.models import Board, BoardMember, BoardRole
+from backend.domains.boards.models import BoardColumn, Task
 from backend.domains.usuarios.auth import current_active_user
 from backend.domains.usuarios.models import User
 
@@ -54,6 +57,58 @@ async def get_user_board_role(
         return None
 
     return BoardRole(role_str)
+
+
+async def require_user_board_role(
+    session: AsyncSession,
+    board_id: uuid.UUID,
+    current_user: User,
+    allowed_roles: Sequence[BoardRole],
+) -> BoardRole:
+    """Valida a permissão do usuário para uma operação em um quadro."""
+    user_role = await get_user_board_role(session, board_id, current_user)
+
+    if user_role is None:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Você não é membro deste quadro",
+        )
+
+    user_level = ROLE_HIERARCHY[user_role]
+    min_required_level = min(ROLE_HIERARCHY[role] for role in allowed_roles)
+    if user_level < min_required_level:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Você não possui permissão suficiente para esta operação",
+        )
+
+    return user_role
+
+
+async def get_column_board_id(session: AsyncSession, column_id: uuid.UUID) -> uuid.UUID:
+    """Obtém o quadro de uma coluna, preservando o erro de recurso inexistente."""
+    board_id = await session.scalar(select(BoardColumn.board_id).where(BoardColumn.id == column_id))
+    if board_id is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Coluna não encontrada",
+        )
+    return board_id
+
+
+async def get_task_board_id(session: AsyncSession, task_id: uuid.UUID) -> uuid.UUID:
+    """Obtém o quadro de uma tarefa a partir da sua coluna."""
+    board_id = await session.scalar(
+        select(BoardColumn.board_id)
+        .join(Task, Task.column_id == BoardColumn.id)
+        .where(Task.id == task_id)
+    )
+    if board_id is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Tarefa não encontrada",
+        )
+    return board_id
 
 
 def require_board_role(

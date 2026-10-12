@@ -196,6 +196,13 @@ class BoardManager:
             )
             if target_column is None:
                 raise NotFoundError("Coluna de destino não encontrada")
+            source_board_id = await session.scalar(
+                select(BoardColumn.board_id)
+                .join(Task, Task.column_id == BoardColumn.id)
+                .where(Task.id == task_id)
+            )
+            if source_board_id != target_column.board_id:
+                raise ConflictError("Não é permitido mover uma tarefa entre quadros diferentes")
             changes_list.append(f"Movida para coluna {target_column.name}")
 
         for key, value in update_data.items():

@@ -1,3 +1,5 @@
+# ruff: noqa: I001
+
 import uuid
 from typing import Annotated
 
@@ -6,6 +8,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.database import get_db
 from backend.domains.boards.dependencies import require_board_role
+from backend.domains.boards.dependencies import (
+    get_column_board_id,
+    get_task_board_id,
+    require_user_board_role,
+)
 from backend.domains.boards.manager import board_manager
 from backend.domains.boards.models import BoardRole
 from backend.domains.boards.schemas import (
@@ -230,6 +237,10 @@ async def create_task(
     session: Annotated[AsyncSession, Depends(get_db)],
 ) -> TaskRead:
     """Cria uma nova tarefa dentro de uma coluna e registra auditoria."""
+    board_id = await get_column_board_id(session, data.column_id)
+    await require_user_board_role(
+        session, board_id, current_user, [BoardRole.MEMBER, BoardRole.ADMIN, BoardRole.OWNER]
+    )
     task = await board_manager.create_task(session, data, user_id=current_user.id)
     return TaskRead.model_validate(task)
 
@@ -242,6 +253,10 @@ async def update_task(
     session: Annotated[AsyncSession, Depends(get_db)],
 ) -> TaskRead:
     """Atualiza dados de uma tarefa e registra auditoria das alterações."""
+    board_id = await get_task_board_id(session, task_id)
+    await require_user_board_role(
+        session, board_id, current_user, [BoardRole.MEMBER, BoardRole.ADMIN, BoardRole.OWNER]
+    )
     task = await board_manager.update_task(session, task_id, data, user_id=current_user.id)
     return TaskRead.model_validate(task)
 
@@ -253,6 +268,10 @@ async def delete_task(
     session: Annotated[AsyncSession, Depends(get_db)],
 ) -> Response:
     """Remove uma tarefa do quadro registrando auditoria."""
+    board_id = await get_task_board_id(session, task_id)
+    await require_user_board_role(
+        session, board_id, current_user, [BoardRole.MEMBER, BoardRole.ADMIN, BoardRole.OWNER]
+    )
     await board_manager.delete_task(session, task_id, user_id=current_user.id)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
@@ -264,5 +283,12 @@ async def list_task_audit_logs(
     session: Annotated[AsyncSession, Depends(get_db)],
 ) -> list[TaskAuditLogResponse]:
     """Lista o histórico imutável de alterações de uma tarefa."""
+    board_id = await get_task_board_id(session, task_id)
+    await require_user_board_role(
+        session,
+        board_id,
+        _user,
+        [BoardRole.VIEWER, BoardRole.MEMBER, BoardRole.ADMIN, BoardRole.OWNER],
+    )
     logs = await board_manager.list_task_audit_logs(session, task_id)
     return [TaskAuditLogResponse.model_validate(log) for log in logs]

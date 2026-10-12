@@ -87,6 +87,24 @@ async def get_regular_user_token(client: AsyncClient) -> str:
     return login.json()["access_token"]
 
 
+async def register_user_token(client: AsyncClient, email: str) -> str:
+    password = "RegularUserPassword123!"
+    response = await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": email,
+            "password": password,
+            "nome": email.split("@")[0],
+        },
+    )
+    assert response.status_code == 201
+    login = await client.post(
+        "/api/v1/auth/jwt/login",
+        data={"username": email, "password": password},
+    )
+    return login.json()["access_token"]
+
+
 @pytest.mark.asyncio
 async def test_boards_unauthenticated_and_forbidden_access(board_client: AsyncClient):
     # Unauthenticated
@@ -318,6 +336,137 @@ async def test_columns_and_tasks_crud_routes(board_client: AsyncClient):
         f"/api/v1/boards/columns/{uuid.uuid4()}", headers=headers
     )
     assert del_missing_col.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_task_authorization_allows_viewing_audit_but_not_mutations(board_client: AsyncClient):
+    owner_token = await register_user_token(board_client, "owner@example.com")
+    viewer_token = await register_user_token(board_client, "viewer@example.com")
+    outsider_token = await register_user_token(board_client, "outsider@example.com")
+    owner_headers = {"Authorization": f"Bearer {owner_token}"}
+    viewer_headers = {"Authorization": f"Bearer {viewer_token}"}
+    outsider_headers = {"Authorization": f"Bearer {outsider_token}"}
+
+    board_response = await board_client.post(
+        "/api/v1/boards", headers=owner_headers, json={"title": "Access controlled board"}
+    )
+    assert board_response.status_code == 201
+    board = board_response.json()
+    board_id = board["id"]
+    column_id = board["columns"][0]["id"]
+
+    async with board_client.board_session_factory() as session:
+        viewer = await session.scalar(select(User).where(User.email == "viewer@example.com"))
+    add_viewer_response = await board_client.post(
+        f"/api/v1/boards/{board_id}/members",
+        headers=owner_headers,
+        json={"user_id": str(viewer.id), "role": "viewer"},
+    )
+    assert add_viewer_response.status_code == 201
+
+    task_response = await board_client.post(
+        "/api/v1/boards/tasks",
+        headers=owner_headers,
+        json={"column_id": column_id, "title": "Protected task"},
+    )
+    assert task_response.status_code == 201
+    task_id = task_response.json()["id"]
+
+    assert (
+        await board_client.post(
+            "/api/v1/boards/tasks",
+            headers=viewer_headers,
+            json={"column_id": column_id, "title": "Viewer task"},
+        )
+    ).status_code == 403
+    assert (
+        await board_client.patch(
+            f"/api/v1/boards/tasks/{task_id}",
+            headers=viewer_headers,
+            json={"title": "Viewer edit"},
+        )
+    ).status_code == 403
+    assert (
+        await board_client.delete(f"/api/v1/boards/tasks/{task_id}", headers=viewer_headers)
+    ).status_code == 403
+
+    viewer_audit_response = await board_client.get(
+        f"/api/v1/boards/tasks/{task_id}/audit", headers=viewer_headers
+    )
+    assert viewer_audit_response.status_code == 200
+    assert viewer_audit_response.json()[0]["action"] == "CREATED"
+
+    assert (
+        await board_client.get(f"/api/v1/boards/tasks/{task_id}/audit", headers=outsider_headers)
+    ).status_code == 403
+    assert (
+        await board_client.patch(
+            f"/api/v1/boards/tasks/{task_id}",
+            headers=outsider_headers,
+            json={"title": "Outsider edit"},
+        )
+    ).status_code == 403
+
+
+@pytest.mark.asyncio
+async def test_task_movement_creates_audit_log_and_cannot_cross_boards(board_client: AsyncClient):
+    owner_token = await register_user_token(board_client, "movement-owner@example.com")
+    headers = {"Authorization": f"Bearer {owner_token}"}
+    first_board_response = await board_client.post(
+        "/api/v1/boards", headers=headers, json={"title": "First board"}
+    )
+    assert first_board_response.status_code == 201
+    first_board = first_board_response.json()
+    source_column_id = first_board["columns"][0]["id"]
+    target_column_id = first_board["columns"][1]["id"]
+
+    task_response = await board_client.post(
+        "/api/v1/boards/tasks",
+        headers=headers,
+        json={"column_id": source_column_id, "title": "Move me"},
+    )
+    assert task_response.status_code == 201
+    task_id = task_response.json()["id"]
+
+    move_response = await board_client.patch(
+        f"/api/v1/boards/tasks/{task_id}",
+        headers=headers,
+        json={"column_id": target_column_id, "position": 1},
+    )
+    assert move_response.status_code == 200
+    assert move_response.json()["column_id"] == target_column_id
+    assert move_response.json()["position"] == 1
+
+    audit_response = await board_client.get(
+        f"/api/v1/boards/tasks/{task_id}/audit", headers=headers
+    )
+    assert audit_response.status_code == 200
+    audit_logs = audit_response.json()
+    assert [log["action"] for log in audit_logs] == ["UPDATED", "CREATED"]
+    assert "Movida para coluna Em andamento" in audit_logs[0]["changes"]
+    assert audit_logs[0]["user_id"] == first_board["owner_id"]
+
+    second_board_response = await board_client.post(
+        "/api/v1/boards", headers=headers, json={"title": "Second board"}
+    )
+    assert second_board_response.status_code == 201
+    other_board_column_id = second_board_response.json()["columns"][0]["id"]
+    cross_board_response = await board_client.patch(
+        f"/api/v1/boards/tasks/{task_id}",
+        headers=headers,
+        json={"column_id": other_board_column_id},
+    )
+    assert cross_board_response.status_code == 409
+
+    board_response = await board_client.get(f"/api/v1/boards/{first_board['id']}", headers=headers)
+    moved_task = next(
+        task
+        for column in board_response.json()["columns"]
+        if column["id"] == target_column_id
+        for task in column["tasks"]
+        if task["id"] == task_id
+    )
+    assert moved_task["column_id"] == target_column_id
 
 
 def test_boards_schemas_validators():
