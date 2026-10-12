@@ -6,7 +6,14 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from backend.domains.boards.models import Board, BoardColumn, BoardMember, BoardRole, Task
+from backend.domains.boards.models import (
+    Board,
+    BoardColumn,
+    BoardMember,
+    BoardRole,
+    Task,
+    TaskAuditLog,
+)
 from backend.domains.boards.schemas import (
     BoardColumnCreate,
     BoardColumnUpdate,
@@ -145,50 +152,102 @@ class BoardManager:
         await session.delete(column)
         await session.commit()
 
-    # --- Operações de Tarefas ---
+    # --- Operações de Tarefas e Auditoria ---
 
-    async def create_task(self, session: AsyncSession, data: TaskCreate) -> Task:
-        """Cria uma tarefa dentro de uma coluna válida."""
+    async def create_task(
+        self, session: AsyncSession, data: TaskCreate, user_id: uuid.UUID
+    ) -> Task:
+        """Cria uma tarefa dentro de uma coluna válida e registra auditoria."""
         column = await session.scalar(select(BoardColumn).where(BoardColumn.id == data.column_id))
         if column is None:
             raise NotFoundError("Coluna de destino não encontrada")
 
         task = Task(**data.model_dump())
         session.add(task)
+        await session.flush()
+
+        # Cria registro de auditoria imutável (CREATED)
+        audit = TaskAuditLog(
+            task_id=task.id,
+            user_id=user_id,
+            action="CREATED",
+            changes=f"Tarefa criada na coluna {column.name}",
+        )
+        session.add(audit)
+
         await session.commit()
         await session.refresh(task)
         return task
 
     async def update_task(
-        self, session: AsyncSession, task_id: uuid.UUID, data: TaskUpdate
+        self, session: AsyncSession, task_id: uuid.UUID, data: TaskUpdate, user_id: uuid.UUID
     ) -> Task:
-        """Atualiza dados do card/tarefa, incluindo troca de coluna se aplicável."""
+        """Atualiza dados do card/tarefa, incluindo troca de coluna, e registra auditoria."""
         task = await session.scalar(select(Task).where(Task.id == task_id))
         if task is None:
             raise NotFoundError("Tarefa não encontrada")
 
         update_data = data.model_dump(exclude_unset=True)
+        changes_list = []
+
         if "column_id" in update_data and update_data["column_id"] is not None:
             target_column = await session.scalar(
                 select(BoardColumn).where(BoardColumn.id == update_data["column_id"])
             )
             if target_column is None:
                 raise NotFoundError("Coluna de destino não encontrada")
+            changes_list.append(f"Movida para coluna {target_column.name}")
 
         for key, value in update_data.items():
-            setattr(task, key, value)
+            if getattr(task, key) != value:
+                changes_list.append(f"Alterado {key} de '{getattr(task, key)}' para '{value}'")
+                setattr(task, key, value)
+
+        if changes_list:
+            audit = TaskAuditLog(
+                task_id=task.id,
+                user_id=user_id,
+                action="UPDATED",
+                changes="; ".join(changes_list),
+            )
+            session.add(audit)
 
         await session.commit()
         await session.refresh(task)
         return task
 
-    async def delete_task(self, session: AsyncSession, task_id: uuid.UUID) -> None:
-        """Remove um card do quadro."""
+    async def delete_task(
+        self, session: AsyncSession, task_id: uuid.UUID, user_id: uuid.UUID
+    ) -> None:
+        """Remove um card do quadro registrando o log de auditoria antes de apagar."""
         task = await session.scalar(select(Task).where(Task.id == task_id))
         if task is None:
             raise NotFoundError("Tarefa não encontrada")
+
+        audit = TaskAuditLog(
+            task_id=task.id,
+            user_id=user_id,
+            action="DELETED",
+            changes=f"Tarefa '{task.title}' removida",
+        )
+        session.add(audit)
+        await session.flush()
+
         await session.delete(task)
         await session.commit()
+
+    async def list_task_audit_logs(
+        self, session: AsyncSession, task_id: uuid.UUID
+    ) -> list[TaskAuditLog]:
+        """Lista o histórico de auditoria imutável de uma tarefa."""
+        stmt = (
+            select(TaskAuditLog)
+            .where(TaskAuditLog.task_id == task_id)
+            .options(selectinload(TaskAuditLog.user))
+            .order_by(TaskAuditLog.created_at.desc())
+        )
+        result = await session.scalars(stmt)
+        return list(result)
 
     # --- Operações de Membros ---
 

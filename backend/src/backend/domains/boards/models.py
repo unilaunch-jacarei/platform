@@ -178,3 +178,29 @@ class Task(Base):
     )
 
     column: Mapped[BoardColumn] = relationship(back_populates="tasks", lazy="raise")
+
+
+class TaskAuditLog(Base):
+    __tablename__ = "task_audit_logs"
+
+    id: Mapped[uuid.UUID] = mapped_column(GUID(), primary_key=True, default=uuid.uuid4)
+    task_id: Mapped[uuid.UUID] = mapped_column(
+        GUID(),
+        ForeignKey("tasks.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        GUID(),
+        ForeignKey("usuarios.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
+    )
+    action: Mapped[str] = mapped_column(String(50), nullable=False)
+    changes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=datetime.now, server_default=func.now(), nullable=False
+    )
+
+    task: Mapped[Task] = relationship(lazy="raise")
+    user: Mapped["User"] = relationship(lazy="raise")
