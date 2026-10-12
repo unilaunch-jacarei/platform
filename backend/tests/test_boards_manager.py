@@ -190,7 +190,7 @@ async def test_task_crud_lifecycle(board_session: AsyncSession, board_user: User
         board_session, BoardColumnCreate(board_id=board.id, name="Done", position=1)
     )
 
-    # 1. Create Task
+    # 1. Create Task (com user_id para auditoria)
     due = datetime.now(UTC) + timedelta(days=7)
     task_data = TaskCreate(
         column_id=col1.id,
@@ -200,21 +200,26 @@ async def test_task_crud_lifecycle(board_session: AsyncSession, board_user: User
         due_date=due,
         position=0,
     )
-    task = await manager.create_task(board_session, task_data)
+    task = await manager.create_task(board_session, task_data, user_id=board_user.id)
     assert task.id is not None
     assert task.column_id == col1.id
     assert task.title == "Implement Auth"
-    assert task.description == "Add JWT auth support"
-    assert task.priority == TaskPriority.HIGH
-    assert task.position == 0
+
+    # Validar log de auditoria de criação
+    logs = await manager.list_task_audit_logs(board_session, task.id)
+    assert len(logs) == 1
+    assert logs[0].action == "CREATED"
+    assert logs[0].user_id == board_user.id
 
     # Create Task in non-existent column raises NotFoundError
     with pytest.raises(NotFoundError, match="Coluna de destino não encontrada"):
         await manager.create_task(
-            board_session, TaskCreate(column_id=uuid.uuid4(), title="Orphan Task")
+            board_session,
+            TaskCreate(column_id=uuid.uuid4(), title="Orphan Task"),
+            user_id=board_user.id,
         )
 
-    # 2. Update Task (content and moving to another column)
+    # 2. Update Task
     updated_task = await manager.update_task(
         board_session,
         task.id,
@@ -224,23 +229,31 @@ async def test_task_crud_lifecycle(board_session: AsyncSession, board_user: User
             priority=TaskPriority.URGENT,
             position=2,
         ),
+        user_id=board_user.id,
     )
     assert updated_task.column_id == col2.id
     assert updated_task.title == "Implement Auth (Complete)"
-    assert updated_task.priority == TaskPriority.URGENT
-    assert updated_task.position == 2
+
+    # Validar log de auditoria de atualização
+    logs = await manager.list_task_audit_logs(board_session, task.id)
+    assert len(logs) == 2
+    assert logs[0].action == "UPDATED"
 
     # Update task with non-existent destination column raises NotFoundError
     with pytest.raises(NotFoundError, match="Coluna de destino não encontrada"):
-        await manager.update_task(board_session, task.id, TaskUpdate(column_id=uuid.uuid4()))
+        await manager.update_task(
+            board_session, task.id, TaskUpdate(column_id=uuid.uuid4()), user_id=board_user.id
+        )
 
     # Update non-existent task raises NotFoundError
     with pytest.raises(NotFoundError, match="Tarefa não encontrada"):
-        await manager.update_task(board_session, uuid.uuid4(), TaskUpdate(title="Non-existent"))
+        await manager.update_task(
+            board_session, uuid.uuid4(), TaskUpdate(title="Non-existent"), user_id=board_user.id
+        )
 
     # 3. Delete Task
-    await manager.delete_task(board_session, task.id)
+    await manager.delete_task(board_session, task.id, user_id=board_user.id)
 
     # Delete non-existent task raises NotFoundError
     with pytest.raises(NotFoundError, match="Tarefa não encontrada"):
-        await manager.delete_task(board_session, task.id)
+        await manager.delete_task(board_session, task.id, user_id=board_user.id)

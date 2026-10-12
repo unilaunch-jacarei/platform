@@ -186,3 +186,14 @@ class BoardRead(BaseModel):
     members: list[BoardMemberRead] = Field(default_factory=list)
     created_at: datetime
     updated_at: datetime
+
+
+class TaskAuditLogResponse(BaseModel):
+    id: uuid.UUID
+    task_id: uuid.UUID
+    user_id: uuid.UUID
+    action: str
+    changes: str | None
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)

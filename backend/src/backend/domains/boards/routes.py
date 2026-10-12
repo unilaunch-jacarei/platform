@@ -18,6 +18,7 @@ from backend.domains.boards.schemas import (
     BoardMemberUpdate,
     BoardRead,
     BoardUpdate,
+    TaskAuditLogResponse,
     TaskCreate,
     TaskRead,
     TaskUpdate,
@@ -119,7 +120,7 @@ async def list_board_members(
     ],
     session: Annotated[AsyncSession, Depends(get_db)],
 ) -> list[BoardMemberRead]:
-    """Lista todos os membros de um quadro especifico."""
+    """Lista todos os membros de um quadro específico."""
     members = await board_manager.list_members(session, board_id)
     return [BoardMemberRead.model_validate(member) for member in members]
 
@@ -215,7 +216,7 @@ async def delete_column(
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
-# --- Operações de Tarefas ---
+# --- Operações de Tarefas e Auditoria ---
 
 
 @boards_router.post(
@@ -225,11 +226,11 @@ async def delete_column(
 )
 async def create_task(
     data: TaskCreate,
-    _user: Annotated[User, Depends(current_superuser)],
+    current_user: Annotated[User, Depends(current_active_user)],
     session: Annotated[AsyncSession, Depends(get_db)],
 ) -> TaskRead:
-    """Cria uma nova tarefa dentro de uma coluna."""
-    task = await board_manager.create_task(session, data)
+    """Cria uma nova tarefa dentro de uma coluna e registra auditoria."""
+    task = await board_manager.create_task(session, data, user_id=current_user.id)
     return TaskRead.model_validate(task)
 
 
@@ -237,20 +238,31 @@ async def create_task(
 async def update_task(
     task_id: uuid.UUID,
     data: TaskUpdate,
-    _user: Annotated[User, Depends(current_superuser)],
+    current_user: Annotated[User, Depends(current_active_user)],
     session: Annotated[AsyncSession, Depends(get_db)],
 ) -> TaskRead:
-    """Atualiza dados de uma tarefa (ex: mover de coluna, reordenar)."""
-    task = await board_manager.update_task(session, task_id, data)
+    """Atualiza dados de uma tarefa e registra auditoria das alterações."""
+    task = await board_manager.update_task(session, task_id, data, user_id=current_user.id)
     return TaskRead.model_validate(task)
 
 
 @boards_router.delete("/tasks/{task_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_task(
     task_id: uuid.UUID,
-    _user: Annotated[User, Depends(current_superuser)],
+    current_user: Annotated[User, Depends(current_active_user)],
     session: Annotated[AsyncSession, Depends(get_db)],
 ) -> Response:
-    """Remove uma tarefa do quadro."""
-    await board_manager.delete_task(session, task_id)
+    """Remove uma tarefa do quadro registrando auditoria."""
+    await board_manager.delete_task(session, task_id, user_id=current_user.id)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@boards_router.get("/tasks/{task_id}/audit", response_model=list[TaskAuditLogResponse])
+async def list_task_audit_logs(
+    task_id: uuid.UUID,
+    _user: Annotated[User, Depends(current_active_user)],
+    session: Annotated[AsyncSession, Depends(get_db)],
+) -> list[TaskAuditLogResponse]:
+    """Lista o histórico imutável de alterações de uma tarefa."""
+    logs = await board_manager.list_task_audit_logs(session, task_id)
+    return [TaskAuditLogResponse.model_validate(log) for log in logs]
