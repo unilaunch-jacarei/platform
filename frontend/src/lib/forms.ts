@@ -6,7 +6,6 @@ export type FormState = {
 	success?: boolean;
 	nome?: string;
 	email?: string;
-	cpf?: string;
 	errors?: Record<string, string | undefined>;
 } | null;
 
