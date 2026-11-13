@@ -12,13 +12,12 @@ backend/
 │   ├── backend/
 │   │   ├── domains/
 │   │   │   └── usuarios/        # Modelos ORM, schemas Pydantic, manager e rotas
-│   │   ├── infra/               # Rate limiter (SlowAPI), HMAC e senhas (Argon2)
+│   │   ├── infra/               # Rate limiter (SlowAPI), e-mail, métricas e senhas (Argon2)
 │   │   ├── config.py            # Pydantic Settings e validações de produção
 │   │   ├── database.py          # SQLAlchemy 2.0 async engine & sessions
 │   │   ├── error.py             # AppExceptions e handlers seguros
 │   │   └── main.py              # Entrypoint FastAPI, CORS, Lifespan e routers
-│   └── main.py
-├── tests/                       # Suíte de testes Pytest (98% de cobertura)
+├── tests/                       # Suíte de testes Pytest (cobertura mínima de 90% no CI)
 ├── Dockerfile                   # Build multi-stage enxuto com uv
 └── pyproject.toml               # Dependências Python
 
