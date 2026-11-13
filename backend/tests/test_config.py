@@ -25,8 +25,14 @@ def test_settings_custom_bind_addr():
     assert settings_no_port.host == "127.0.0.1"
     assert settings_no_port.port == 3000
 
-    settings_invalid_port = Settings(_env_file=None, BIND_ADDR="0.0.0.0:invalid")
-    assert settings_invalid_port.port == 3000
+    with pytest.raises(ValidationError, match="BIND_ADDR"):
+        Settings(_env_file=None, BIND_ADDR="0.0.0.0:invalid")
+
+    with pytest.raises(ValidationError, match="BIND_ADDR"):
+        Settings(_env_file=None, BIND_ADDR="0.0.0.0:70000")
+
+    with pytest.raises(ValidationError, match="BIND_ADDR"):
+        Settings(_env_file=None, BIND_ADDR=":8080")
 
 
 def test_async_database_url_conversions():
