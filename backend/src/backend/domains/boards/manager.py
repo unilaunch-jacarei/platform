@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import uuid
 
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -169,6 +169,7 @@ class BoardManager:
         # Cria registro de auditoria imutável (CREATED)
         audit = TaskAuditLog(
             task_id=task.id,
+            task_title=task.title,
             user_id=user_id,
             action="CREATED",
             changes=f"Tarefa criada na coluna {column.name}",
@@ -213,6 +214,7 @@ class BoardManager:
         if changes_list:
             audit = TaskAuditLog(
                 task_id=task.id,
+                task_title=task.title,
                 user_id=user_id,
                 action="UPDATED",
                 changes="; ".join(changes_list),
@@ -226,13 +228,20 @@ class BoardManager:
     async def delete_task(
         self, session: AsyncSession, task_id: uuid.UUID, user_id: uuid.UUID
     ) -> None:
-        """Remove um card do quadro registrando o log de auditoria antes de apagar."""
+        """Remove um card do quadro preservando o histórico de auditoria."""
         task = await session.scalar(select(Task).where(Task.id == task_id))
         if task is None:
             raise NotFoundError("Tarefa não encontrada")
 
+        # Desvincula os logs existentes antes de remover a tarefa para que o
+        # histórico sobreviva em bancos que aplicam as foreign keys em cascata.
+        await session.execute(
+            update(TaskAuditLog).where(TaskAuditLog.task_id == task.id).values(task_id=None)
+        )
+
         audit = TaskAuditLog(
-            task_id=task.id,
+            task_id=None,
+            task_title=task.title,
             user_id=user_id,
             action="DELETED",
             changes=f"Tarefa '{task.title}' removida",

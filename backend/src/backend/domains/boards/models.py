@@ -184,12 +184,13 @@ class TaskAuditLog(Base):
     __tablename__ = "task_audit_logs"
 
     id: Mapped[uuid.UUID] = mapped_column(GUID(), primary_key=True, default=uuid.uuid4)
-    task_id: Mapped[uuid.UUID] = mapped_column(
+    task_id: Mapped[uuid.UUID | None] = mapped_column(
         GUID(),
-        ForeignKey("tasks.id", ondelete="CASCADE"),
-        nullable=False,
+        ForeignKey("tasks.id", ondelete="SET NULL"),
+        nullable=True,
         index=True,
     )
+    task_title: Mapped[str | None] = mapped_column(String(255), nullable=True)
     user_id: Mapped[uuid.UUID] = mapped_column(
         GUID(),
         ForeignKey("usuarios.id", ondelete="RESTRICT"),

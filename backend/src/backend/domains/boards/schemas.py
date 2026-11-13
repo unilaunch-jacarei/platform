@@ -190,7 +190,8 @@ class BoardRead(BaseModel):
 
 class TaskAuditLogResponse(BaseModel):
     id: uuid.UUID
-    task_id: uuid.UUID
+    task_id: uuid.UUID | None
+    task_title: str | None
     user_id: uuid.UUID
     action: str
     changes: str | None

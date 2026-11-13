@@ -3,11 +3,12 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 import pytest_asyncio
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from backend.database import Base
 from backend.domains.boards.manager import BoardManager
-from backend.domains.boards.models import TaskPriority
+from backend.domains.boards.models import TaskAuditLog, TaskPriority
 from backend.domains.boards.schemas import (
     BoardColumnCreate,
     BoardColumnUpdate,
@@ -257,3 +258,30 @@ async def test_task_crud_lifecycle(board_session: AsyncSession, board_user: User
     # Delete non-existent task raises NotFoundError
     with pytest.raises(NotFoundError, match="Tarefa não encontrada"):
         await manager.delete_task(board_session, task.id, user_id=board_user.id)
+
+
+@pytest.mark.asyncio
+async def test_delete_task_preserves_audit_logs(board_session: AsyncSession, board_user: User):
+    manager = BoardManager()
+    board = await manager.create(
+        board_session, BoardCreate(title="Audit Board"), owner_id=board_user.id
+    )
+    column = await manager.create_column(
+        board_session, BoardColumnCreate(board_id=board.id, name="Backlog", position=0)
+    )
+    task = await manager.create_task(
+        board_session,
+        TaskCreate(column_id=column.id, title="Keep my history"),
+        user_id=board_user.id,
+    )
+
+    await manager.delete_task(board_session, task.id, user_id=board_user.id)
+
+    logs = list(
+        await board_session.scalars(
+            select(TaskAuditLog).where(TaskAuditLog.task_title == "Keep my history")
+        )
+    )
+    assert sorted(log.action for log in logs) == ["CREATED", "DELETED"]
+    assert all(log.task_id is None for log in logs)
+    assert all(log.task_title == "Keep my history" for log in logs)
