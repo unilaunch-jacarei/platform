@@ -19,6 +19,9 @@ from backend.domains.leads.models import (
     Lead,
     LeadInterestArea,
     LeadPageView,
+    NamedAliasModel,
+    NamedCatalog,
+    NamedCatalogModel,
 )
 from backend.domains.leads.schemas import (
     LeadCreate,
@@ -27,10 +30,6 @@ from backend.domains.leads.schemas import (
     StudentLeadCreate,
 )
 from backend.error import ConflictError, NotFoundError, UnprocessableEntityError
-
-NamedCatalog = EducationalInstitution | AcademicCourse
-NamedCatalogModel = type[EducationalInstitution] | type[AcademicCourse]
-NamedAliasModel = type[EducationalInstitutionAlias] | type[AcademicCourseAlias]
 
 
 class LeadService:

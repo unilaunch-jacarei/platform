@@ -19,11 +19,10 @@ from backend.domains.leads.models import (
     Lead,
     LeadInterestArea,
     LeadType,
+    NamedAliasModel,
+    NamedCatalog,
+    NamedCatalogModel,
 )
-
-NamedCatalog = EducationalInstitution | AcademicCourse
-NamedCatalogModel = type[EducationalInstitution] | type[AcademicCourse]
-NamedAliasModel = type[EducationalInstitutionAlias] | type[AcademicCourseAlias]
 
 
 def parse_legacy_semester(value: str | None) -> int | None:
