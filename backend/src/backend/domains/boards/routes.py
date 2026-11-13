@@ -39,11 +39,11 @@ boards_router = APIRouter(prefix="/boards", tags=["boards"])
 
 @boards_router.get("", response_model=list[BoardRead])
 async def list_boards(
-    _user: Annotated[User, Depends(current_superuser)],
+    current_user: Annotated[User, Depends(current_active_user)],
     session: Annotated[AsyncSession, Depends(get_db)],
 ) -> list[BoardRead]:
-    """Lista todos os quadros cadastrados com seus membros."""
-    boards = await board_manager.list(session)
+    """Lista os quadros acessíveis ao usuário autenticado."""
+    boards = await board_manager.list(session, current_user)
     return [BoardRead.model_validate(board) for board in boards]
 
 

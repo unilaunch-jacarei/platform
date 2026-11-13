@@ -114,11 +114,32 @@ async def test_boards_unauthenticated_and_forbidden_access(board_client: AsyncCl
     res = await board_client.post("/api/v1/boards", json={"title": "Test"})
     assert res.status_code == 401
 
-    # Regular user (non-superuser) gets 403 Forbidden
+    # Regular user (non-superuser) sees only boards they can access
     reg_token = await get_regular_user_token(board_client)
     headers = {"Authorization": f"Bearer {reg_token}"}
     res = await board_client.get("/api/v1/boards", headers=headers)
-    assert res.status_code == 403
+    assert res.status_code == 200
+    assert res.json() == []
+
+
+@pytest.mark.asyncio
+async def test_boards_list_filters_by_membership(board_client: AsyncClient):
+    first_token = await register_user_token(board_client, "first-list@example.com")
+    second_token = await register_user_token(board_client, "second-list@example.com")
+    first_headers = {"Authorization": f"Bearer {first_token}"}
+    second_headers = {"Authorization": f"Bearer {second_token}"}
+
+    board_response = await board_client.post(
+        "/api/v1/boards", headers=first_headers, json={"title": "First user board"}
+    )
+    assert board_response.status_code == 201
+    board_id = board_response.json()["id"]
+
+    first_list = await board_client.get("/api/v1/boards", headers=first_headers)
+    assert [board["id"] for board in first_list.json()] == [board_id]
+
+    second_list = await board_client.get("/api/v1/boards", headers=second_headers)
+    assert second_list.json() == []
 
 
 @pytest.mark.asyncio
