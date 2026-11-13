@@ -1,4 +1,20 @@
 import type { LeadFormValues, StudentLeadFormValues, StudentLeadPayload } from '$lib/lead-form';
+import { createClientIpHeaders } from './client-ip';
+
+export function getRequestId(request: Request): string {
+	return request.headers.get('X-Request-ID') ?? crypto.randomUUID();
+}
+
+export function buildLeadForwardHeaders(
+	request: Request,
+	clientIp: string,
+	internalSecret: string
+): Record<string, string> {
+	return {
+		...createClientIpHeaders(clientIp, internalSecret),
+		'X-Request-ID': getRequestId(request)
+	};
+}
 
 export function readLeadForm(form: FormData): LeadFormValues {
 	return {

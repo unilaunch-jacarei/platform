@@ -3,25 +3,20 @@ import { env } from '$env/dynamic/private';
 import type { Actions, PageServerLoad } from './$types';
 import { backendFetch } from '$lib/server/backend';
 import type { LeadFormValues } from '$lib/lead-form';
-import { buildLeadPayload, getBackendError, getLeadErrorStatus, normalizeLeadSource, readLeadForm, validateLeadForm } from '$lib/server/lead-capture';
-import { createClientIpHeaders } from '$lib/server/client-ip';
-
-const getRequestId = (request: Request) => request.headers.get('X-Request-ID') ?? crypto.randomUUID();
+import { buildLeadForwardHeaders, buildLeadPayload, getBackendError, getLeadErrorStatus, normalizeLeadSource, readLeadForm, validateLeadForm } from '$lib/server/lead-capture';
 
 export const load: PageServerLoad = async ({ url, request, getClientAddress }) => {
 	const source = normalizeLeadSource(url.searchParams.get('o'));
 
 	try {
-		await backendFetch(`/api/v1/public/leads/views?o=${encodeURIComponent(source)}`, {
+		const response = await backendFetch(`/api/v1/public/leads/views?o=${encodeURIComponent(source)}`, {
 			method: 'POST',
 			headers: {
 				'Idempotency-Key': crypto.randomUUID(),
-				...createClientIpHeaders(getClientAddress(), env.INTERNAL_SECRET ?? ''),
-				'X-Request-ID': getRequestId(request)
+				...buildLeadForwardHeaders(request, getClientAddress(), env.INTERNAL_SECRET ?? '')
 			}
-		}).then((response) => {
-			if (!response.ok) console.warn('lead_view_tracking_failed', response.status);
 		});
+		if (!response.ok) console.warn('lead_view_tracking_failed', response.status);
 	} catch {
 		// A tracking failure must not block the public form.
 	}
@@ -46,8 +41,7 @@ export const actions: Actions = {
 				method: 'POST',
 				headers: {
 					'content-type': 'application/json',
-					...createClientIpHeaders(getClientAddress(), env.INTERNAL_SECRET ?? ''),
-					'X-Request-ID': getRequestId(request)
+					...buildLeadForwardHeaders(request, getClientAddress(), env.INTERNAL_SECRET ?? '')
 				},
 				body: JSON.stringify(buildLeadPayload(values))
 			});
