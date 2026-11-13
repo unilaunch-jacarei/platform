@@ -1,5 +1,5 @@
-import { redirect } from '@sveltejs/kit';
-import type { PageServerLoad } from './$types';
+import { fail, redirect } from '@sveltejs/kit';
+import type { Actions, PageServerLoad } from './$types';
 import { backendFetch } from '$lib/server/backend';
 
 export type HomePriority = 'low' | 'medium' | 'high' | 'urgent';
@@ -29,6 +29,7 @@ export type HomeBoard = {
 };
 
 const PRIORITIES: HomePriority[] = ['low', 'medium', 'high', 'urgent'];
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 type BackendRecord = Record<string, unknown>;
 
@@ -124,5 +125,124 @@ export const load: PageServerLoad = async ({ locals }) => {
 		return { board: boards[0] ?? null, unavailable: false };
 	} catch {
 		return { board: null, unavailable: true };
+	}
+};
+
+async function backendError(response: Response): Promise<string> {
+	if (response.status === 401 || response.status === 403) {
+		return 'Sua sessão expirou. Entre novamente para continuar.';
+	}
+	if (response.status === 404) {
+		return 'A tarefa selecionada não existe mais.';
+	}
+	if (response.status >= 500) {
+		return 'Não foi possível salvar a tarefa agora. Tente novamente em instantes.';
+	}
+
+	try {
+		const body = (await response.json()) as { error?: unknown; detail?: unknown };
+		if (typeof body.error === 'string') return body.error;
+		if (typeof body.detail === 'string') return body.detail;
+	} catch {
+		/* A resposta pode não conter JSON. */
+	}
+
+	return 'Não foi possível salvar a tarefa. Confira os dados e tente novamente.';
+}
+
+export const actions: Actions = {
+	create: async ({ request, locals }) => {
+		const token = requireToken(locals.token);
+		const formData = await request.formData();
+		const title = String(formData.get('title') ?? '').trim();
+		const description = String(formData.get('description') ?? '').trim();
+		const columnId = String(formData.get('column_id') ?? '');
+		const rawPriority = String(formData.get('priority') ?? 'medium');
+		const priority = PRIORITIES.includes(rawPriority as HomePriority)
+			? (rawPriority as HomePriority)
+			: 'medium';
+		const values = { title, description, column_id: columnId, priority };
+
+		if (!title) {
+			return fail(400, { error: 'Informe um título para a tarefa.', values });
+		}
+		if (title.length > 255) {
+			return fail(400, { error: 'O título pode ter no máximo 255 caracteres.', values });
+		}
+		if (!UUID_PATTERN.test(columnId)) {
+			return fail(400, { error: 'Selecione uma coluna válida.', values });
+		}
+
+		try {
+			const response = await backendFetch('/api/v1/boards/tasks', token, {
+				method: 'POST',
+				headers: { 'content-type': 'application/json' },
+				body: JSON.stringify({
+					column_id: columnId,
+					title,
+					description: description || null,
+					priority
+				})
+			});
+			if (!response.ok) {
+				return fail(response.status, { error: await backendError(response), values });
+			}
+		} catch {
+			return fail(503, {
+				error: 'Não foi possível conectar ao serviço de tarefas. Tente novamente.',
+				values
+			});
+		}
+
+		return { message: 'Tarefa criada.', success: true };
+	},
+
+	move: async ({ request, locals }) => {
+		const token = requireToken(locals.token);
+		const formData = await request.formData();
+		const taskId = String(formData.get('task_id') ?? '');
+		const columnId = String(formData.get('column_id') ?? '');
+
+		if (!UUID_PATTERN.test(taskId) || !UUID_PATTERN.test(columnId)) {
+			return fail(400, { error: 'Movimentação inválida.' });
+		}
+
+		try {
+			const response = await backendFetch(`/api/v1/boards/tasks/${taskId}`, token, {
+				method: 'PATCH',
+				headers: { 'content-type': 'application/json' },
+				body: JSON.stringify({ column_id: columnId })
+			});
+			if (!response.ok) {
+				return fail(response.status, { error: await backendError(response) });
+			}
+		} catch {
+			return fail(503, { error: 'Não foi possível mover a tarefa. Tente novamente.' });
+		}
+
+		return { message: 'Tarefa movida.' };
+	},
+
+	delete: async ({ request, locals }) => {
+		const token = requireToken(locals.token);
+		const formData = await request.formData();
+		const taskId = String(formData.get('task_id') ?? '');
+
+		if (!UUID_PATTERN.test(taskId)) {
+			return fail(400, { error: 'Tarefa inválida.' });
+		}
+
+		try {
+			const response = await backendFetch(`/api/v1/boards/tasks/${taskId}`, token, {
+				method: 'DELETE'
+			});
+			if (!response.ok) {
+				return fail(response.status, { error: await backendError(response) });
+			}
+		} catch {
+			return fail(503, { error: 'Não foi possível excluir a tarefa. Tente novamente.' });
+		}
+
+		return { message: 'Tarefa excluída.' };
 	}
 };

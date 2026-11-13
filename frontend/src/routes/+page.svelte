@@ -1,9 +1,12 @@
 <script lang="ts">
-	import type { PageData } from './$types';
+	import { enhance } from '$app/forms';
+	import type { SubmitFunction } from '@sveltejs/kit';
+	import { tick } from 'svelte';
+	import type { ActionData, PageData } from './$types';
 
 	type Priority = 'low' | 'medium' | 'high' | 'urgent';
 
-	let { data }: { data: PageData } = $props();
+	let { data, form }: { data: PageData; form: ActionData } = $props();
 
 	const priorityLabels: Record<Priority, string> = {
 		low: 'Baixa',
@@ -11,6 +14,13 @@
 		high: 'Alta',
 		urgent: 'Urgente'
 	};
+
+	const priorityOptions: { value: Priority; label: string }[] = [
+		{ value: 'low', label: 'Baixa' },
+		{ value: 'medium', label: 'Média' },
+		{ value: 'high', label: 'Alta' },
+		{ value: 'urgent', label: 'Urgente' }
+	];
 
 	let board = $derived(data.board);
 	let columns = $derived(board?.columns ?? []);
@@ -21,6 +31,24 @@
 	let progress = $derived(
 		totalTaskCount ? Math.round((completedTaskCount / totalTaskCount) * 100) : 0
 	);
+
+	let isModalOpen = $state(false);
+	let newTaskColumn = $state('');
+	let newTaskTitle = $state('');
+	let newTaskDescription = $state('');
+	let newTaskPriority = $state<Priority>('medium');
+	let draggingTaskId = $state<string | null>(null);
+	let dropTarget = $state<string | null>(null);
+	let moveForm = $state<HTMLFormElement | null>(null);
+	let moveTaskId = $state('');
+	let moveColumnId = $state('');
+
+	const createEnhance: SubmitFunction = () => async ({ result, update }) => {
+		if (result.type === 'success') {
+			closeModal();
+			await update();
+		}
+	};
 
 	function priorityClass(priority: Priority) {
 		return priority;
@@ -33,6 +61,49 @@
 			? null
 			: parsed.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
 	}
+
+	function openModal(columnId: string) {
+		newTaskColumn = columnId;
+		newTaskTitle = '';
+		newTaskDescription = '';
+		newTaskPriority = 'medium';
+		isModalOpen = true;
+	}
+
+	function closeModal() {
+		isModalOpen = false;
+	}
+
+	function startDrag(event: DragEvent, taskId: string) {
+		draggingTaskId = taskId;
+		event.dataTransfer?.setData('text/plain', taskId);
+		if (event.dataTransfer) event.dataTransfer.effectAllowed = 'move';
+	}
+
+	function finishDrag() {
+		draggingTaskId = null;
+		dropTarget = null;
+	}
+
+	function allowDrop(event: DragEvent, columnId: string) {
+		event.preventDefault();
+		dropTarget = columnId;
+	}
+
+	async function moveTask(event: DragEvent, columnId: string) {
+		event.preventDefault();
+		const taskId = draggingTaskId ?? event.dataTransfer?.getData('text/plain');
+		if (!taskId) {
+			finishDrag();
+			return;
+		}
+
+		moveTaskId = taskId;
+		moveColumnId = columnId;
+		finishDrag();
+		await tick();
+		moveForm?.requestSubmit();
+	}
 </script>
 
 <svelte:head>
@@ -41,6 +112,25 @@
 </svelte:head>
 
 <main class="kanban-page">
+	<form
+		method="POST"
+		action="?/move"
+		use:enhance
+		bind:this={moveForm}
+		class="hidden-form"
+		aria-hidden="true"
+		tabindex="-1"
+	>
+		<input type="hidden" name="task_id" value={moveTaskId} />
+		<input type="hidden" name="column_id" value={moveColumnId} />
+	</form>
+
+	{#if form?.error}
+		<p class="alert" role="alert">{form.error}</p>
+	{:else if form?.message}
+		<p class="notice" role="status">{form.message}</p>
+	{/if}
+
 	{#if board}
 		<section class="project-overview" aria-labelledby="project-title">
 			<nav aria-label="Caminho do projeto" class="breadcrumb">
@@ -65,19 +155,48 @@
 				style={`grid-template-columns: repeat(${Math.max(columns.length, 1)}, minmax(15rem, 1fr));`}
 			>
 				{#each columns as column (column.id)}
-					<section class="kanban-column" aria-labelledby={`${column.id}-heading`}>
+					<section
+						class:drop-active={dropTarget === column.id && draggingTaskId !== null}
+						class="kanban-column"
+						ondragover={(event) => allowDrop(event, column.id)}
+						ondragleave={() => (dropTarget = null)}
+						ondrop={(event) => moveTask(event, column.id)}
+						aria-labelledby={`${column.id}-heading`}
+					>
 						<header class="column-heading">
 							<div class="heading-name">
 								<i></i>
 								<h2 id={`${column.id}-heading`}>{column.name}</h2>
 								<span>{column.tasks.length}</span>
 							</div>
+							<button
+								class="add-card"
+								type="button"
+								aria-label={`Adicionar tarefa em ${column.name}`}
+								onclick={() => openModal(column.id)}
+							>
+								+
+							</button>
 						</header>
 
 						<div class="column-body">
 							{#each column.tasks as task (task.id)}
-								<article class="task-card">
-									<h3>{task.title}</h3>
+								<article
+									class:dragging={draggingTaskId === task.id}
+									class="task-card"
+									draggable="true"
+									ondragstart={(event) => startDrag(event, task.id)}
+									ondragend={finishDrag}
+								>
+									<header class="task-header">
+										<h3>{task.title}</h3>
+										<form method="POST" action="?/delete" use:enhance class="task-delete">
+											<input type="hidden" name="task_id" value={task.id} />
+											<button type="submit" aria-label={`Excluir ${task.title}`} title="Excluir">
+												×
+											</button>
+										</form>
+									</header>
 									{#if task.description}
 										<p class="task-description">{task.description}</p>
 									{/if}
@@ -112,15 +231,84 @@
 	{/if}
 </main>
 
+{#if isModalOpen}
+	<button class="modal-backdrop" type="button" aria-label="Fechar nova tarefa" onclick={closeModal}
+	></button>
+	<dialog open class="task-modal" aria-labelledby="modal-title">
+		<form method="POST" action="?/create" use:enhance={createEnhance} class="task-form">
+			<input type="hidden" name="column_id" value={newTaskColumn} />
+			<header>
+				<h2 id="modal-title">Nova tarefa</h2>
+				<button type="button" aria-label="Fechar" onclick={closeModal}>×</button>
+			</header>
+			<label class="field full">
+				<span>Título <b>*</b></span>
+				<input
+					name="title"
+					bind:value={newTaskTitle}
+					placeholder="Nome da tarefa"
+					maxlength="255"
+					required
+				/>
+			</label>
+			<label class="field full">
+				<span>Descrição</span>
+				<textarea
+					name="description"
+					bind:value={newTaskDescription}
+					rows="3"
+					placeholder="Descreva a tarefa..."
+				></textarea>
+			</label>
+			<label class="field full">
+				<span>Prioridade</span>
+				<select name="priority" bind:value={newTaskPriority}>
+					{#each priorityOptions as option (option.value)}
+						<option value={option.value}>{option.label}</option>
+					{/each}
+				</select>
+			</label>
+			{#if form?.error}
+				<p class="form-error" role="alert">{form.error}</p>
+			{/if}
+			<footer>
+				<button class="cancel" type="button" onclick={closeModal}>Cancelar</button>
+				<button class="create" type="submit">Criar tarefa</button>
+			</footer>
+		</form>
+	</dialog>
+{/if}
+
 <style>
 	:global(body) {
 		overflow-x: hidden;
+	}
+
+	.hidden-form {
+		display: none;
 	}
 
 	.kanban-page {
 		min-height: calc(100vh - 4.5rem);
 		background: var(--background);
 		color: var(--foreground);
+	}
+
+	.alert,
+	.notice {
+		margin: 0;
+		padding: 0.7rem 1.85rem;
+		font-size: 0.85rem;
+	}
+
+	.alert {
+		background: #3a1220;
+		color: #ffb3c0;
+	}
+
+	.notice {
+		background: #102a24;
+		color: #8fe3c8;
 	}
 
 	.project-overview {
@@ -232,6 +420,13 @@
 		border: 1px solid #302766;
 		border-radius: 1.15rem;
 		background: rgba(10, 13, 32, 0.62);
+		transition: border-color 0.18s, background 0.18s;
+	}
+
+	.kanban-column.drop-active {
+		border-color: #7859ff;
+		background: rgba(120, 89, 255, 0.12);
+		box-shadow: inset 0 0 0 1px #7859ff;
 	}
 
 	.column-heading {
@@ -273,6 +468,26 @@
 		font-size: 0.73rem;
 	}
 
+	.add-card {
+		display: grid;
+		width: 2rem;
+		height: 2rem;
+		place-items: center;
+		border: 0;
+		border-radius: 50%;
+		padding: 0;
+		background: transparent;
+		color: #71809d;
+		cursor: pointer;
+		font-size: 1.3rem;
+		line-height: 1;
+	}
+
+	.add-card:hover {
+		color: #fff;
+		background: #1b2344;
+	}
+
 	.column-body {
 		display: grid;
 		gap: 0.65rem;
@@ -289,13 +504,45 @@
 		border-radius: 1.12rem;
 		background: #1d2342;
 		box-shadow: 0 10px 20px rgba(0, 0, 0, 0.07);
+		cursor: grab;
+		transition: opacity 0.15s, transform 0.15s;
 	}
 
-	.task-card h3 {
+	.task-card.dragging {
+		opacity: 0.28;
+	}
+
+	.task-card:active {
+		cursor: grabbing;
+		transform: rotate(1deg);
+	}
+
+	.task-header {
+		display: flex;
+		align-items: flex-start;
+		justify-content: space-between;
+		gap: 0.5rem;
+	}
+
+	.task-header h3 {
 		margin: 0 0 0.44rem;
 		color: #fff;
 		font: 700 0.94rem var(--app-font-display);
 		letter-spacing: -0.035em;
+	}
+
+	.task-delete button {
+		border: 0;
+		padding: 0;
+		background: transparent;
+		color: #71809d;
+		cursor: pointer;
+		font-size: 1.1rem;
+		line-height: 1;
+	}
+
+	.task-delete button:hover {
+		color: #ff7b8a;
 	}
 
 	.task-description {
@@ -359,6 +606,125 @@
 		color: #71809d;
 	}
 
+	.modal-backdrop {
+		position: fixed;
+		z-index: 20;
+		inset: 0;
+		border: 0;
+		background: rgba(0, 2, 12, 0.78);
+		backdrop-filter: blur(6px);
+		cursor: default;
+	}
+
+	.task-modal {
+		position: fixed;
+		z-index: 21;
+		top: 50%;
+		left: 50%;
+		width: min(38rem, calc(100vw - 2rem));
+		max-height: calc(100dvh - 2rem);
+		box-sizing: border-box;
+		overflow-y: auto;
+		transform: translate(-50%, -50%);
+		border: 1px solid #332777;
+		border-radius: 1.15rem;
+		padding: 1.85rem;
+		background: #10142d;
+		color: var(--foreground);
+		box-shadow: 0 24px 70px rgba(0, 0, 0, 0.6);
+	}
+
+	.task-modal header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		margin-bottom: 1.35rem;
+	}
+
+	.task-modal h2 {
+		margin: 0;
+		font: 800 1.18rem var(--app-font-display);
+		letter-spacing: -0.04em;
+	}
+
+	.task-modal header button {
+		display: grid;
+		width: 2rem;
+		height: 2rem;
+		place-items: center;
+		border: 0;
+		padding: 0;
+		background: transparent;
+		color: #71809d;
+		cursor: pointer;
+		font-size: 1.55rem;
+		line-height: 1;
+	}
+
+	.field {
+		display: grid;
+		gap: 0.5rem;
+		color: #f3f4fb;
+		font-size: 0.78rem;
+		font-weight: 700;
+	}
+
+	.field.full {
+		margin-bottom: 1.15rem;
+	}
+
+	.field b {
+		color: #ff5b68;
+	}
+
+	.field input,
+	.field textarea,
+	.field select {
+		width: 100%;
+		box-sizing: border-box;
+		border: 1px solid #2b2660;
+		border-radius: 0.95rem;
+		padding: 0.72rem 0.92rem;
+		background: #161d30;
+		color: var(--foreground);
+		font: 500 0.9rem var(--app-font-display);
+		outline: none;
+	}
+
+	.field textarea {
+		resize: vertical;
+	}
+
+	.form-error {
+		margin: 0 0 1rem;
+		color: #ff7b8a;
+		font-size: 0.82rem;
+	}
+
+	.task-form footer {
+		display: flex;
+		justify-content: flex-end;
+		gap: 0.65rem;
+	}
+
+	.task-form footer button {
+		border: 0;
+		border-radius: 0.9rem;
+		padding: 0.65rem 1.1rem;
+		cursor: pointer;
+		font: 700 0.85rem var(--app-font-display);
+	}
+
+	.task-form .cancel {
+		background: #1b2344;
+		color: #c3cbe0;
+	}
+
+	.task-form .create {
+		background: #7859ff;
+		color: #fff;
+	}
+
 	@media (max-width: 780px) {
 		.project-overview {
 			min-height: 13rem;
@@ -376,6 +742,10 @@
 
 		.board-scroll {
 			padding: 1.75rem 1.15rem;
+		}
+
+		.task-modal {
+			padding: 1.3rem;
 		}
 	}
 </style>
