@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import uuid
 
-from sqlalchemy import select
+from sqlalchemy import or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -40,9 +40,20 @@ class BoardManager:
     para Boards, Colunas, Tarefas e Membros.
     """
 
-    async def list(self, session: AsyncSession) -> list[Board]:
-        """Lista todos os quadros ordenados pela data de criação."""
-        result = await session.scalars(self._board_query().order_by(Board.created_at.desc()))
+    async def list(self, session: AsyncSession, user: User | None = None) -> list[Board]:
+        """Lista quadros ordenados pela data de criação.
+
+        Sem ``user`` retorna todos os quadros; com ``user``, superusuários veem
+        todos e os demais veem apenas quadros em que são donos ou membros.
+        """
+        query = self._board_query()
+        if user is not None and not user.is_superuser:
+            query = (
+                query.outerjoin(BoardMember)
+                .where(or_(Board.owner_id == user.id, BoardMember.user_id == user.id))
+                .distinct()
+            )
+        result = await session.scalars(query.order_by(Board.created_at.desc()))
         return list(result)
 
     async def get(self, session: AsyncSession, board_id: uuid.UUID) -> Board:
@@ -169,6 +180,7 @@ class BoardManager:
         # Cria registro de auditoria imutável (CREATED)
         audit = TaskAuditLog(
             task_id=task.id,
+            task_title=task.title,
             user_id=user_id,
             action="CREATED",
             changes=f"Tarefa criada na coluna {column.name}",
@@ -213,6 +225,7 @@ class BoardManager:
         if changes_list:
             audit = TaskAuditLog(
                 task_id=task.id,
+                task_title=task.title,
                 user_id=user_id,
                 action="UPDATED",
                 changes="; ".join(changes_list),
@@ -226,13 +239,20 @@ class BoardManager:
     async def delete_task(
         self, session: AsyncSession, task_id: uuid.UUID, user_id: uuid.UUID
     ) -> None:
-        """Remove um card do quadro registrando o log de auditoria antes de apagar."""
+        """Remove um card do quadro preservando o histórico de auditoria."""
         task = await session.scalar(select(Task).where(Task.id == task_id))
         if task is None:
             raise NotFoundError("Tarefa não encontrada")
 
+        # Desvincula os logs existentes antes de remover a tarefa para que o
+        # histórico sobreviva em bancos que aplicam as foreign keys em cascata.
+        await session.execute(
+            update(TaskAuditLog).where(TaskAuditLog.task_id == task.id).values(task_id=None)
+        )
+
         audit = TaskAuditLog(
-            task_id=task.id,
+            task_id=None,
+            task_title=task.title,
             user_id=user_id,
             action="DELETED",
             changes=f"Tarefa '{task.title}' removida",

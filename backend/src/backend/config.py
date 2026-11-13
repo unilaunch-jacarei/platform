@@ -1,6 +1,6 @@
 from functools import lru_cache
 
-from pydantic import Field, computed_field, model_validator
+from pydantic import Field, computed_field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -108,6 +108,22 @@ class Settings(BaseSettings):
             return "postgresql+psycopg://" + url[len("postgresql://") :]
         return url
 
+    @field_validator("bind_addr")
+    @classmethod
+    def validate_bind_addr(cls, value: str) -> str:
+        if ":" not in value:
+            return value
+        host, _, raw_port = value.rpartition(":")
+        if not host:
+            raise ValueError("BIND_ADDR deve incluir um host antes da porta")
+        try:
+            port = int(raw_port)
+        except ValueError:
+            raise ValueError("BIND_ADDR deve usar uma porta numérica") from None
+        if not 1 <= port <= 65535:
+            raise ValueError("BIND_ADDR deve usar uma porta entre 1 e 65535")
+        return value
+
     @property
     def host(self) -> str:
         if ":" in self.bind_addr:
@@ -117,10 +133,7 @@ class Settings(BaseSettings):
     @property
     def port(self) -> int:
         if ":" in self.bind_addr:
-            try:
-                return int(self.bind_addr.rsplit(":", 1)[1])
-            except ValueError:
-                return 3000
+            return int(self.bind_addr.rsplit(":", 1)[1])
         return 3000
 
 

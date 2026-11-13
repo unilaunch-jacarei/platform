@@ -1,20 +1,17 @@
 import { fail } from '@sveltejs/kit';
 import { env } from '$env/dynamic/private';
 import type { Actions, PageServerLoad } from './$types';
-import { createClientIpHeaders } from '$lib/server/client-ip';
 import { backendFetch } from '$lib/server/backend';
-import type { StudentLeadFormValues } from '$lib/lead-form';
-import type { InterestAreaOption } from '$lib/lead-form';
-import { buildStudentLeadPayload, getBackendError, getLeadErrorStatus, normalizeLeadSource, readStudentLeadForm, validateStudentLeadForm } from '$lib/server/lead-capture';
-
-const getRequestId = (request: Request) => request.headers.get('X-Request-ID') ?? crypto.randomUUID();
+import type { InterestAreaOption, StudentLeadFormValues } from '$lib/lead-form';
+import { buildLeadForwardHeaders, buildStudentLeadPayload, getBackendError, getLeadErrorStatus, normalizeLeadSource, readStudentLeadForm, validateStudentLeadForm } from '$lib/server/lead-capture';
 
 export const load: PageServerLoad = async ({ url, request, getClientAddress }) => {
 	const source = normalizeLeadSource(url.searchParams.get('o'));
-	const forwardedHeaders = {
-		...createClientIpHeaders(getClientAddress(), env.INTERNAL_SECRET ?? ''),
-		'X-Request-ID': getRequestId(request)
-	};
+	const forwardedHeaders = buildLeadForwardHeaders(
+		request,
+		getClientAddress(),
+		env.INTERNAL_SECRET ?? ''
+	);
 	const [tracking, catalog] = await Promise.allSettled([
 		backendFetch(`/api/v1/public/leads/views?o=${encodeURIComponent(source)}`, {
 			method: 'POST',
@@ -52,8 +49,7 @@ export const actions: Actions = {
 				method: 'POST',
 				headers: {
 					'content-type': 'application/json',
-					...createClientIpHeaders(getClientAddress(), env.INTERNAL_SECRET ?? ''),
-					'X-Request-ID': getRequestId(request)
+					...buildLeadForwardHeaders(request, getClientAddress(), env.INTERNAL_SECRET ?? '')
 				},
 				body: JSON.stringify(buildStudentLeadPayload(values))
 			});

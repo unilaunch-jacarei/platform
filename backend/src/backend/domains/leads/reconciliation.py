@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import re
 from collections.abc import Sequence
 
@@ -19,11 +20,12 @@ from backend.domains.leads.models import (
     Lead,
     LeadInterestArea,
     LeadType,
+    NamedAliasModel,
+    NamedCatalog,
+    NamedCatalogModel,
 )
 
-NamedCatalog = EducationalInstitution | AcademicCourse
-NamedCatalogModel = type[EducationalInstitution] | type[AcademicCourse]
-NamedAliasModel = type[EducationalInstitutionAlias] | type[AcademicCourseAlias]
+logger = logging.getLogger("backend.reconciliation")
 
 
 def parse_legacy_semester(value: str | None) -> int | None:
@@ -143,7 +145,7 @@ async def _run() -> None:
     try:
         async with get_session_factory()() as session:
             changed = await reconcile_student_leads(session)
-            print(f"Reconciled {changed} student leads")
+            logger.info("Reconciled %s student leads", changed)
     finally:
         await close_db()
 

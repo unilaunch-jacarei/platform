@@ -2,59 +2,52 @@
 
 ## Zero-Trust interno
 
-O backend Rust é um Resource Server em rede privada. Ele não deve ser exposto diretamente à internet ou ao navegador. O único consumidor autorizado é o servidor SvelteKit.
+O backend Python/FastAPI é um Resource Server em rede privada. Ele não deve ser exposto diretamente à internet ou ao navegador. O único consumidor autorizado é o servidor SvelteKit (BFF).
 
-## HMAC-SHA256
+## Autenticação interna
 
-Cada request interna contém:
-
-```text
-x-user-id
-x-timestamp
-x-signature
-```
-
-O payload assinado é:
+O SvelteKit autentica no backend com JWT Bearer:
 
 ```text
-{timestamp}:{caminho_da_rota}:{user_id}
+Authorization: Bearer <access_token>
 ```
 
-O backend:
+O token é emitido por `POST /api/v1/auth/jwt/login` (fastapi-users) e armazenado pelo BFF em cookie `HttpOnly`. O navegador nunca recebe o token nem chama o backend diretamente.
 
-1. Verifica a existência e o formato dos headers.
-2. Rejeita timestamps fora de uma janela de 30 segundos.
-3. Recalcula HMAC-SHA256 com `INTERNAL_SECRET`.
-4. Compara a assinatura em tempo constante.
-5. Injeta o `user_id` autenticado na request.
+### Assinatura do IP do cliente
 
-Referência: [RFC 2104 — HMAC](https://www.rfc-editor.org/rfc/rfc2104).
+Para o rate limit usar o IP real atrás do proxy, o BFF envia:
+
+```text
+X-Client-IP
+X-Client-IP-Signature
+```
+
+A assinatura é `HMAC-SHA256(INTERNAL_SECRET, client_ip)`. O backend ([`backend/infra/limiter.py`](../backend/src/backend/infra/limiter.py)) só aceita o IP encaminhado quando ele é um IP válido e a assinatura confere em tempo constante; caso contrário, usa o IP da conexão.
 
 ## Senhas
 
-Senhas são armazenadas apenas como Argon2id com salt aleatório. O valor puro nunca é logado, retornado ou salvo no banco.
+Senhas são armazenadas apenas como hash Argon2id (via fastapi-users/pwdlib). O valor puro nunca é logado, retornado ou salvo no banco.
 
 ## Sessões
 
-- Tokens opacos aleatórios armazenados no PostgreSQL.
-- Cookie `HttpOnly`.
-- Cookie `Secure` em produção.
-- `SameSite=Strict`.
-- Expiração inicial de 8 horas.
-- Renovação quando faltam até 30 minutos.
-- Vida absoluta máxima de 24 horas.
-- Logout com revogação no banco.
+- JWT com validade de 7 dias (`JWT_LIFETIME_SECONDS`), emitido pelo backend.
+- Cookie `session_token` `HttpOnly` e `SameSite=Lax`.
+- Cookie `Secure` fora do ambiente de desenvolvimento.
+- Logout remove o cookie no BFF e chama `POST /api/v1/auth/jwt/logout`.
+- O backend não mantém sessão em banco; a validade é a do JWT.
 
 ## SSR e segredos
 
-O segredo interno usa `$env/dynamic/private` e só é acessado por módulos server-side do SvelteKit. As actions `+page.server.ts` processam login e cadastro no servidor. O browser não recebe `INTERNAL_SECRET` nem chama o Rust diretamente.
-
-Referências:
-
-- [SvelteKit — server-only modules](https://svelte.dev/docs/kit/server-only-modules)
-- [SvelteKit — form actions](https://svelte.dev/docs/kit/form-actions)
-- [OWASP — Session Management](https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html)
+O segredo interno usa `$env/dynamic/private` e só é acessado por módulos server-side do SvelteKit. As actions `+page.server.ts` processam login e cadastro no servidor. O browser não recebe `INTERNAL_SECRET` nem chama o backend diretamente.
 
 ## Rate limit
 
-O login aceita até 5 tentativas por IP a cada 60 segundos. O limite atual é local à instância Rust; em múltiplas réplicas, deve ser movido para Redis ou PostgreSQL.
+Limites aplicados hoje (SlowAPI) nos endpoints públicos de captura de leads:
+
+- `POST /api/v1/public/leads/views`: 30/minuto
+- `POST /api/v1/public/leads`: 5/hora
+- `POST /api/v1/public/leads/students`: 5/hora
+- `GET /api/v1/public/leads/catalog/*`: 60/minuto
+
+O login ainda não possui rate limit dedicado. Em múltiplas réplicas o storage compartilhado deve usar Redis (`RATE_LIMIT_STORAGE_URI`).

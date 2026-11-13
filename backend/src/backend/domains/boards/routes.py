@@ -1,5 +1,3 @@
-# ruff: noqa: I001
-
 import uuid
 from typing import Annotated
 
@@ -7,10 +5,10 @@ from fastapi import APIRouter, Depends, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.database import get_db
-from backend.domains.boards.dependencies import require_board_role
 from backend.domains.boards.dependencies import (
     get_column_board_id,
     get_task_board_id,
+    require_board_role,
     require_user_board_role,
 )
 from backend.domains.boards.manager import board_manager
@@ -41,11 +39,11 @@ boards_router = APIRouter(prefix="/boards", tags=["boards"])
 
 @boards_router.get("", response_model=list[BoardRead])
 async def list_boards(
-    _user: Annotated[User, Depends(current_superuser)],
+    current_user: Annotated[User, Depends(current_active_user)],
     session: Annotated[AsyncSession, Depends(get_db)],
 ) -> list[BoardRead]:
-    """Lista todos os quadros cadastrados com seus membros."""
-    boards = await board_manager.list(session)
+    """Lista os quadros acessíveis ao usuário autenticado."""
+    boards = await board_manager.list(session, current_user)
     return [BoardRead.model_validate(board) for board in boards]
 
 
