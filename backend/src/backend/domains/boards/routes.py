@@ -1,5 +1,3 @@
-# ruff: noqa: I001
-
 import uuid
 from typing import Annotated
 
@@ -7,10 +5,10 @@ from fastapi import APIRouter, Depends, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.database import get_db
-from backend.domains.boards.dependencies import require_board_role
 from backend.domains.boards.dependencies import (
     get_column_board_id,
     get_task_board_id,
+    require_board_role,
     require_user_board_role,
 )
 from backend.domains.boards.manager import board_manager

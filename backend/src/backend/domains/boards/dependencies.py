@@ -1,5 +1,3 @@
-# ruff: noqa: I001
-
 import uuid
 from typing import Annotated, Callable, Coroutine, Sequence
 
@@ -8,8 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.database import get_db
-from backend.domains.boards.models import Board, BoardMember, BoardRole
-from backend.domains.boards.models import BoardColumn, Task
+from backend.domains.boards.models import Board, BoardColumn, BoardMember, BoardRole, Task
 from backend.domains.usuarios.auth import current_active_user
 from backend.domains.usuarios.models import User
 
