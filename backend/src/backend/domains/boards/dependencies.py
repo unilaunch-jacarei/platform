@@ -56,15 +56,10 @@ async def get_user_board_role(
     return BoardRole(role_str)
 
 
-async def require_user_board_role(
-    session: AsyncSession,
-    board_id: uuid.UUID,
-    current_user: User,
-    allowed_roles: Sequence[BoardRole],
+def _ensure_allowed_role(
+    user_role: BoardRole | None, allowed_roles: Sequence[BoardRole]
 ) -> BoardRole:
-    """Valida a permissão do usuário para uma operação em um quadro."""
-    user_role = await get_user_board_role(session, board_id, current_user)
-
+    """Valida se o papel do usuário satisfaz alguma das permissões exigidas."""
     if user_role is None:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -80,6 +75,17 @@ async def require_user_board_role(
         )
 
     return user_role
+
+
+async def require_user_board_role(
+    session: AsyncSession,
+    board_id: uuid.UUID,
+    current_user: User,
+    allowed_roles: Sequence[BoardRole],
+) -> BoardRole:
+    """Valida a permissão do usuário para uma operação em um quadro."""
+    user_role = await get_user_board_role(session, board_id, current_user)
+    return _ensure_allowed_role(user_role, allowed_roles)
 
 
 async def get_column_board_id(session: AsyncSession, column_id: uuid.UUID) -> uuid.UUID:
@@ -122,23 +128,6 @@ def require_board_role(
         session: Annotated[AsyncSession, Depends(get_db)],
     ) -> BoardRole:
         user_role = await get_user_board_role(session, board_id, current_user)
-
-        if user_role is None:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Você não é membro deste quadro",
-            )
-
-        # Checa se a role do usuário satisfaz alguma das permissões necessárias
-        user_level = ROLE_HIERARCHY[user_role]
-        min_required_level = min(ROLE_HIERARCHY[role] for role in allowed_roles)
-
-        if user_level < min_required_level:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Você não possui permissão suficiente para esta operação",
-            )
-
-        return user_role
+        return _ensure_allowed_role(user_role, allowed_roles)
 
     return dependency
