@@ -13,6 +13,7 @@ from slowapi.middleware import SlowAPIMiddleware
 from backend.config import get_settings
 from backend.database import close_db
 from backend.domains.boards.routes import boards_router
+from backend.domains.gamification.routes import gamification_router
 from backend.domains.leads.routes import leads_router, public_leads_router
 from backend.domains.usuarios.routes import auth_router, users_router
 from backend.error import register_exception_handlers
@@ -116,6 +117,7 @@ def create_app() -> FastAPI:
     app.include_router(public_leads_router, prefix="/api/v1")
     app.include_router(leads_router, prefix="/api/v1")
     app.include_router(boards_router, prefix="/api/v1")
+    app.include_router(gamification_router, prefix="/api/v1")
 
     return app
 
